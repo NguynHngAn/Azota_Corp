@@ -1,14 +1,3 @@
-// import { BrowserRouter } from "react-router";
-// import { AppRouter } from "./router";
-
-// function App() {
-//   return (
-//     <BrowserRouter>
-//       <AppRouter />
-//     </BrowserRouter>
-//   );
-// }
-
 // export default App;
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router";
