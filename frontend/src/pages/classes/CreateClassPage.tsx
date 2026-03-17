@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import { createClass } from "../../api/classes";
 
@@ -24,7 +24,10 @@ export function CreateClassPage() {
     setSubmitting(true);
     if (!token) return;
     try {
-      const created = await createClass({ name, description: description || null }, token);
+      const created = await createClass(
+        { name, description: description || null },
+        token,
+      );
       navigate(`${base}/classes/${created.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed");
@@ -38,7 +41,9 @@ export function CreateClassPage() {
       <h2 className="text-lg font-semibold mb-4">Create class</h2>
       <form onSubmit={handleSubmit} className="max-w-md space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Name
+          </label>
           <input
             type="text"
             value={name}
@@ -48,7 +53,9 @@ export function CreateClassPage() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Description (optional)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Description (optional)
+          </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}

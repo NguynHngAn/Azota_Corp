@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import { listExams, type ExamResponse } from "../../api/exams";
 
@@ -39,10 +39,12 @@ export function ExamListPage() {
             <li key={e.id}>
               <Link
                 to={`/teacher/exams/${e.id}`}
-                className="block p-3 bg-white rounded shadow hover:bg-gray-50 flex justify-between items-center"
+                className="block p-3 bg-white rounded shadow hover:bg-gray-50 justify-between items-center"
               >
                 <span className="font-medium">{e.title}</span>
-                <span className={`text-xs px-2 py-0.5 rounded ${e.is_draft ? "bg-yellow-100" : "bg-green-100"}`}>
+                <span
+                  className={`text-xs px-2 py-0.5 rounded ${e.is_draft ? "bg-yellow-100" : "bg-green-100"}`}
+                >
                   {e.is_draft ? "Draft" : "Published"}
                 </span>
               </Link>

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import { useExam } from "../../context";
 import {
@@ -58,7 +58,9 @@ export function ExamRoomPage() {
     try {
       await submitSubmission(room.submission_id, payload, token);
       await exitFullScreen();
-      navigate(`/student/assignments/result/${room.submission_id}`, { replace: true });
+      navigate(`/student/assignments/result/${room.submission_id}`, {
+        replace: true,
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Submit failed");
       autoSubmitTriggered.current = false;
@@ -78,10 +80,14 @@ export function ExamRoomPage() {
     startAssignment(id, token)
       .then((data) => {
         setRoom(data);
-        const endTime = new Date(data.started_at).getTime() + data.duration_minutes * 60 * 1000;
+        const endTime =
+          new Date(data.started_at).getTime() +
+          data.duration_minutes * 60 * 1000;
         setRemainingMs(Math.max(0, endTime - Date.now()));
       })
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to start"))
+      .catch((e) =>
+        setError(e instanceof Error ? e.message : "Failed to start"),
+      )
       .finally(() => setLoading(false));
   }, [token, assignmentId]);
 
@@ -92,7 +98,8 @@ export function ExamRoomPage() {
       return;
     }
     const t = setInterval(() => {
-      const endTime = new Date(room.started_at).getTime() + room.duration_minutes * 60 * 1000;
+      const endTime =
+        new Date(room.started_at).getTime() + room.duration_minutes * 60 * 1000;
       const next = Math.max(0, endTime - Date.now());
       setRemainingMs(next);
       if (next <= 0) clearInterval(t);
@@ -113,11 +120,13 @@ export function ExamRoomPage() {
           setViolationMessage(
             next === 1
               ? "Bạn vừa thoát toàn màn hình hoặc chuyển tab. Vui lòng quay lại full screen để tiếp tục làm bài."
-              : "Bạn đã vi phạm lần 2 (thoát full screen / chuyển tab). Lần 3 hệ thống sẽ tự động nộp bài."
+              : "Bạn đã vi phạm lần 2 (thoát full screen / chuyển tab). Lần 3 hệ thống sẽ tự động nộp bài.",
           );
           setShowViolationModal(true);
         } else {
-          setViolationMessage("Bạn đã vi phạm 3 lần. Hệ thống sẽ tự động nộp bài.");
+          setViolationMessage(
+            "Bạn đã vi phạm 3 lần. Hệ thống sẽ tự động nộp bài.",
+          );
           setShowViolationModal(true);
           doSubmit();
         }
@@ -132,7 +141,11 @@ export function ExamRoomPage() {
     setAnswers((prev) => ({ ...prev, [questionId]: [optionId] }));
   };
 
-  const setMultiple = (questionId: number, optionId: number, checked: boolean) => {
+  const setMultiple = (
+    questionId: number,
+    optionId: number,
+    checked: boolean,
+  ) => {
     setAnswers((prev) => {
       const current = prev[questionId] ?? [];
       if (checked) return { ...prev, [questionId]: [...current, optionId] };
@@ -144,7 +157,9 @@ export function ExamRoomPage() {
   if (error && !room) return <p className="text-red-600">{error}</p>;
   if (!room) return null;
 
-  const sortedQuestions = [...room.questions].sort((a, b) => a.order_index - b.order_index);
+  const sortedQuestions = [...room.questions].sort(
+    (a, b) => a.order_index - b.order_index,
+  );
   const isTimeUp = remainingMs !== null && remainingMs <= 0;
 
   const showStartOverlay = !examStarted;
@@ -155,7 +170,9 @@ export function ExamRoomPage() {
         <h2 className="text-lg font-semibold">{room.exam_title}</h2>
         <div
           className={`font-mono text-lg px-3 py-1 rounded ${
-            remainingMs !== null && remainingMs <= 60 * 1000 ? "bg-red-100 text-red-800" : "bg-gray-100"
+            remainingMs !== null && remainingMs <= 60 * 1000
+              ? "bg-red-100 text-red-800"
+              : "bg-gray-100"
           }`}
         >
           {remainingMs !== null ? formatCountdown(remainingMs) : "—"}
@@ -169,8 +186,8 @@ export function ExamRoomPage() {
           <div className="bg-white rounded shadow-lg max-w-md w-full p-6">
             <h3 className="text-lg font-semibold mb-3">Bắt đầu làm bài</h3>
             <p className="text-sm text-gray-700 mb-4">
-              Hệ thống sẽ bật chế độ toàn màn hình. Nếu bạn thoát full screen hoặc chuyển tab 3 lần, bài sẽ tự động
-              được nộp.
+              Hệ thống sẽ bật chế độ toàn màn hình. Nếu bạn thoát full screen
+              hoặc chuyển tab 3 lần, bài sẽ tự động được nộp.
             </p>
             <div className="flex justify-end gap-2">
               <button
@@ -186,7 +203,10 @@ export function ExamRoomPage() {
                   await requestFullScreen();
                   lastOkRef.current = isFullScreen && isVisible;
                   if (room) {
-                    startExam({ assignmentId: room.assignment_id, submissionId: room.submission_id });
+                    startExam({
+                      assignmentId: room.assignment_id,
+                      submissionId: room.submission_id,
+                    });
                   }
                   setExamStarted(true);
                 }}
@@ -239,7 +259,9 @@ export function ExamRoomPage() {
       {showViolationModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded shadow-lg max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold mb-3">Cảnh báo chống gian lận</h3>
+            <h3 className="text-lg font-semibold mb-3">
+              Cảnh báo chống gian lận
+            </h3>
             <p className="text-sm text-gray-800 mb-4">{violationMessage}</p>
             <div className="flex justify-end">
               <button
@@ -279,7 +301,9 @@ function QuestionBlock({
   disabled: boolean;
 }) {
   const isSingle = question.question_type === "single_choice";
-  const sortedOptions = [...question.options].sort((a, b) => a.order_index - b.order_index);
+  const sortedOptions = [...question.options].sort(
+    (a, b) => a.order_index - b.order_index,
+  );
 
   return (
     <fieldset className="p-4 bg-white rounded shadow" disabled={disabled}>
@@ -301,7 +325,9 @@ function QuestionBlock({
               <input
                 type="checkbox"
                 checked={chosenIds.includes(opt.id)}
-                onChange={(e) => onMultiple(question.id, opt.id, e.target.checked)}
+                onChange={(e) =>
+                  onMultiple(question.id, opt.id, e.target.checked)
+                }
                 className="mt-1"
               />
             )}

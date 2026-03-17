@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import { getClass, type ClassDetail } from "../../api/classes";
 
@@ -21,7 +21,8 @@ export function StudentClassDetailPage() {
   }, [token, id, classId]);
 
   if (loading) return <p className="text-gray-600">Loading...</p>;
-  if (error || !cls) return <p className="text-red-600">{error || "Not found"}</p>;
+  if (error || !cls)
+    return <p className="text-red-600">{error || "Not found"}</p>;
 
   return (
     <div>
@@ -31,8 +32,12 @@ export function StudentClassDetailPage() {
         </Link>
       </div>
       <h2 className="text-lg font-semibold">{cls.name}</h2>
-      {cls.description && <p className="text-gray-600 mt-1">{cls.description}</p>}
-      <p className="text-sm text-gray-500 mt-2">Teacher: {cls.creator?.full_name ?? "—"}</p>
+      {cls.description && (
+        <p className="text-gray-600 mt-1">{cls.description}</p>
+      )}
+      <p className="text-sm text-gray-500 mt-2">
+        Teacher: {cls.creator?.full_name ?? "—"}
+      </p>
     </div>
   );
 }

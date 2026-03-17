@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useLocation, Link } from "react-router-dom";
+import { useParams, useLocation, Link } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import {
   getClass,
@@ -41,7 +41,9 @@ export function ClassDetailPage() {
 
   useEffect(() => {
     if (!token || isNaN(classId)) return;
-    listMembers(classId, token).then(setMembers).catch(() => {});
+    listMembers(classId, token)
+      .then(setMembers)
+      .catch(() => {});
   }, [token, classId]);
 
   useEffect(() => {
@@ -83,7 +85,7 @@ export function ClassDetailPage() {
     setUpdatingTeacher(true);
     try {
       const updated = await updateClassTeacher(cls.id, teacherId, token);
-      setCls(updated);
+      setCls({ ...cls, created_by: updated.created_by });
     } catch {
       // ignore error for now
     } finally {
@@ -92,7 +94,8 @@ export function ClassDetailPage() {
   }
 
   if (loading) return <p className="text-gray-600">Loading...</p>;
-  if (error || !cls) return <p className="text-red-600">{error || "Not found"}</p>;
+  if (error || !cls)
+    return <p className="text-red-600">{error || "Not found"}</p>;
 
   return (
     <div>
@@ -102,11 +105,15 @@ export function ClassDetailPage() {
         </Link>
       </div>
       <h2 className="text-lg font-semibold">{cls.name}</h2>
-      {cls.description && <p className="text-gray-600 mt-1">{cls.description}</p>}
+      {cls.description && (
+        <p className="text-gray-600 mt-1">{cls.description}</p>
+      )}
       <p className="text-sm text-gray-500 mt-2">Members: {cls.member_count}</p>
       {base === "/admin" && (
         <div className="mt-2">
-          <label className="text-sm font-medium text-gray-700 mr-2">Teacher:</label>
+          <label className="text-sm font-medium text-gray-700 mr-2">
+            Teacher:
+          </label>
           <select
             value={cls.created_by}
             onChange={handleChangeTeacher}
@@ -125,7 +132,9 @@ export function ClassDetailPage() {
 
       <div className="mt-4 p-3 bg-gray-50 rounded flex flex-wrap items-center gap-2">
         <span className="text-sm font-medium">Invite code:</span>
-        <code className="px-2 py-1 bg-white border rounded">{cls.invite_code}</code>
+        <code className="px-2 py-1 bg-white border rounded">
+          {cls.invite_code}
+        </code>
         <button
           type="button"
           onClick={copyCode}
@@ -148,7 +157,10 @@ export function ClassDetailPage() {
           <li className="text-gray-500">No members yet.</li>
         ) : (
           members.map((m) => (
-            <li key={m.id} className="flex justify-between items-center p-2 bg-white rounded shadow">
+            <li
+              key={m.id}
+              className="flex justify-between items-center p-2 bg-white rounded shadow"
+            >
               <span>
                 {m.user?.full_name ?? "—"} ({m.user?.email ?? ""})
               </span>

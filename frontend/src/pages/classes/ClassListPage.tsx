@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import { listClasses, type ClassResponse } from "../../api/classes";
 
@@ -49,7 +49,9 @@ export function ClassListPage() {
                 className="block p-3 bg-white rounded shadow hover:bg-gray-50"
               >
                 <span className="font-medium">{c.name}</span>
-                {c.description && <span className="text-gray-500 ml-2">— {c.description}</span>}
+                {c.description && (
+                  <span className="text-gray-500 ml-2">— {c.description}</span>
+                )}
               </Link>
             </li>
           ))

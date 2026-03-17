@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams } from "react-router";
 import { useAuth } from "../../context/AuthContext";
-import { getAssignmentReport, type AssignmentReportResponse } from "../../api/assignments";
+import {
+  getAssignmentReport,
+  type AssignmentReportResponse,
+} from "../../api/assignments";
 import { ScoreBarChart } from "../../components/ScoreBarChart";
 
 export function AssignmentReportPage() {
@@ -21,7 +24,9 @@ export function AssignmentReportPage() {
     }
     getAssignmentReport(assignmentId, token)
       .then(setReport)
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load report"))
+      .catch((e) =>
+        setError(e instanceof Error ? e.message : "Failed to load report"),
+      )
       .finally(() => setLoading(false));
   }, [token, id]);
 
@@ -38,30 +43,39 @@ export function AssignmentReportPage() {
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="p-4 bg-white rounded shadow">
-          <div className="text-2xl font-bold text-blue-600">{report.total_students}</div>
+          <div className="text-2xl font-bold text-blue-600">
+            {report.total_students}
+          </div>
           <div className="text-sm text-gray-600">Total students</div>
         </div>
         <div className="p-4 bg-white rounded shadow">
-          <div className="text-2xl font-bold text-green-600">{report.submitted_count}</div>
+          <div className="text-2xl font-bold text-green-600">
+            {report.submitted_count}
+          </div>
           <div className="text-sm text-gray-600">Submitted</div>
         </div>
         <div className="p-4 bg-white rounded shadow">
-          <div className="text-2xl font-bold text-yellow-600">{report.not_submitted_count}</div>
+          <div className="text-2xl font-bold text-yellow-600">
+            {report.not_submitted_count}
+          </div>
           <div className="text-sm text-gray-600">Not submitted</div>
         </div>
         <div className="p-4 bg-white rounded shadow">
           <div className="text-2xl font-bold text-gray-800">
-            {report.average_score != null ? report.average_score.toFixed(2) : "--"}
+            {report.average_score != null
+              ? report.average_score.toFixed(2)
+              : "--"}
           </div>
           <div className="text-sm text-gray-600">Average score</div>
         </div>
       </div>
 
       <div className="p-4 bg-white rounded shadow space-y-4">
-        <h3 className="text-sm font-semibold text-gray-800">Score distribution</h3>
+        <h3 className="text-sm font-semibold text-gray-800">
+          Score distribution
+        </h3>
         <ScoreBarChart buckets={report.score_buckets} />
       </div>
     </div>
   );
 }
-

@@ -33,14 +33,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(AUTH_TOKEN_KEY);
   }, []);
 
-  const login = useCallback(async (email: string, password: string): Promise<UserResponse> => {
-    const { access_token } = await apiLogin(email, password);
-    localStorage.setItem(AUTH_TOKEN_KEY, access_token);
-    const me = await getMe(access_token);
-    setToken(access_token);
-    setUser(me);
-    return me;
-  }, []);
+  const login = useCallback(
+    async (email: string, password: string): Promise<UserResponse> => {
+      const { access_token } = await apiLogin(email, password);
+      localStorage.setItem(AUTH_TOKEN_KEY, access_token);
+      const me = await getMe(access_token);
+      setToken(access_token);
+      setUser(me);
+      return me;
+    },
+    [],
+  );
 
   useEffect(() => {
     const stored = localStorage.getItem(AUTH_TOKEN_KEY);

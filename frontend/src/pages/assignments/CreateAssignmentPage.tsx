@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import { listExams, type ExamResponse } from "../../api/exams";
 import { listClasses, type ClassResponse } from "../../api/classes";
-import { createAssignment, type AssignmentCreatePayload } from "../../api/assignments";
+import {
+  createAssignment,
+  type AssignmentCreatePayload,
+} from "../../api/assignments";
 
 function basePath(pathname: string): string {
   if (pathname.startsWith("/admin")) return "/admin";
@@ -37,7 +40,9 @@ export function CreateAssignmentPage() {
         setExams(examsList);
         setClasses(classesList);
       })
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load"));
+      .catch((e) =>
+        setError(e instanceof Error ? e.message : "Failed to load"),
+      );
   }, [token]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -85,10 +90,14 @@ export function CreateAssignmentPage() {
       <h2 className="text-lg font-semibold mb-4">Assign exam to class</h2>
       <form onSubmit={handleSubmit} className="max-w-md space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Exam</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Exam
+          </label>
           <select
             value={examId}
-            onChange={(e) => setExamId(e.target.value === "" ? "" : Number(e.target.value))}
+            onChange={(e) =>
+              setExamId(e.target.value === "" ? "" : Number(e.target.value))
+            }
             required
             className="w-full px-3 py-2 border border-gray-300 rounded"
           >
@@ -101,10 +110,14 @@ export function CreateAssignmentPage() {
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Class
+          </label>
           <select
             value={classId}
-            onChange={(e) => setClassId(e.target.value === "" ? "" : Number(e.target.value))}
+            onChange={(e) =>
+              setClassId(e.target.value === "" ? "" : Number(e.target.value))
+            }
             required
             className="w-full px-3 py-2 border border-gray-300 rounded"
           >
@@ -117,7 +130,9 @@ export function CreateAssignmentPage() {
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Start time</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Start time
+          </label>
           <input
             type="datetime-local"
             value={startDateTime}
@@ -127,7 +142,9 @@ export function CreateAssignmentPage() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">End time</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            End time
+          </label>
           <input
             type="datetime-local"
             value={endDateTime}
@@ -137,7 +154,9 @@ export function CreateAssignmentPage() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Duration (minutes)
+          </label>
           <input
             type="number"
             min={1}

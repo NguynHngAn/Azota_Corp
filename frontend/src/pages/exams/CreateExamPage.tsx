@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import { createExam } from "../../api/exams";
 import { type ExamFormState, emptyQuestion, validateExamForm } from "./types";

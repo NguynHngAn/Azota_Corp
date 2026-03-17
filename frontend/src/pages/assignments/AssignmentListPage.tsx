@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import { listAssignments, type AssignmentDetail } from "../../api/assignments";
 import { formatDateTimeVietnam } from "../../utils/date";
@@ -41,7 +41,9 @@ export function AssignmentListPage() {
       </div>
       <ul className="space-y-2">
         {assignments.length === 0 ? (
-          <li className="text-gray-500">No assignments yet. Assign an exam to a class to get started.</li>
+          <li className="text-gray-500">
+            No assignments yet. Assign an exam to a class to get started.
+          </li>
         ) : (
           assignments.map((a) => (
             <li key={a.id}>
@@ -49,10 +51,14 @@ export function AssignmentListPage() {
                 <div className="min-w-0">
                   <div className="flex justify-between items-start">
                     <span className="font-medium">{a.exam_title}</span>
-                    <span className="text-xs text-gray-500 ml-2 shrink-0">{a.class_name}</span>
+                    <span className="text-xs text-gray-500 ml-2 shrink-0">
+                      {a.class_name}
+                    </span>
                   </div>
                   <div className="text-sm text-gray-600 mt-1">
-                    {formatDateTimeVietnam(a.start_time)} – {formatDateTimeVietnam(a.end_time)} · {a.duration_minutes} min
+                    {formatDateTimeVietnam(a.start_time)} –{" "}
+                    {formatDateTimeVietnam(a.end_time)} · {a.duration_minutes}{" "}
+                    min
                   </div>
                 </div>
                 {base === "/teacher" && (

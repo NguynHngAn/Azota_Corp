@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import { joinClass } from "../../api/classes";
 
@@ -39,7 +39,9 @@ export function JoinClassPage() {
       </p>
       <form onSubmit={handleSubmit} className="max-w-md space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Invite code</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Invite code
+          </label>
           <input
             type="text"
             value={inviteCode}

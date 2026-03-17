@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import {
   getExam,
@@ -71,10 +71,12 @@ export function EditExamPage() {
           description: state.description.trim() || null,
           is_draft: state.is_draft,
         },
-        token
+        token,
       );
 
-      const currentIds = new Set(state.questions.map((q) => q.id).filter((x): x is number => x != null));
+      const currentIds = new Set(
+        state.questions.map((q) => q.id).filter((x): x is number => x != null),
+      );
       for (const oldId of originalQuestionIds) {
         if (!currentIds.has(oldId)) {
           await deleteQuestion(examId, oldId, token);
@@ -102,12 +104,18 @@ export function EditExamPage() {
         }
       }
       if (newIds.some((id) => id != null)) {
-        setOriginalQuestionIds((prev) => [...prev, ...newIds.filter((x): x is number => x != null)]);
+        setOriginalQuestionIds((prev) => [
+          ...prev,
+          ...newIds.filter((x): x is number => x != null),
+        ]);
         setState((s) => {
           if (!s) return s;
           return {
             ...s,
-            questions: s.questions.map((q, i) => ({ ...q, id: newIds[i] ?? q.id })),
+            questions: s.questions.map((q, i) => ({
+              ...q,
+              id: newIds[i] ?? q.id,
+            })),
           };
         });
       }
@@ -156,7 +164,9 @@ export function EditExamPage() {
       {error && <p className="mb-2 text-red-600 text-sm">{error}</p>}
       <ExamEditorForm
         state={state}
-        setState={setState as React.Dispatch<React.SetStateAction<ExamFormState>>}
+        setState={
+          setState as React.Dispatch<React.SetStateAction<ExamFormState>>
+        }
         onAddQuestion={addQuestionLocal}
         onSave={handleSave}
         saving={submitting}
