@@ -2,6 +2,10 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { joinClass } from "../../api/classes";
+import { PageHeader } from "../../components/ui/PageHeader";
+import { Card } from "../../components/ui/Card";
+import { Input } from "../../components/ui/Input";
+import { Button } from "../../components/ui/Button";
 
 export function JoinClassPage() {
   const { token } = useAuth();
@@ -32,32 +36,29 @@ export function JoinClassPage() {
   }
 
   return (
-    <div>
-      <h2 className="text-lg font-semibold mb-4">Join a class</h2>
-      <p className="text-gray-600 text-sm mb-4">
-        Enter the invite code from your teacher or use an invite link.
-      </p>
-      <form onSubmit={handleSubmit} className="max-w-md space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Invite code</label>
-          <input
-            type="text"
-            value={inviteCode}
-            onChange={(e) => setInviteCode(e.target.value)}
-            placeholder="e.g. abc12XYZ"
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded"
-          />
-        </div>
-        {error && <p className="text-red-600 text-sm">{error}</p>}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-        >
-          {submitting ? "Joining..." : "Join class"}
-        </button>
-      </form>
+    <div className="max-w-lg space-y-4">
+      <PageHeader
+        title="Join a class"
+        description="Enter the invite code from your teacher or use an invite link."
+      />
+      <Card>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Invite code</label>
+            <Input
+              type="text"
+              value={inviteCode}
+              onChange={(e) => setInviteCode(e.target.value)}
+              placeholder="e.g. abc12XYZ"
+              required
+            />
+          </div>
+          {error && <p className="text-red-600 text-sm">{error}</p>}
+          <Button type="submit" disabled={submitting}>
+            {submitting ? "Joining..." : "Join class"}
+          </Button>
+        </form>
+      </Card>
     </div>
   );
 }

@@ -3,6 +3,8 @@ import { useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { getAssignmentReport, type AssignmentReportResponse } from "../../api/assignments";
 import { ScoreBarChart } from "../../components/ScoreBarChart";
+import { Card } from "../../components/ui/Card";
+import { PageHeader } from "../../components/ui/PageHeader";
 
 export function AssignmentReportPage() {
   const { id } = useParams<{ id: string }>();
@@ -31,36 +33,36 @@ export function AssignmentReportPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold mb-1">{report.exam_title}</h2>
-        <p className="text-sm text-gray-600">Class: {report.class_name}</p>
-      </div>
+      <PageHeader
+        title={report.exam_title}
+        description={`Class: ${report.class_name}`}
+      />
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="p-4 bg-white rounded shadow">
+        <Card>
+          <div className="text-xs uppercase text-gray-500 mb-1">Total students</div>
           <div className="text-2xl font-bold text-blue-600">{report.total_students}</div>
-          <div className="text-sm text-gray-600">Total students</div>
-        </div>
-        <div className="p-4 bg-white rounded shadow">
+        </Card>
+        <Card>
+          <div className="text-xs uppercase text-gray-500 mb-1">Submitted</div>
           <div className="text-2xl font-bold text-green-600">{report.submitted_count}</div>
-          <div className="text-sm text-gray-600">Submitted</div>
-        </div>
-        <div className="p-4 bg-white rounded shadow">
+        </Card>
+        <Card>
+          <div className="text-xs uppercase text-gray-500 mb-1">Not submitted</div>
           <div className="text-2xl font-bold text-yellow-600">{report.not_submitted_count}</div>
-          <div className="text-sm text-gray-600">Not submitted</div>
-        </div>
-        <div className="p-4 bg-white rounded shadow">
+        </Card>
+        <Card>
+          <div className="text-xs uppercase text-gray-500 mb-1">Average score</div>
           <div className="text-2xl font-bold text-gray-800">
             {report.average_score != null ? report.average_score.toFixed(2) : "--"}
           </div>
-          <div className="text-sm text-gray-600">Average score</div>
-        </div>
+        </Card>
       </div>
 
-      <div className="p-4 bg-white rounded shadow space-y-4">
-        <h3 className="text-sm font-semibold text-gray-800">Score distribution</h3>
+      <Card>
+        <h3 className="text-sm font-semibold text-gray-800 mb-4">Score distribution</h3>
         <ScoreBarChart buckets={report.score_buckets} />
-      </div>
+      </Card>
     </div>
   );
 }

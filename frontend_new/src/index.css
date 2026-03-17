@@ -1,0 +1,113 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 225 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 225 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 225 25% 15%;
+
+    --primary: 235 70% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 60% 96%;
+    --secondary-foreground: 235 70% 55%;
+
+    --muted: 220 30% 96%;
+    --muted-foreground: 220 15% 50%;
+
+    --accent: 165 55% 48%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 20% 90%;
+    --input: 220 20% 90%;
+    --ring: 235 70% 55%;
+
+    --radius: 0.75rem;
+
+    /* Custom EdTech tokens */
+    --amber: 40 95% 55%;
+    --amber-foreground: 40 95% 20%;
+    --mint: 165 55% 48%;
+    --mint-light: 165 55% 95%;
+    --violet: 270 60% 65%;
+    --violet-light: 270 60% 95%;
+    --coral: 15 85% 60%;
+    --coral-light: 15 85% 95%;
+    --blue-light: 235 70% 96%;
+
+    --gradient-hero: linear-gradient(135deg, hsl(235, 70%, 55%) 0%, hsl(270, 60%, 55%) 100%);
+    --gradient-hero-soft: linear-gradient(135deg, hsl(235, 70%, 96%) 0%, hsl(270, 60%, 96%) 50%, hsl(165, 55%, 96%) 100%);
+    --gradient-cta: linear-gradient(135deg, hsl(235, 70%, 55%) 0%, hsl(250, 65%, 50%) 100%);
+    --gradient-card-blue: linear-gradient(145deg, hsl(235, 70%, 97%) 0%, hsl(220, 60%, 98%) 100%);
+    --gradient-card-mint: linear-gradient(145deg, hsl(165, 55%, 96%) 0%, hsl(165, 40%, 98%) 100%);
+    --gradient-card-violet: linear-gradient(145deg, hsl(270, 60%, 96%) 0%, hsl(270, 40%, 98%) 100%);
+    --gradient-card-amber: linear-gradient(145deg, hsl(40, 95%, 95%) 0%, hsl(40, 80%, 98%) 100%);
+    --gradient-card-coral: linear-gradient(145deg, hsl(15, 85%, 96%) 0%, hsl(15, 70%, 98%) 100%);
+
+    --shadow-card: 0 4px 24px -4px hsl(235 70% 55% / 0.08);
+    --shadow-card-hover: 0 12px 40px -8px hsl(235 70% 55% / 0.15);
+    --shadow-button: 0 4px 16px -2px hsl(235 70% 55% / 0.3);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+  }
+}
+
+@layer utilities {
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+  .gradient-hero-soft {
+    background: var(--gradient-hero-soft);
+  }
+  .gradient-cta {
+    background: var(--gradient-cta);
+  }
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  .shadow-card-hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+  .shadow-button {
+    box-shadow: var(--shadow-button);
+  }
+  .card-blue { background: var(--gradient-card-blue); }
+  .card-mint { background: var(--gradient-card-mint); }
+  .card-violet { background: var(--gradient-card-violet); }
+  .card-amber { background: var(--gradient-card-amber); }
+  .card-coral { background: var(--gradient-card-coral); }
+}

@@ -48,3 +48,7 @@ class JoinClassRequest(BaseModel):
 
 class UpdateClassTeacherRequest(BaseModel):
     teacher_id: int = Field(..., gt=0)
+
+
+class AddClassTeachersRequest(BaseModel):
+    teacher_ids: list[int] = Field(..., min_length=1)

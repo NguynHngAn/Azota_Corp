@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { listClasses, type ClassResponse } from "../../api/classes";
+import { PageHeader } from "../../components/ui/PageHeader";
+import { Card } from "../../components/ui/Card";
+import { Button } from "../../components/ui/Button";
 
 function basePath(pathname: string): string {
   if (pathname.startsWith("/admin")) return "/admin";
@@ -28,33 +31,35 @@ export function ClassListPage() {
   if (error) return <p className="text-red-600">{error}</p>;
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">Classes</h2>
-        <Link
-          to={`${base}/classes/new`}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Create class
-        </Link>
-      </div>
-      <ul className="space-y-2">
-        {classes.length === 0 ? (
-          <li className="text-gray-500">No classes yet.</li>
-        ) : (
-          classes.map((c) => (
-            <li key={c.id}>
-              <Link
-                to={`${base}/classes/${c.id}`}
-                className="block p-3 bg-white rounded shadow hover:bg-gray-50"
-              >
-                <span className="font-medium">{c.name}</span>
-                {c.description && <span className="text-gray-500 ml-2">— {c.description}</span>}
+    <div className="space-y-4">
+      <PageHeader
+        title="Classes"
+        description={base === "/admin" ? "Manage all classes in the system." : "Classes that you own or teach."}
+        actions={
+          <Button>
+            <Link to={`${base}/classes/new`} className="text-white">
+              Create class
+            </Link>
+          </Button>
+        }
+      />
+
+      {classes.length === 0 ? (
+        <Card>
+          <p className="text-sm text-gray-500">No classes yet.</p>
+        </Card>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {classes.map((c) => (
+            <Card key={c.id} className="hover:ring-1 hover:ring-blue-100 transition">
+              <Link to={`${base}/classes/${c.id}`} className="block">
+                <h3 className="font-medium text-gray-900">{c.name}</h3>
+                {c.description && <p className="mt-1 text-sm text-gray-600">{c.description}</p>}
               </Link>
-            </li>
-          ))
-        )}
-      </ul>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.user import Role, User
-from app.schemas.user import UserCreate, UserResponse, UserUpdate
+from app.schemas.user import AdminResetPasswordRequest, UserCreate, UserResponse, UserUpdate
 from app.api.deps import get_current_user, require_role
 from app.core.security import hash_password
 
@@ -64,6 +64,11 @@ def update_user(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     if body.role is not None and body.role not in (Role.teacher, Role.student):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only teacher or student roles are allowed")
+    if body.email is not None:
+        existing = db.query(User).filter(User.email == body.email).first()
+        if existing and existing.id != user.id:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
+        user.email = body.email
     if body.full_name is not None:
         user.full_name = body.full_name
     if body.role is not None:
@@ -75,12 +80,29 @@ def update_user(
     return user
 
 
+@router.put("/{user_id}/password", status_code=status.HTTP_204_NO_CONTENT)
+def admin_reset_password(
+    user_id: int,
+    body: AdminResetPasswordRequest,
+    current_user: Annotated[User, Depends(require_role(Role.admin))],
+    db: Session = Depends(get_db),
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    user.password_hash = hash_password(body.new_password)
+    db.commit()
+    return None
+
+
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def deactivate_user(
     user_id: int,
     current_user: Annotated[User, Depends(require_role(Role.admin))],
     db: Session = Depends(get_db),
 ):
+    if current_user.id == user_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot delete your own admin account")
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")

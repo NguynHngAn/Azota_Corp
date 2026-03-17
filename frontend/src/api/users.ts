@@ -20,6 +20,7 @@ export interface UserCreatePayload {
 }
 
 export interface UserUpdatePayload {
+  email?: string;
   full_name?: string;
   role?: "teacher" | "student";
   is_active?: boolean;
@@ -40,5 +41,9 @@ export function updateUser(userId: number, body: UserUpdatePayload, token: strin
 
 export function deactivateUser(userId: number, token: string): Promise<void> {
   return del(`/api/v1/users/${userId}`, token);
+}
+
+export function resetUserPassword(userId: number, newPassword: string, token: string): Promise<void> {
+  return put(`/api/v1/users/${userId}/password`, { new_password: newPassword }, token);
 }
 

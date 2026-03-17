@@ -1,4 +1,4 @@
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useExam } from "../context";
 
@@ -11,6 +11,7 @@ export function DashboardLayout({ title, navLinks }: DashboardLayoutProps) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const exam = useExam();
+  const navigate = useNavigate();
 
   const isStudent = user?.role === "student";
   const effectiveNavLinks =
@@ -34,7 +35,10 @@ export function DashboardLayout({ title, navLinks }: DashboardLayoutProps) {
             </p>
           </div>
           <button
-            onClick={logout}
+            onClick={() => {
+              logout();
+              navigate("/", { replace: true });
+            }}
             className="text-xs px-3 py-1 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200"
           >
             Logout

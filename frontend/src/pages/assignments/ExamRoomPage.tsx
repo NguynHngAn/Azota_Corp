@@ -10,6 +10,8 @@ import {
 } from "../../api/assignments";
 import { useFullScreen } from "../../hooks/useFullScreen";
 import { useTabVisibility } from "../../hooks/useTabVisibility";
+import { Card } from "../../components/ui/Card";
+import { Button } from "../../components/ui/Button";
 
 function formatCountdown(ms: number): string {
   if (ms <= 0) return "0:00";
@@ -36,7 +38,6 @@ export function ExamRoomPage() {
   const { isFullScreen, requestFullScreen, exitFullScreen } = useFullScreen();
   const { isVisible } = useTabVisibility();
   const [examStarted, setExamStarted] = useState(false);
-  const [violationCount, setViolationCount] = useState(0);
   const [violationMessage, setViolationMessage] = useState("");
   const [showViolationModal, setShowViolationModal] = useState(false);
   const lastOkRef = useRef<boolean>(true);
@@ -107,22 +108,10 @@ export function ExamRoomPage() {
     const wasOk = lastOkRef.current;
 
     if (wasOk && !ok && !submitting && !autoSubmitTriggered.current) {
-      setViolationCount((prev) => {
-        const next = prev + 1;
-        if (next < 3) {
-          setViolationMessage(
-            next === 1
-              ? "Bạn vừa thoát toàn màn hình hoặc chuyển tab. Vui lòng quay lại full screen để tiếp tục làm bài."
-              : "Bạn đã vi phạm lần 2 (thoát full screen / chuyển tab). Lần 3 hệ thống sẽ tự động nộp bài."
-          );
-          setShowViolationModal(true);
-        } else {
-          setViolationMessage("Bạn đã vi phạm 3 lần. Hệ thống sẽ tự động nộp bài.");
-          setShowViolationModal(true);
-          doSubmit();
-        }
-        return next;
-      });
+      setViolationMessage(
+        "Bạn vừa thoát toàn màn hình hoặc chuyển tab. Nếu bạn vi phạm 3 lần, hệ thống sẽ tự động nộp bài.",
+      );
+      setShowViolationModal(true);
     }
 
     lastOkRef.current = ok;
@@ -151,16 +140,21 @@ export function ExamRoomPage() {
 
   return (
     <div className="max-w-2xl mx-auto relative">
-      <div className="flex justify-between items-center mb-6 pb-4 border-b">
-        <h2 className="text-lg font-semibold">{room.exam_title}</h2>
+      <Card className="mb-4 flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">{room.exam_title}</h2>
+          <p className="mt-1 text-xs text-gray-500">
+            Please stay in fullscreen and do not switch tabs while taking the exam.
+          </p>
+        </div>
         <div
-          className={`font-mono text-lg px-3 py-1 rounded ${
-            remainingMs !== null && remainingMs <= 60 * 1000 ? "bg-red-100 text-red-800" : "bg-gray-100"
+          className={`font-mono text-lg px-3 py-1 rounded-md ${
+            remainingMs !== null && remainingMs <= 60 * 1000 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
           }`}
         >
           {remainingMs !== null ? formatCountdown(remainingMs) : "—"}
         </div>
-      </div>
+      </Card>
 
       {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
 
@@ -219,20 +213,16 @@ export function ExamRoomPage() {
         ))}
 
         <div className="flex gap-4 pt-4">
-          <button
-            type="submit"
-            disabled={isTimeUp || submitting}
-            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-          >
+          <Button type="submit" disabled={isTimeUp || submitting}>
             {submitting ? "Submitting..." : "Submit"}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="secondary"
             onClick={() => navigate("/student/assignments")}
-            className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
           >
             Back
-          </button>
+          </Button>
         </div>
       </form>
 

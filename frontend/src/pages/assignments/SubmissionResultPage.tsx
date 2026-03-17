@@ -4,6 +4,9 @@ import { useAuth } from "../../context/AuthContext";
 import { getSubmissionResult, type SubmissionResultResponse } from "../../api/assignments";
 import { formatDateTimeVietnam } from "../../utils/date";
 import { useExam } from "../../context";
+import { Card } from "../../components/ui/Card";
+import { Badge } from "../../components/ui/Badge";
+import { Button } from "../../components/ui/Button";
 
 export function SubmissionResultPage() {
   const { submissionId } = useParams<{ submissionId: string }>();
@@ -39,46 +42,50 @@ export function SubmissionResultPage() {
   const wrongCount = data.question_results.length - correctCount;
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h2 className="text-lg font-semibold mb-2">{data.exam_title}</h2>
-      <p className="text-sm text-gray-500 mb-6">
-        Submitted at {data.submitted_at ? formatDateTimeVietnam(data.submitted_at) : "—"}
-      </p>
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-        <div className="p-4 bg-white rounded shadow">
-          <div className="text-2xl font-bold text-blue-600">{data.score ?? 0}</div>
-          <div className="text-sm text-gray-600">Score (0–100)</div>
-        </div>
-        <div className="p-4 bg-white rounded shadow">
-          <div className="text-2xl font-bold text-green-600">{correctCount}</div>
-          <div className="text-sm text-gray-600">Correct</div>
-        </div>
-        <div className="p-4 bg-white rounded shadow">
-          <div className="text-2xl font-bold text-red-600">{wrongCount}</div>
-          <div className="text-sm text-gray-600">Wrong</div>
-        </div>
-        <div className="p-4 bg-white rounded shadow">
-          <div className="text-2xl font-bold text-gray-700">{data.question_details.length}</div>
-          <div className="text-sm text-gray-600">Total questions</div>
-        </div>
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900">{data.exam_title}</h2>
+        <p className="text-sm text-gray-500">
+          Submitted at {data.submitted_at ? formatDateTimeVietnam(data.submitted_at) : "—"}
+        </p>
       </div>
 
-      <div className="space-y-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <Card>
+          <div className="text-xs uppercase text-gray-500 mb-1">Score</div>
+          <div className="text-2xl font-bold text-blue-600">{data.score ?? 0}</div>
+          <div className="text-xs text-gray-500 mt-1">0–100</div>
+        </Card>
+        <Card>
+          <div className="text-xs uppercase text-gray-500 mb-1">Correct</div>
+          <div className="text-2xl font-bold text-green-600">{correctCount}</div>
+          <div className="text-xs text-gray-500 mt-1">questions</div>
+        </Card>
+        <Card>
+          <div className="text-xs uppercase text-gray-500 mb-1">Wrong</div>
+          <div className="text-2xl font-bold text-red-600">{wrongCount}</div>
+          <div className="text-xs text-gray-500 mt-1">questions</div>
+        </Card>
+        <Card>
+          <div className="text-xs uppercase text-gray-500 mb-1">Total</div>
+          <div className="text-2xl font-bold text-gray-800">{data.question_details.length}</div>
+          <div className="text-xs text-gray-500 mt-1">questions</div>
+        </Card>
+      </div>
+
+      <div className="space-y-4">
         {data.question_details.map((q, idx) => {
           const chosenTexts = q.options.filter((o) => q.chosen_option_ids.includes(o.id)).map((o) => o.text);
           const correctTexts = q.options.filter((o) => o.is_correct).map((o) => o.text);
           return (
-            <div key={q.question_id} className="p-4 bg-white rounded shadow">
+            <Card key={q.question_id}>
               <div className="flex justify-between items-start gap-2 mb-2">
-                <span className="font-medium text-gray-900">Question {idx + 1}: {q.question_text}</span>
-                <span
-                  className={`shrink-0 text-xs px-2 py-0.5 rounded ${
-                    q.correct ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                  }`}
-                >
-                  {q.correct ? "Correct" : "Wrong"}
+                <span className="font-medium text-gray-900">
+                  Question {idx + 1}: {q.question_text}
                 </span>
+                <Badge variant={q.correct ? "success" : "danger"}>
+                  {q.correct ? "Correct" : "Wrong"}
+                </Badge>
               </div>
               <div className="text-sm space-y-1 mt-2">
                 <div>
@@ -90,25 +97,25 @@ export function SubmissionResultPage() {
                   {correctTexts.length ? correctTexts.join(", ") : "—"}
                 </div>
                 {q.ai_explanation && (
-                  <div className="pt-2 border-t border-gray-100">
-                    <span className="block text-gray-500 mb-1">AI explanation:</span>
+                  <div className="pt-2 border-t border-gray-100 mt-2">
+                    <span className="block text-gray-500 mb-1">AI explanation</span>
                     <p className="text-gray-800 text-sm whitespace-pre-line">{q.ai_explanation}</p>
                   </div>
                 )}
               </div>
-            </div>
+            </Card>
           );
         })}
       </div>
 
-      <div className="mt-8">
-        <button
+      <div className="mt-4">
+        <Button
           type="button"
+          variant="secondary"
           onClick={() => navigate(-1)}
-          className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
         >
           Back
-        </button>
+        </Button>
       </div>
     </div>
   );

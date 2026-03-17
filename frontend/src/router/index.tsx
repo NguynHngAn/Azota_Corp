@@ -3,6 +3,7 @@ import { AuthProvider, useAuth, ExamProvider } from "../context";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { Login } from "../pages/Login";
+import { LandingPage } from "../pages/LandingPage";
 import {
   ClassListPage,
   CreateClassPage,
@@ -20,13 +21,14 @@ import {
   SubmissionResultPage,
 } from "../pages/assignments";
 import { AssignmentReportPage, AdminOverviewReportPage } from "../pages/reports";
+import { ProfilePage } from "../pages/ProfilePage";
 import { AdminUsersPage } from "../pages/admin/AdminUsersPage";
 import { ROLES } from "../utils/constants";
 
 function RootRedirect() {
   const { user, token, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-  if (!token || !user) return <Navigate to="/login" replace />;
+  if (!token || !user) return <LandingPage />;
   if (user.role === "admin") return <Navigate to="/admin/classes" replace />;
   if (user.role === "teacher") return <Navigate to="/teacher/classes" replace />;
   return <Navigate to="/student/classes" replace />;
@@ -109,6 +111,7 @@ export function AppRouter() {
                 navLinks={[
                   { to: "/student/classes", label: "My classes" },
                   { to: "/student/assignments", label: "Assignments" },
+                  { to: "/student/profile", label: "Profile" },
                   { to: "/student/join", label: "Join class" },
                 ]}
               />
@@ -121,6 +124,7 @@ export function AppRouter() {
           <Route path="assignments" element={<MyAssignmentsPage />} />
           <Route path="assignments/:assignmentId/exam" element={<ExamRoomPage />} />
           <Route path="assignments/result/:submissionId" element={<SubmissionResultPage />} />
+          <Route path="profile" element={<ProfilePage />} />
           <Route path="join" element={<JoinClassPage />} />
         </Route>
         </Routes>

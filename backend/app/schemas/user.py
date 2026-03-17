@@ -17,9 +17,14 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(BaseModel):
+    email: str | None = Field(None, max_length=255)
     full_name: str | None = Field(None, min_length=1, max_length=255)
     role: Role | None = None
     is_active: bool | None = None
+
+
+class AdminResetPasswordRequest(BaseModel):
+    new_password: str = Field(..., min_length=6, max_length=128)
 
 
 class UserInDB(UserBase):

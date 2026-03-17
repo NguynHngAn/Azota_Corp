@@ -1,4 +1,4 @@
-import { get, post, del } from "./client";
+import { get, post, del, put } from "./client";
 
 export interface ClassResponse {
   id: number;
@@ -50,6 +50,18 @@ export function removeMember(classId: number, userId: number, token: string): Pr
   return del(`/api/v1/classes/${classId}/members/${userId}`, token);
 }
 
-export function updateClassTeacher(classId: number, teacherId: number, token: string): Promise<ClassResponse> {
-  return put<ClassResponse>(`/api/v1/classes/${classId}/owner`, { teacher_id: teacherId }, token);
+export function updateClassTeacher(classId: number, teacherId: number, token: string): Promise<ClassDetail> {
+  return put<ClassDetail>(`/api/v1/classes/${classId}/owner`, { teacher_id: teacherId }, token);
+}
+
+export function listClassTeachers(classId: number, token: string): Promise<{ id: number; email: string; full_name: string; role: string }[]> {
+  return get<{ id: number; email: string; full_name: string; role: string }[]>(`/api/v1/classes/${classId}/teachers`, token);
+}
+
+export function addClassTeachers(classId: number, teacherIds: number[], token: string): Promise<{ id: number; email: string; full_name: string; role: string }[]> {
+  return post<{ id: number; email: string; full_name: string; role: string }[]>(`/api/v1/classes/${classId}/teachers`, { teacher_ids: teacherIds }, token);
+}
+
+export function removeClassTeacher(classId: number, teacherId: number, token: string): Promise<void> {
+  return del(`/api/v1/classes/${classId}/teachers/${teacherId}`, token);
 }

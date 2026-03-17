@@ -19,6 +19,7 @@ class Class(Base):
 
     creator = relationship("User", backref="created_classes", foreign_keys=[created_by], lazy="joined")
     members = relationship("ClassMember", back_populates="class_", cascade="all, delete-orphan")
+    teachers = relationship("ClassTeacher", back_populates="class_", cascade="all, delete-orphan")
 
 
 class ClassMember(Base):
@@ -33,3 +34,17 @@ class ClassMember(Base):
 
     class_ = relationship("Class", back_populates="members")
     user = relationship("User", backref="class_memberships")
+
+
+class ClassTeacher(Base):
+    __tablename__ = "class_teachers"
+    __table_args__ = (UniqueConstraint("class_id", "teacher_id", name="uq_class_teacher"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    class_id: Mapped[int] = mapped_column(ForeignKey("classes.id", ondelete="CASCADE"), nullable=False)
+    teacher_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    class_ = relationship("Class", back_populates="teachers")
+    teacher = relationship("User", backref="teaching_assignments")

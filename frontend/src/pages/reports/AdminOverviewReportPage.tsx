@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { getAdminOverviewReport, type AdminOverviewReportResponse } from "../../api/assignments";
 import { ScoreBarChart } from "../../components/ScoreBarChart";
+import { Card } from "../../components/ui/Card";
+import { PageHeader } from "../../components/ui/PageHeader";
 
 export function AdminOverviewReportPage() {
   const { token } = useAuth();
@@ -23,33 +25,36 @@ export function AdminOverviewReportPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <h2 className="text-lg font-semibold mb-2">System overview</h2>
+      <PageHeader
+        title="System overview"
+        description="High-level statistics for all assignments in the system."
+      />
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="p-4 bg-white rounded shadow">
+        <Card>
+          <div className="text-xs uppercase text-gray-500 mb-1">Assignments</div>
           <div className="text-2xl font-bold text-blue-600">{report.total_assignments}</div>
-          <div className="text-sm text-gray-600">Assignments</div>
-        </div>
-        <div className="p-4 bg-white rounded shadow">
+        </Card>
+        <Card>
+          <div className="text-xs uppercase text-gray-500 mb-1">Assigned students</div>
           <div className="text-2xl font-bold text-indigo-600">{report.total_assigned_students}</div>
-          <div className="text-sm text-gray-600">Assigned students</div>
-        </div>
-        <div className="p-4 bg-white rounded shadow">
+        </Card>
+        <Card>
+          <div className="text-xs uppercase text-gray-500 mb-1">Submitted</div>
           <div className="text-2xl font-bold text-green-600">{report.total_submitted}</div>
-          <div className="text-sm text-gray-600">Submitted</div>
-        </div>
-        <div className="p-4 bg-white rounded shadow">
+        </Card>
+        <Card>
+          <div className="text-xs uppercase text-gray-500 mb-1">Average score</div>
           <div className="text-2xl font-bold text-gray-800">
             {report.average_score != null ? report.average_score.toFixed(2) : "--"}
           </div>
-          <div className="text-sm text-gray-600">Average score</div>
-        </div>
+        </Card>
       </div>
 
-      <div className="p-4 bg-white rounded shadow space-y-4">
-        <h3 className="text-sm font-semibold text-gray-800">Score distribution</h3>
+      <Card>
+        <h3 className="text-sm font-semibold text-gray-800 mb-4">Score distribution</h3>
         <ScoreBarChart buckets={report.score_buckets} />
-      </div>
+      </Card>
     </div>
   );
 }
