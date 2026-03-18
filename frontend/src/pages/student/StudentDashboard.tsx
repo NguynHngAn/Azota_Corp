@@ -26,7 +26,7 @@
 //   );
 // }
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuthContext";
 import {
   BookOpen,
   FileText,

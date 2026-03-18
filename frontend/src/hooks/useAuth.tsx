@@ -1,50 +1,32 @@
+import { useState, type ReactNode } from "react";
 import {
-  createContext,
-  useContext,
-  useState,
-  ReactNode,
-} from "react";
-
-type AppRole = "admin" | "teacher" | "student";
-
-type User = { id: string; email: string };
-type Session = { user: User } | null;
-
-interface AuthContextType {
-  user: User | null;
-  session: Session | null;
-  loading: boolean;
-  role: AppRole | null;
-  profile: {
-    display_name: string;
-    email: string;
-    avatar_url: string | null;
-    school: string | null;
-  } | null;
-  signOut: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  session: null,
-  loading: true,
-  role: null,
-  profile: null,
-  signOut: async () => {},
-});
+  AuthContext,
+  type AppRole,
+  type AuthContextType,
+  type Session,
+  type User,
+} from "./authContext";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [state] = useState(() => {
+  const [state] = useState<{
+    user: User;
+    role: AppRole;
+    profile: AuthContextType["profile"];
+  }>(() => {
     const raw = localStorage.getItem("eduflow-mock-auth");
-    const fallback = {
-      user: { id: "dev", email: "dev@local" } satisfies User,
-      role: "teacher" satisfies AppRole,
+    const fallback: {
+      user: User;
+      role: AppRole;
+      profile: AuthContextType["profile"];
+    } = {
+      user: { id: "dev", email: "dev@local" },
+      role: "teacher",
       profile: {
         display_name: "Dev User",
         email: "dev@local",
         avatar_url: null,
         school: null,
-      } satisfies AuthContextType["profile"],
+      },
     };
 
     if (!raw) return fallback;
@@ -85,4 +67,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export const useAuth = () => useContext(AuthContext);
+// `useAuth` is exported from `src/hooks/useAuthContext.ts` to keep Fast Refresh happy.

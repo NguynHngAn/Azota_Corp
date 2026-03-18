@@ -14,7 +14,7 @@ import {
   School,
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuthContext";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useTheme } from "@/hooks/useTheme";
 import { useIsMobile } from "@/hooks/useMobile";

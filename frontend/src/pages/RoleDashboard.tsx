@@ -1,4 +1,4 @@
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuthContext";
 import Index from "@/pages/Index";
 import StudentDashboard from "@/pages/student/StudentDashboard";
 import AdminDashboard from "@/pages/admin/AdminDashboard";

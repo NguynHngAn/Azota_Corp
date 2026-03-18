@@ -2,7 +2,7 @@ import { Navigate, Route, Routes } from "react-router";
 import { AuthProvider, useAuth, ExamProvider } from "../context";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { DashboardLayout } from "../components/DashboardLayout";
-import { Login } from "../pages/LoginPage";
+import LoginPage from "../pages/LoginPage";
 import {
   ClassListPage,
   CreateClassPage,
@@ -49,7 +49,7 @@ function LoginRedirect() {
         Loading...
       </div>
     );
-  if (!token || !user) return <Login />;
+  if (!token || !user) return <LoginPage />;
   if (user.role === "admin") return <Navigate to="/admin/classes" replace />;
   if (user.role === "teacher")
     return <Navigate to="/teacher/classes" replace />;

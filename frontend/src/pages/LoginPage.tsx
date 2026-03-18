@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router";
-// import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import { login } from "../api/auth";
+import { AUTH_TOKEN_KEY } from "@/utils/constants";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -15,17 +16,15 @@ const LoginPage = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // const { error } = await supabase.auth.signInWithPassword({
-    //   email,
-    //   password,
-    // });
-    // setLoading(false);
-    // if (error) {
-    //   toast.error(error.message);
-    // } else {
-    //   toast.success("Logged in successfully!");
-    //   navigate("/");
-    // }
+    try {
+      const { access_token } = await login(email, password);
+      localStorage.setItem(AUTH_TOKEN_KEY, access_token);
+      navigate("/");
+    } catch (error) {
+      toast.error("Invalid email or password");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

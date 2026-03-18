@@ -1,44 +1,17 @@
-import { Navigate, useLocation } from "react-router";
-import { useAuth } from "../context/AuthContext";
-import type { Role } from "../utils/constants";
+import { Navigate } from "react-router-dom";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: Role[];
+  allowedRoles?: string[];
 }
 
 export function ProtectedRoute({
   children,
-  allowedRoles,
+  allowedRoles: _allowedRoles,
 }: ProtectedRouteProps) {
-  const { user, token, loading } = useAuth();
-  const location = useLocation();
+  const token = localStorage.getItem("token");
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <p className="text-gray-600">Loading...</p>
-      </div>
-    );
-  }
-
-  if (!token || !user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  if (
-    allowedRoles &&
-    allowedRoles.length > 0 &&
-    !allowedRoles.includes(user.role as Role)
-  ) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <p className="text-red-600">
-          You do not have permission to view this page.
-        </p>
-      </div>
-    );
-  }
+  if (!token) return <Navigate to="/landing" replace />;
 
   return <>{children}</>;
 }

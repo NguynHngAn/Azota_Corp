@@ -1,7 +1,7 @@
 import { Search, Bell, Plus, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuthContext";
 import { useLanguage } from "@/hooks/useLanguage";
 
 export function TopNavbar() {
