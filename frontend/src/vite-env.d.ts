@@ -1,8 +1,7 @@
-// Extend Vite's environment typing with our custom variable.
-interface ImportMetaEnv {
-  readonly API_BASE_URL: string | undefined;
-}
+/// <reference types="vite/client" />
 
-interface ImportMeta {
-  readonly env: ImportMetaEnv;
+// Extend Vite's environment typing with our custom variables.
+interface ImportMetaEnv {
+  readonly VITE_API_BASE_URL?: string;
+  readonly API_BASE_URL?: string;
 }

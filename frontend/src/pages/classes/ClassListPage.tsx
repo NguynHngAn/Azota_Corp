@@ -8,71 +8,11 @@ import {
   MoreHorizontal,
   Calendar,
 } from "lucide-react";
-
-const classes = [
-  {
-    id: 1,
-    name: "Class 10A",
-    subject: "Mathematics",
-    students: 35,
-    exams: 8,
-    lastActive: "Today",
-    teacher: "Ms. Nguyen",
-    schedule: "Mon, Wed, Fri",
-  },
-  {
-    id: 2,
-    name: "Class 11B",
-    subject: "Physics",
-    students: 32,
-    exams: 6,
-    lastActive: "Yesterday",
-    teacher: "Mr. Tran",
-    schedule: "Tue, Thu",
-  },
-  {
-    id: 3,
-    name: "Class 9C",
-    subject: "English",
-    students: 40,
-    exams: 12,
-    lastActive: "Today",
-    teacher: "Ms. Le",
-    schedule: "Mon, Wed, Fri",
-  },
-  {
-    id: 4,
-    name: "Class 12A",
-    subject: "Chemistry",
-    students: 28,
-    exams: 10,
-    lastActive: "2 days ago",
-    teacher: "Mr. Pham",
-    schedule: "Tue, Thu, Sat",
-  },
-  {
-    id: 5,
-    name: "Class 10B",
-    subject: "Biology",
-    students: 36,
-    exams: 5,
-    lastActive: "Today",
-    teacher: "Ms. Hoang",
-    schedule: "Mon, Wed",
-  },
-  {
-    id: 6,
-    name: "Class 11A",
-    subject: "History",
-    students: 30,
-    exams: 4,
-    lastActive: "3 days ago",
-    teacher: "Mr. Vo",
-    schedule: "Tue, Fri",
-  },
-];
+import { useClassesList } from "@/hooks/queries/classes";
 
 const ClassesPage = () => {
+  const { data: classes = [], isLoading, error } = useClassesList();
+
   return (
     <DashboardLayout>
       <div className="max-w-7xl mx-auto space-y-6">
@@ -98,9 +38,22 @@ const ClassesPage = () => {
           />
         </div>
 
+        {error ? (
+          <div className="text-sm text-destructive">
+            {error instanceof Error ? error.message : "Failed to load classes"}
+          </div>
+        ) : null}
+
         {/* Class cards grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {classes.map((cls) => (
+          {isLoading
+            ? Array.from({ length: 6 }).map((_, idx) => (
+                <div
+                  key={idx}
+                  className="glass-card p-5 animate-pulse h-[168px]"
+                />
+              ))
+            : classes.map((cls) => (
             <div
               key={cls.id}
               className="glass-card p-5 hover:shadow-md transition-all duration-200 cursor-pointer group"
@@ -115,7 +68,7 @@ const ClassesPage = () => {
                       {cls.name}
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      {cls.subject}
+                      {cls.description || "No description"}
                     </p>
                   </div>
                 </div>
@@ -128,13 +81,13 @@ const ClassesPage = () => {
                 <div className="flex items-center gap-2 text-sm">
                   <Users className="w-3.5 h-3.5 text-muted-foreground" />
                   <span className="text-muted-foreground">
-                    {cls.students} students
+                    Invite: {cls.invite_code}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <BookOpen className="w-3.5 h-3.5 text-muted-foreground" />
                   <span className="text-muted-foreground">
-                    {cls.exams} exams
+                    ID: {cls.id}
                   </span>
                 </div>
               </div>
@@ -142,10 +95,10 @@ const ClassesPage = () => {
               <div className="flex items-center justify-between pt-3 border-t border-border">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <Calendar className="w-3 h-3" />
-                  {cls.schedule}
+                  Created {new Date(cls.created_at).toLocaleDateString()}
                 </div>
                 <span className="text-xs text-muted-foreground">
-                  Active {cls.lastActive}
+                  Owner #{cls.created_by}
                 </span>
               </div>
             </div>

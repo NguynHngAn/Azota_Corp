@@ -1,4 +1,3 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -31,170 +30,166 @@ import ExamDetailPage from "./pages/exams/ExamDetailPage";
 import AssignmentSubmissionsReviewPage from "./pages/assignments/AssignmentSubmissionsReviewPage";
 import NotFound from "./pages/common/NotFoundPage";
 
-const queryClient = new QueryClient();
-
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <LanguageProvider>
-        <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                {/* Public routes */}
-                <Route path="/landing" element={<LandingPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/signup" element={<SignupPage />} />
-                <Route
-                  path="/forgot-password"
-                  element={<ForgotPasswordPage />}
-                />
-                <Route path="/reset-password" element={<ResetPasswordPage />} />
+  <ThemeProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/landing" element={<LandingPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+              <Route
+                path="/forgot-password"
+                element={<ForgotPasswordPage />}
+              />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-                {/* Protected routes */}
-                <Route
-                  path="/"
-                  element={
-                    <ProtectedRoute>
-                      <RoleDashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/exams"
-                  element={
-                    <ProtectedRoute allowedRoles={["teacher", "admin"]}>
-                      <ExamListPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/exams/create"
-                  element={
-                    <ProtectedRoute allowedRoles={["teacher"]}>
-                      <CreateExamPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/questions"
-                  element={
-                    <ProtectedRoute allowedRoles={["teacher"]}>
-                      <QuestionBankPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/classes"
-                  element={
-                    <ProtectedRoute>
-                      <ClassListPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/assignments"
-                  element={
-                    <ProtectedRoute allowedRoles={["teacher", "admin"]}>
-                      <AssignmentListPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/assignments/:assignmentId/submissions"
-                  element={
-                    <ProtectedRoute allowedRoles={["teacher", "admin"]}>
-                      <AssignmentSubmissionsReviewPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/exams/:examId/detail"
-                  element={
-                    <ProtectedRoute allowedRoles={["teacher", "admin"]}>
-                      <ExamDetailPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/students"
-                  element={
-                    <ProtectedRoute allowedRoles={["teacher", "admin"]}>
-                      <StudentsPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/analytics"
-                  element={
-                    <ProtectedRoute allowedRoles={["teacher", "admin"]}>
-                      <AnalyticsPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/anti-cheating"
-                  element={
-                    <ProtectedRoute allowedRoles={["teacher"]}>
-                      <AntiCheatingPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/settings"
-                  element={
-                    <ProtectedRoute>
-                      <SettingsPage />
-                    </ProtectedRoute>
-                  }
-                />
+              {/* Protected routes */}
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <RoleDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/exams"
+                element={
+                  <ProtectedRoute allowedRoles={["teacher", "admin"]}>
+                    <ExamListPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/exams/create"
+                element={
+                  <ProtectedRoute allowedRoles={["teacher"]}>
+                    <CreateExamPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/questions"
+                element={
+                  <ProtectedRoute allowedRoles={["teacher"]}>
+                    <QuestionBankPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/classes"
+                element={
+                  <ProtectedRoute>
+                    <ClassListPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/assignments"
+                element={
+                  <ProtectedRoute allowedRoles={["teacher", "admin"]}>
+                    <AssignmentListPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/assignments/:assignmentId/submissions"
+                element={
+                  <ProtectedRoute allowedRoles={["teacher", "admin"]}>
+                    <AssignmentSubmissionsReviewPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/exams/:examId/detail"
+                element={
+                  <ProtectedRoute allowedRoles={["teacher", "admin"]}>
+                    <ExamDetailPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/students"
+                element={
+                  <ProtectedRoute allowedRoles={["teacher", "admin"]}>
+                    <StudentsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/analytics"
+                element={
+                  <ProtectedRoute allowedRoles={["teacher", "admin"]}>
+                    <AnalyticsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/anti-cheating"
+                element={
+                  <ProtectedRoute allowedRoles={["teacher"]}>
+                    <AntiCheatingPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <SettingsPage />
+                  </ProtectedRoute>
+                }
+              />
 
-                {/* Student routes */}
-                <Route
-                  path="/my-classes"
-                  element={
-                    <ProtectedRoute allowedRoles={["student"]}>
-                      <MyClassesPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/results"
-                  element={
-                    <ProtectedRoute allowedRoles={["student"]}>
-                      <MyResultsPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/exam/:examId"
-                  element={
-                    <ProtectedRoute allowedRoles={["student"]}>
-                      <TakeExamPage />
-                    </ProtectedRoute>
-                  }
-                />
+              {/* Student routes */}
+              <Route
+                path="/my-classes"
+                element={
+                  <ProtectedRoute allowedRoles={["student"]}>
+                    <MyClassesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/results"
+                element={
+                  <ProtectedRoute allowedRoles={["student"]}>
+                    <MyResultsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/exam/:examId"
+                element={
+                  <ProtectedRoute allowedRoles={["student"]}>
+                    <TakeExamPage />
+                  </ProtectedRoute>
+                }
+              />
 
-                {/* Admin routes */}
-                <Route
-                  path="/admin/users"
-                  element={
-                    <ProtectedRoute allowedRoles={["admin"]}>
-                      <AdminDashboard />
-                    </ProtectedRoute>
-                  }
-                />
+              {/* Admin routes */}
+              <Route
+                path="/admin/users"
+                element={
+                  <ProtectedRoute allowedRoles={["admin"]}>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
 
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </AuthProvider>
-      </LanguageProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </LanguageProvider>
+  </ThemeProvider>
 );
 
 export default App;
