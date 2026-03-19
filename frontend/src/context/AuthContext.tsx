@@ -6,8 +6,9 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { login as apiLogin, getMe, type UserResponse } from "../api/auth";
 import { AUTH_TOKEN_KEY } from "../utils/constants";
+import { authService } from "@/services/auth.service";
+import type { UserResponse } from "@/services/types";
 
 interface AuthState {
   user: UserResponse | null;
@@ -35,9 +36,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (email: string, password: string): Promise<UserResponse> => {
-      const { access_token } = await apiLogin(email, password);
+      const tokenRes = await authService.login(email, password);
+      if (!tokenRes.success || !tokenRes.data) {
+        throw new Error(tokenRes.message || "Login failed");
+      }
+      const { access_token } = tokenRes.data;
       localStorage.setItem(AUTH_TOKEN_KEY, access_token);
-      const me = await getMe(access_token);
+      const meRes = await authService.me(access_token);
+      if (!meRes.success || !meRes.data) {
+        throw new Error(meRes.message || "Failed to load profile");
+      }
+      const me = meRes.data;
       setToken(access_token);
       setUser(me);
       return me;
@@ -51,14 +60,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
       return;
     }
-    getMe(stored)
-      .then((me) => {
+    authService
+      .me(stored)
+      .then((res) => {
+        if (!res.success || !res.data) throw new Error(res.message || "Failed");
         setToken(stored);
-        setUser(me);
+        setUser(res.data);
       })
-      .catch(() => {
-        localStorage.removeItem(AUTH_TOKEN_KEY);
-      })
+      .catch(() => localStorage.removeItem(AUTH_TOKEN_KEY))
       .finally(() => setLoading(false));
   }, []);
 

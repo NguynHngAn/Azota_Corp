@@ -28,15 +28,15 @@ export interface ClassMemberResponse {
 }
 
 export function listClasses(token: string): Promise<ClassResponse[]> {
-  return get<ClassResponse[]>("/api/v1/classes", token);
+  return get<ClassResponse[]>("/classes", token);
 }
 
 export function listMyClasses(token: string): Promise<ClassResponse[]> {
-  return get<ClassResponse[]>("/api/v1/classes/my", token);
+  return get<ClassResponse[]>("/classes/my", token);
 }
 
 export function getClass(classId: number, token: string): Promise<ClassDetail> {
-  return get<ClassDetail>(`/api/v1/classes/${classId}`, token);
+  return get<ClassDetail>(`/classes/${classId}`, token);
 }
 
 export function listMembers(
@@ -44,7 +44,7 @@ export function listMembers(
   token: string,
 ): Promise<ClassMemberResponse[]> {
   return get<ClassMemberResponse[]>(
-    `/api/v1/classes/${classId}/members`,
+    `/classes/${classId}/members`,
     token,
   );
 }
@@ -53,7 +53,7 @@ export function createClass(
   body: { name: string; description?: string | null },
   token: string,
 ): Promise<ClassResponse> {
-  return post<ClassResponse>("/api/v1/classes", body, token);
+  return post<ClassResponse>("/classes", body, token);
 }
 
 export function joinClass(
@@ -61,7 +61,7 @@ export function joinClass(
   token: string,
 ): Promise<ClassResponse> {
   return post<ClassResponse>(
-    "/api/v1/classes/join",
+    "/classes/join",
     { invite_code: inviteCode.trim() },
     token,
   );
@@ -72,7 +72,7 @@ export function removeMember(
   userId: number,
   token: string,
 ): Promise<void> {
-  return del(`/api/v1/classes/${classId}/members/${userId}`, token);
+  return del(`/classes/${classId}/members/${userId}`, token);
 }
 
 export function updateClassTeacher(
@@ -81,7 +81,7 @@ export function updateClassTeacher(
   token: string,
 ): Promise<ClassResponse> {
   return put<ClassResponse>(
-    `/api/v1/classes/${classId}/owner`,
+    `/classes/${classId}/owner`,
     { teacher_id: teacherId },
     token,
   );

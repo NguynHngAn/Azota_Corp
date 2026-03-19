@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/useAuthContext";
-import Index from "@/pages/Index";
-import StudentDashboard from "@/pages/student/StudentDashboard";
-import AdminDashboard from "@/pages/admin/AdminDashboard";
+import TeacherDashboard from "@/pages/dashboard/TeacherDashboardPage";
+import StudentDashboard from "@/pages/dashboard/StudentDashboardPage";
+import AdminDashboard from "@/pages/dashboard/AdminDashboardPage";
 
 /**
  * Renders the appropriate dashboard based on user role
@@ -11,7 +11,7 @@ const RoleDashboard = () => {
 
   if (role === "student") return <StudentDashboard />;
   if (role === "admin") return <AdminDashboard />;
-  return <Index />;
+  return <TeacherDashboard />;
 };
 
 export default RoleDashboard;

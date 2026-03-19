@@ -2,9 +2,10 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { ArrowLeft, Loader2, CheckCircle, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getExam, type ExamDetail } from "@/api/exams";
 import { AUTH_TOKEN_KEY } from "@/utils/constants";
 import { toast } from "sonner";
+import { examsService } from "@/services/exams.service";
+import type { ExamDetail } from "@/services/types";
 
 const ExamDetailPage = () => {
   const { examId } = useParams<{ examId: string }>();
@@ -29,8 +30,9 @@ const ExamDetailPage = () => {
     const fetchExam = async () => {
       try {
         setLoading(true);
-        const data = await getExam(id, token);
-        setExam(data);
+        const res = await examsService.get(id, token);
+        if (!res.success || !res.data) throw new Error(res.message || "Failed");
+        setExam(res.data);
       } catch {
         toast.error("Exam not found");
         navigate("/exams", { replace: true });

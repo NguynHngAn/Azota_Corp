@@ -24,6 +24,24 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
       "@typescript-eslint/no-unused-vars": "off",
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/api/*"],
+              message:
+                "Do not import api directly. Use services layer instead.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/services/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": "off",
     },
   },
 );

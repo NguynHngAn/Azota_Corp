@@ -16,9 +16,9 @@ export interface UserResponse {
 }
 
 export function login(email: string, password: string): Promise<LoginResponse> {
-  return post<LoginResponse>("/api/v1/auth/login", { email, password });
+  return post<LoginResponse>("/auth/login", { email, password });
 }
 
 export function getMe(token: string): Promise<UserResponse> {
-  return get<UserResponse>("/api/v1/users/me", token);
+  return get<UserResponse>("/users/me", token);
 }

@@ -51,28 +51,45 @@ export interface SubmitAnswerPayload {
   chosen_option_ids: number[];
 }
 
-export function createAssignment(body: AssignmentCreatePayload, token: string): Promise<AssignmentResponse> {
-  return post<AssignmentResponse>("/api/v1/assignments", body, token);
+export function createAssignment(
+  body: AssignmentCreatePayload,
+  token: string,
+): Promise<AssignmentResponse> {
+  return post<AssignmentResponse>("/assignments", body, token);
 }
 
 export function listAssignments(token: string): Promise<AssignmentDetail[]> {
-  return get<AssignmentDetail[]>("/api/v1/assignments", token);
+  return get<AssignmentDetail[]>("/assignments", token);
 }
 
 export function listMyAssignments(token: string): Promise<AssignmentDetail[]> {
-  return get<AssignmentDetail[]>("/api/v1/assignments/my", token);
+  return get<AssignmentDetail[]>("/assignments/my", token);
 }
 
-export function startAssignment(assignmentId: number, token: string): Promise<SubmissionStartResponse> {
-  return post<SubmissionStartResponse>(`/api/v1/assignments/${assignmentId}/start`, {}, token);
+export function startAssignment(
+  assignmentId: number,
+  token: string,
+): Promise<SubmissionStartResponse> {
+  return post<SubmissionStartResponse>(
+    `/assignments/${assignmentId}/start`,
+    {},
+    token,
+  );
 }
 
 export function submitSubmission(
   submissionId: number,
   body: { answers: SubmitAnswerPayload[] },
-  token: string
-): Promise<{ id: number; assignment_id: number; user_id: number; started_at: string; submitted_at: string | null; score: number | null }> {
-  return post(`/api/v1/assignments/submissions/${submissionId}/submit`, body, token);
+  token: string,
+): Promise<{
+  id: number;
+  assignment_id: number;
+  user_id: number;
+  started_at: string;
+  submitted_at: string | null;
+  score: number | null;
+}> {
+  return post(`/assignments/submissions/${submissionId}/submit`, body, token);
 }
 
 export interface OptionResultItem {
@@ -102,8 +119,14 @@ export interface SubmissionResultResponse {
   question_details: QuestionResultDetail[];
 }
 
-export function getSubmissionResult(submissionId: number, token: string): Promise<SubmissionResultResponse> {
-  return get<SubmissionResultResponse>(`/api/v1/assignments/submissions/${submissionId}/result`, token);
+export function getSubmissionResult(
+  submissionId: number,
+  token: string,
+): Promise<SubmissionResultResponse> {
+  return get<SubmissionResultResponse>(
+    `/assignments/submissions/${submissionId}/result`,
+    token,
+  );
 }
 
 // Reporting
@@ -138,10 +161,21 @@ export interface AdminOverviewReportResponse {
   score_buckets: ScoreBucket[];
 }
 
-export function getAssignmentReport(assignmentId: number, token: string): Promise<AssignmentReportResponse> {
-  return get<AssignmentReportResponse>(`/api/v1/assignments/${assignmentId}/report`, token);
+export function getAssignmentReport(
+  assignmentId: number,
+  token: string,
+): Promise<AssignmentReportResponse> {
+  return get<AssignmentReportResponse>(
+    `/assignments/${assignmentId}/report`,
+    token,
+  );
 }
 
-export function getAdminOverviewReport(token: string): Promise<AdminOverviewReportResponse> {
-  return get<AdminOverviewReportResponse>("/api/v1/assignments/reports/overview", token);
+export function getAdminOverviewReport(
+  token: string,
+): Promise<AdminOverviewReportResponse> {
+  return get<AdminOverviewReportResponse>(
+    "/assignments/reports/overview",
+    token,
+  );
 }

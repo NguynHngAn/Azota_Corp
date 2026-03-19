@@ -8,28 +8,28 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import { LanguageProvider } from "@/hooks/useLanguage";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
-import LandingPage from "./pages/LandingPage";
-import LoginPage from "./pages/LoginPage";
-import SignupPage from "./pages/SignupPage";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage";
-import ResetPasswordPage from "./pages/ResetPasswordPage";
-import RoleDashboard from "./pages/RoleDashboard";
-import ExamsPage from "./pages/ExamsPage";
-import CreateExamPage from "./pages/CreateExamPage";
-import QuestionBankPage from "./pages/QuestionBankPage";
-import ClassesPage from "./pages/ClassesPage";
-import StudentsPage from "./pages/StudentsPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
-import AntiCheatingPage from "./pages/AntiCheatingPage";
-import SettingsPage from "./pages/SettingsPage";
-import AssignmentsPage from "./pages/AssignmentsPage";
-import TakeExamPage from "./pages/student/TakeExamPage";
-import MyClassesPage from "./pages/student/MyClassesPage";
-import MyResultsPage from "./pages/student/MyResultsPage";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import ExamDetailPage from "./pages/ExamDetailPage";
-import SubmissionsReviewPage from "./pages/SubmissionsReviewPage";
-import NotFound from "./pages/NotFound";
+import LandingPage from "./pages/common/LandingPage";
+import LoginPage from "./pages/auth/LoginPage";
+import SignupPage from "./pages/auth/SignupPage";
+import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
+import RoleDashboard from "./pages/dashboard/RoleDashboardPage";
+import ExamListPage from "./pages/exams/ExamListPage";
+import CreateExamPage from "./pages/exams/CreateExamPage";
+import QuestionBankPage from "./pages/exams/QuestionBankPage";
+import ClassListPage from "./pages/classes/ClassListPage";
+import StudentsPage from "./pages/students/StudentsPage";
+import AnalyticsPage from "./pages/reports/AnalyticsPage";
+import AntiCheatingPage from "./pages/system/AntiCheatingPage";
+import SettingsPage from "./pages/system/SettingsPage";
+import AssignmentListPage from "./pages/assignments/AssignmentListPage";
+import TakeExamPage from "./pages/learning/TakeExamPage";
+import MyClassesPage from "./pages/learning/MyClassesPage";
+import MyResultsPage from "./pages/learning/MyResultsPage";
+import AdminDashboard from "./pages/dashboard/AdminDashboardPage";
+import ExamDetailPage from "./pages/exams/ExamDetailPage";
+import AssignmentSubmissionsReviewPage from "./pages/assignments/AssignmentSubmissionsReviewPage";
+import NotFound from "./pages/common/NotFoundPage";
 
 const queryClient = new QueryClient();
 
@@ -66,7 +66,7 @@ const App = () => (
                   path="/exams"
                   element={
                     <ProtectedRoute allowedRoles={["teacher", "admin"]}>
-                      <ExamsPage />
+                      <ExamListPage />
                     </ProtectedRoute>
                   }
                 />
@@ -90,7 +90,7 @@ const App = () => (
                   path="/classes"
                   element={
                     <ProtectedRoute>
-                      <ClassesPage />
+                      <ClassListPage />
                     </ProtectedRoute>
                   }
                 />
@@ -98,7 +98,7 @@ const App = () => (
                   path="/assignments"
                   element={
                     <ProtectedRoute allowedRoles={["teacher", "admin"]}>
-                      <AssignmentsPage />
+                      <AssignmentListPage />
                     </ProtectedRoute>
                   }
                 />
@@ -106,7 +106,7 @@ const App = () => (
                   path="/assignments/:assignmentId/submissions"
                   element={
                     <ProtectedRoute allowedRoles={["teacher", "admin"]}>
-                      <SubmissionsReviewPage />
+                      <AssignmentSubmissionsReviewPage />
                     </ProtectedRoute>
                   }
                 />

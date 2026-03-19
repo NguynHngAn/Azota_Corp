@@ -27,18 +27,18 @@ export interface UserUpdatePayload {
 
 export function listUsers(token: string, role?: "teacher" | "student"): Promise<UserResponse[]> {
   const query = role ? `?role=${role}` : "";
-  return get<UserResponse[]>(`/api/v1/users${query}`, token);
+  return get<UserResponse[]>(`/users${query}`, token);
 }
 
 export function createUser(body: UserCreatePayload, token: string): Promise<UserResponse> {
-  return post<UserResponse>("/api/v1/users", body, token);
+  return post<UserResponse>("/users", body, token);
 }
 
 export function updateUser(userId: number, body: UserUpdatePayload, token: string): Promise<UserResponse> {
-  return put<UserResponse>(`/api/v1/users/${userId}`, body, token);
+  return put<UserResponse>(`/users/${userId}`, body, token);
 }
 
 export function deactivateUser(userId: number, token: string): Promise<void> {
-  return del(`/api/v1/users/${userId}`, token);
+  return del(`/users/${userId}`, token);
 }
 

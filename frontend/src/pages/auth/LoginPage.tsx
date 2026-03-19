@@ -3,8 +3,8 @@ import { useNavigate, Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
-import { login } from "../api/auth";
 import { AUTH_TOKEN_KEY } from "@/utils/constants";
+import { authService } from "@/services/auth.service";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -17,7 +17,12 @@ const LoginPage = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const { access_token } = await login(email, password);
+      const res = await authService.login(email, password);
+      if (!res.success || !res.data) {
+        toast.error(res.message || "Invalid email or password");
+        return;
+      }
+      const { access_token } = res.data;
       localStorage.setItem(AUTH_TOKEN_KEY, access_token);
       navigate("/");
     } catch (error) {
