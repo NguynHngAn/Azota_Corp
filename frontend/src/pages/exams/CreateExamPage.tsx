@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { createExam } from "../../api/exams";
 import { type ExamFormState, emptyQuestion, validateExamForm } from "./types";
 import { ExamEditorForm } from "./ExamEditorForm";
+import { Card } from "../../components/ui/Card";
 
 const initialState: ExamFormState = {
   title: "",
@@ -61,16 +62,23 @@ export function CreateExamPage() {
   }
 
   return (
-    <div>
-      <h2 className="text-lg font-semibold mb-4">Create exam</h2>
-      {error && <p className="mb-2 text-red-600 text-sm">{error}</p>}
+    <div className="space-y-4">
+      <div>
+        <h1 className="text-2xl font-semibold text-slate-900">Create Exam</h1>
+        <p className="text-sm text-slate-500">Set up a new exam with questions and answer options.</p>
+      </div>
+      {error && (
+        <Card className="border border-rose-100 bg-rose-50 shadow-none hover:shadow-none">
+          <div className="text-sm text-rose-800">{error}</div>
+        </Card>
+      )}
       <ExamEditorForm
         state={state}
         setState={setState}
         onAddQuestion={addQuestion}
         onSave={handleSave}
         saving={submitting}
-        saveLabel="Create exam"
+        saveLabel="Save"
       />
     </div>
   );

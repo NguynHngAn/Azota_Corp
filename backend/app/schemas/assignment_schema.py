@@ -91,6 +91,23 @@ class SubmissionResultResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class MySubmissionSummary(BaseModel):
+    submission_id: int
+    assignment_id: int
+    exam_title: str
+    class_name: str
+    submitted_at: datetime
+    score: float | None = None
+
+
+class MyAssignmentSubmissionResponse(BaseModel):
+    submission_id: int
+    assignment_id: int
+    exam_title: str
+    submitted_at: datetime
+    score: float | None = None
+
+
 class SubmissionAnswerResponse(BaseModel):
     id: int
     submission_id: int

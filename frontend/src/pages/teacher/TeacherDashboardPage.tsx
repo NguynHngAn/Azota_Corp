@@ -1,0 +1,299 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useAuth } from "../../context/AuthContext";
+import { getClass, listMyClasses, type ClassDetail } from "../../api/classes";
+import { listExams } from "../../api/exams";
+import { getAssignmentReport, listAssignments, type AssignmentReportResponse } from "../../api/assignments";
+import type { ClassResponse } from "../../api/classes";
+import type { ExamResponse } from "../../api/exams";
+import type { AssignmentDetail } from "../../api/assignments";
+import { StatsCard } from "../../components/admin/StatsCard";
+import { Icons } from "../../components/admin/icons";
+import { Card } from "../../components/ui/Card";
+import { Button } from "../../components/ui/Button";
+import { useNavigate } from "react-router-dom";
+
+// In-memory caches (persist across SPA navigation)
+const classCache = new Map<number, ClassDetail>();
+const classInflight = new Map<number, Promise<ClassDetail>>();
+const reportCache = new Map<number, AssignmentReportResponse>();
+const reportInflight = new Map<number, Promise<AssignmentReportResponse>>();
+
+async function getClassCached(id: number, token: string): Promise<ClassDetail> {
+  const hit = classCache.get(id);
+  if (hit) return hit;
+  const inflight = classInflight.get(id);
+  if (inflight) return inflight;
+  const p = getClass(id, token)
+    .then((res) => {
+      classCache.set(id, res);
+      return res;
+    })
+    .finally(() => {
+      classInflight.delete(id);
+    });
+  classInflight.set(id, p);
+  return p;
+}
+
+async function getAssignmentReportCached(id: number, token: string): Promise<AssignmentReportResponse> {
+  const hit = reportCache.get(id);
+  if (hit) return hit;
+  const inflight = reportInflight.get(id);
+  if (inflight) return inflight;
+  const p = getAssignmentReport(id, token)
+    .then((res) => {
+      reportCache.set(id, res);
+      return res;
+    })
+    .finally(() => {
+      reportInflight.delete(id);
+    });
+  reportInflight.set(id, p);
+  return p;
+}
+
+export function TeacherDashboardPage() {
+  const { token, user } = useAuth();
+  const navigate = useNavigate();
+  const [classes, setClasses] = useState<ClassResponse[]>([]);
+  const [exams, setExams] = useState<ExamResponse[]>([]);
+  const [assignments, setAssignments] = useState<AssignmentDetail[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [baseLoaded, setBaseLoaded] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [studentsCount, setStudentsCount] = useState<number | null>(null);
+  const [submissionsCount, setSubmissionsCount] = useState<number | null>(null);
+  const [avgScore, setAvgScore] = useState<number | null>(null);
+  const [statsProgress, setStatsProgress] = useState<{
+    classesDone: number;
+    classesTotal: number;
+    reportsDone: number;
+    reportsTotal: number;
+  }>({ classesDone: 0, classesTotal: 0, reportsDone: 0, reportsTotal: 0 });
+  const runIdRef = useRef(0);
+
+  useEffect(() => {
+    if (!token) return;
+    setLoading(true);
+    setBaseLoaded(false);
+    Promise.all([
+      listMyClasses(token).catch(() => [] as ClassResponse[]),
+      listExams(token).catch(() => [] as ExamResponse[]),
+      listAssignments(token).catch(() => [] as AssignmentDetail[]),
+    ])
+      .then(([c, e, a]) => {
+        setClasses(c);
+        setExams(e);
+        setAssignments(a);
+      })
+      .finally(() => {
+        setLoading(false);
+        setBaseLoaded(true);
+      });
+  }, [token]);
+
+  // Run a single sequential worker to avoid cancelling earlier batches.
+  useEffect(() => {
+    if (!token) return;
+    if (!baseLoaded) return;
+
+    const runId = ++runIdRef.current;
+    const anyWindow = window as unknown as {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+
+    const idle = () =>
+      new Promise<void>((resolve) => {
+        if (anyWindow.requestIdleCallback) {
+          anyWindow.requestIdleCallback(() => resolve(), { timeout: 400 });
+        } else {
+          window.setTimeout(() => resolve(), 120);
+        }
+      });
+
+    setStatsLoading(true);
+    setStudentsCount(0);
+    setSubmissionsCount(0);
+    setAvgScore(null);
+    setStatsProgress({
+      classesDone: 0,
+      classesTotal: classes.length,
+      reportsDone: 0,
+      reportsTotal: assignments.length,
+    });
+
+    const batchSizeClasses = 4;
+    const batchSizeReports = 3;
+    const classIds = classes.map((c) => c.id);
+    const assignmentIds = assignments.map((a) => a.id);
+    const maxBatches = Math.max(
+      Math.ceil(classIds.length / batchSizeClasses),
+      Math.ceil(assignmentIds.length / batchSizeReports),
+    );
+
+    (async () => {
+      for (let i = 0; i < maxBatches; i++) {
+        if (runIdRef.current !== runId) return;
+
+        const classBatch = classIds.slice(i * batchSizeClasses, i * batchSizeClasses + batchSizeClasses);
+        const reportBatch = assignmentIds.slice(i * batchSizeReports, i * batchSizeReports + batchSizeReports);
+
+        if (classBatch.length > 0) {
+          const results = await Promise.all(classBatch.map((id) => getClassCached(id, token).catch(() => null)));
+          if (runIdRef.current !== runId) return;
+          const addStudents = results
+            .filter((c): c is ClassDetail => !!c)
+            .reduce((sum, c) => sum + (c.member_count ?? 0), 0);
+          setStudentsCount((prev) => (prev ?? 0) + addStudents);
+          setStatsProgress((p) => ({
+            ...p,
+            classesDone: Math.min(p.classesDone + classBatch.length, p.classesTotal),
+          }));
+        }
+
+        if (reportBatch.length > 0) {
+          const reports = await Promise.all(reportBatch.map((id) => getAssignmentReportCached(id, token).catch(() => null)));
+          if (runIdRef.current !== runId) return;
+          const submittedTotal = reports
+            .filter((r): r is AssignmentReportResponse => !!r)
+            .reduce((sum, r) => sum + (r.submitted_count ?? 0), 0);
+          setSubmissionsCount((prev) => (prev ?? 0) + submittedTotal);
+
+          const fetched = Array.from(reportCache.values());
+          const allValid = fetched
+            .filter((r) => typeof r.average_score === "number")
+            .map((r) => ({ avg: r.average_score as number, weight: r.submitted_count ?? 0 }));
+          if (allValid.length > 0) {
+            const weightSum = allValid.reduce((s, x) => s + x.weight, 0);
+            if (weightSum > 0) {
+              const weighted = allValid.reduce((s, x) => s + x.avg * x.weight, 0) / weightSum;
+              setAvgScore(Math.round(weighted * 100) / 100);
+            } else {
+              const simple = allValid.reduce((s, x) => s + x.avg, 0) / allValid.length;
+              setAvgScore(Math.round(simple * 100) / 100);
+            }
+          }
+
+          setStatsProgress((p) => ({
+            ...p,
+            reportsDone: Math.min(p.reportsDone + reportBatch.length, p.reportsTotal),
+          }));
+        }
+
+        await idle();
+      }
+
+      if (runIdRef.current === runId) setStatsLoading(false);
+    })();
+
+    return () => {
+      // invalidate this run
+      runIdRef.current++;
+    };
+  }, [assignments, baseLoaded, classes, token]);
+
+  const stats = useMemo(() => {
+    return {
+      myStudents: statsLoading ? studentsCount ?? "—" : studentsCount ?? 0,
+      myExams: exams.length,
+      submissions: statsLoading ? submissionsCount ?? "—" : submissionsCount ?? 0,
+      avgScore: statsLoading ? avgScore ?? "—" : avgScore ?? "—",
+    };
+  }, [avgScore, exams.length, statsLoading, studentsCount, submissionsCount]);
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold text-slate-900">Dashboard</h1>
+        <p className="text-sm text-slate-500">
+          Welcome back, {user?.full_name || "Teacher"}. Here’s your overview.
+        </p>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatsCard icon={<Icons.Users />} value={stats.myStudents} label="My Students" tone="blue" />
+        <StatsCard icon={<Icons.Book />} value={stats.myExams} label="My Exams" tone="violet" />
+        <StatsCard icon={<Icons.Clipboard />} value={stats.submissions} label="Submissions" tone="slate" />
+        <StatsCard icon={<Icons.Chart />} value={stats.avgScore} label="Avg Score" tone="green" />
+      </div>
+
+      {statsLoading && (
+        <div className="text-xs text-slate-400">
+          Calculating stats… {statsProgress.classesDone}/{statsProgress.classesTotal} classes,{" "}
+          {statsProgress.reportsDone}/{statsProgress.reportsTotal} assignments
+        </div>
+      )}
+
+      <Card className="border border-slate-100 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900">Recent Exams</h2>
+            <p className="text-xs text-slate-500">Quick access to your latest work.</p>
+          </div>
+          <Button size="sm" variant="ghost" onClick={() => navigate("/teacher/exams")}>
+            View all →
+          </Button>
+        </div>
+
+        <div className="mt-4">
+          {loading ? (
+            <div className="py-8">
+              <div className="h-10 bg-slate-50 rounded-xl animate-pulse mb-3" />
+              <div className="h-10 bg-slate-50 rounded-xl animate-pulse mb-3" />
+              <div className="h-10 bg-slate-50 rounded-xl animate-pulse" />
+            </div>
+          ) : exams.length === 0 ? (
+            <div className="py-10 text-center text-sm text-slate-500">
+              No exams yet. Create your first exam to get started.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {exams.slice(0, 3).map((e) => (
+                <button
+                  key={e.id}
+                  type="button"
+                  onClick={() => navigate(`/teacher/exams/${e.id}`)}
+                  className="w-full text-left rounded-xl border border-slate-100 bg-white px-4 py-3 hover:bg-slate-50 transition"
+                >
+                  <div className="text-sm font-medium text-slate-900">{e.title}</div>
+                  <div className="text-xs text-slate-500">{e.is_draft ? "Draft" : "Published"}</div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </Card>
+
+      <Card className="border border-slate-100 shadow-sm">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900">Quick Links</h2>
+            <p className="text-xs text-slate-500">Common teacher actions.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" onClick={() => navigate("/teacher/exams/new")}>Create Exam</Button>
+            <Button size="sm" variant="secondary" onClick={() => navigate("/teacher/assignments/new")}>New Assignment</Button>
+            <Button size="sm" variant="secondary" onClick={() => navigate("/teacher/classes/new")}>New Class</Button>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+            <div className="text-xs text-slate-500">Classes</div>
+            <div className="text-lg font-semibold text-slate-900">{classes.length}</div>
+          </div>
+          <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+            <div className="text-xs text-slate-500">Assignments</div>
+            <div className="text-lg font-semibold text-slate-900">{assignments.length}</div>
+          </div>
+          <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+            <div className="text-xs text-slate-500">Students</div>
+            <div className="text-lg font-semibold text-slate-900">—</div>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+

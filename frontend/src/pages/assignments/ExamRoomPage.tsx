@@ -5,6 +5,7 @@ import { useExam } from "../../context";
 import {
   startAssignment,
   submitSubmission,
+  getMySubmissionForAssignment,
   type ExamRoomQuestion,
   type SubmissionStartResponse,
 } from "../../api/assignments";
@@ -12,6 +13,7 @@ import { useFullScreen } from "../../hooks/useFullScreen";
 import { useTabVisibility } from "../../hooks/useTabVisibility";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
+import { logAntiCheatEvent } from "../../api/antiCheat";
 
 function formatCountdown(ms: number): string {
   if (ms <= 0) return "0:00";
@@ -28,6 +30,7 @@ export function ExamRoomPage() {
   const { startExam } = useExam();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [alreadySubmittedSubmissionId, setAlreadySubmittedSubmissionId] = useState<number | null>(null);
   const [room, setRoom] = useState<SubmissionStartResponse | null>(null);
   const [answers, setAnswers] = useState<Record<number, number[]>>({});
   const [remainingMs, setRemainingMs] = useState<number | null>(null);
@@ -41,6 +44,7 @@ export function ExamRoomPage() {
   const [violationMessage, setViolationMessage] = useState("");
   const [showViolationModal, setShowViolationModal] = useState(false);
   const lastOkRef = useRef<boolean>(true);
+  const lastViolationAtRef = useRef<number>(0);
 
   const answersRef = useRef(answers);
   answersRef.current = answers;
@@ -58,6 +62,15 @@ export function ExamRoomPage() {
     };
     try {
       await submitSubmission(room.submission_id, payload, token);
+      // Best-effort log; do not block submit UX.
+      void logAntiCheatEvent(
+        {
+          assignment_id: room.assignment_id,
+          submission_id: room.submission_id,
+          event_type: "EXAM_SUBMIT",
+        },
+        token,
+      ).catch(() => {});
       await exitFullScreen();
       navigate(`/student/assignments/result/${room.submission_id}`, { replace: true });
     } catch (e) {
@@ -82,7 +95,18 @@ export function ExamRoomPage() {
         const endTime = new Date(data.started_at).getTime() + data.duration_minutes * 60 * 1000;
         setRemainingMs(Math.max(0, endTime - Date.now()));
       })
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to start"))
+      .catch(async (e) => {
+        const msg = e instanceof Error ? e.message : "Failed to start";
+        setError(msg);
+        if (msg.toLowerCase().includes("already submitted")) {
+          try {
+            const mine = await getMySubmissionForAssignment(id, token);
+            setAlreadySubmittedSubmissionId(mine.submission_id);
+          } catch {
+            setAlreadySubmittedSubmissionId(null);
+          }
+        }
+      })
       .finally(() => setLoading(false));
   }, [token, assignmentId]);
 
@@ -103,11 +127,34 @@ export function ExamRoomPage() {
 
   // Track fullscreen/tab visibility violations after exam started
   useEffect(() => {
-    if (!room || !examStarted) return;
+    if (!room || !examStarted || !token) return;
     const ok = isFullScreen && isVisible;
     const wasOk = lastOkRef.current;
 
     if (wasOk && !ok && !submitting && !autoSubmitTriggered.current) {
+      const now = Date.now();
+      // Simple cooldown to avoid double logs from multiple events firing at once.
+      if (now - lastViolationAtRef.current > 400) {
+        lastViolationAtRef.current = now;
+        const meta: Record<string, unknown> = {
+          isFullScreen,
+          isVisible,
+          visibilityState: document.visibilityState,
+          hasFocus: typeof document.hasFocus === "function" ? document.hasFocus() : undefined,
+        };
+        if (!isFullScreen) {
+          void logAntiCheatEvent(
+            { assignment_id: room.assignment_id, submission_id: room.submission_id, event_type: "FULLSCREEN_EXIT", meta },
+            token,
+          ).catch(() => {});
+        }
+        if (!isVisible) {
+          void logAntiCheatEvent(
+            { assignment_id: room.assignment_id, submission_id: room.submission_id, event_type: "TAB_HIDDEN", meta },
+            token,
+          ).catch(() => {});
+        }
+      }
       setViolationMessage(
         "Bạn vừa thoát toàn màn hình hoặc chuyển tab. Nếu bạn vi phạm 3 lần, hệ thống sẽ tự động nộp bài.",
       );
@@ -115,7 +162,7 @@ export function ExamRoomPage() {
     }
 
     lastOkRef.current = ok;
-  }, [isFullScreen, isVisible, room, examStarted, submitting, doSubmit]);
+  }, [isFullScreen, isVisible, room, examStarted, submitting, token, doSubmit]);
 
   const setSingle = (questionId: number, optionId: number) => {
     setAnswers((prev) => ({ ...prev, [questionId]: [optionId] }));
@@ -130,7 +177,36 @@ export function ExamRoomPage() {
   };
 
   if (loading) return <p className="text-gray-600">Loading exam...</p>;
-  if (error && !room) return <p className="text-red-600">{error}</p>;
+  if (error && !room) {
+    const already = error.toLowerCase().includes("already submitted");
+    return (
+      <div className="max-w-2xl mx-auto">
+        <Card className="border border-slate-100 shadow-sm hover:shadow-sm">
+          <div className="text-sm font-semibold text-slate-900">
+            {already ? "Already submitted" : "Unable to start exam"}
+          </div>
+          <div className="mt-2 text-sm text-slate-600">
+            {already
+              ? "You have already submitted this exam. You can go back or view your result."
+              : error}
+          </div>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Button type="button" variant="secondary" onClick={() => navigate("/student/assignments")}>
+              Back to assignments
+            </Button>
+            {already && alreadySubmittedSubmissionId ? (
+              <Button
+                type="button"
+                onClick={() => navigate(`/student/assignments/result/${alreadySubmittedSubmissionId}`)}
+              >
+                View result
+              </Button>
+            ) : null}
+          </div>
+        </Card>
+      </div>
+    );
+  }
   if (!room) return null;
 
   const sortedQuestions = [...room.questions].sort((a, b) => a.order_index - b.order_index);
@@ -181,6 +257,17 @@ export function ExamRoomPage() {
                   lastOkRef.current = isFullScreen && isVisible;
                   if (room) {
                     startExam({ assignmentId: room.assignment_id, submissionId: room.submission_id });
+                  }
+                  if (room && token) {
+                    void logAntiCheatEvent(
+                      {
+                        assignment_id: room.assignment_id,
+                        submission_id: room.submission_id,
+                        event_type: "EXAM_START",
+                        meta: { enteredFullScreen: true },
+                      },
+                      token,
+                    ).catch(() => {});
                   }
                   setExamStarted(true);
                 }}

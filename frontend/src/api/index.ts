@@ -28,3 +28,31 @@ export {
   type QuestionPayload,
   type AnswerOptionPayload,
 } from "./exams";
+
+export {
+  startAssignment,
+  submitSubmission,
+  getSubmissionResult,
+  listAssignments,
+  listMyAssignments,
+  createAssignment,
+  getAssignmentReport,
+  listMySubmissions,
+  getMySubmissionForAssignment,
+  type AssignmentDetail,
+  type SubmissionStartResponse,
+  type SubmissionResultResponse,
+  type AssignmentReportResponse,
+  type MySubmissionSummary,
+  type MyAssignmentSubmissionResponse,
+} from "./assignments";
+
+export {
+  logAntiCheatEvent,
+  getTeacherAntiCheatMonitor,
+  type AntiCheatEventType,
+  type AntiCheatEventCreate,
+  type AntiCheatMonitorResponse,
+  type AntiCheatMonitorRow,
+  type AntiCheatMonitorSummary,
+} from "./antiCheat";

@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { listAssignments, type AssignmentDetail } from "../../api/assignments";
 import { formatDateTimeVietnam } from "../../utils/date";
+import { Card } from "../../components/ui/Card";
+import { Button } from "../../components/ui/Button";
+import { Input } from "../../components/ui/Input";
 
 function basePath(pathname: string): string {
   if (pathname.startsWith("/admin")) return "/admin";
@@ -12,10 +15,12 @@ function basePath(pathname: string): string {
 export function AssignmentListPage() {
   const { token } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const base = basePath(location.pathname);
   const [assignments, setAssignments] = useState<AssignmentDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [q, setQ] = useState("");
 
   useEffect(() => {
     if (!token) return;
@@ -25,49 +30,67 @@ export function AssignmentListPage() {
       .finally(() => setLoading(false));
   }, [token]);
 
-  if (loading) return <p className="text-gray-600">Loading...</p>;
+  const filtered = assignments.filter((a) => {
+    const query = q.trim().toLowerCase();
+    if (!query) return true;
+    return `${a.exam_title} ${a.class_name}`.toLowerCase().includes(query);
+  });
+
+  if (loading) return <p className="text-slate-500">Loading...</p>;
   if (error) return <p className="text-red-600">{error}</p>;
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">Assignments</h2>
-        <Link
-          to={`${base}/assignments/new`}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Assign exam
-        </Link>
+    <div className="space-y-6">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">Assignments</h1>
+          <p className="text-sm text-slate-500">Schedule exams to classes with time windows.</p>
+        </div>
+        <Button onClick={() => navigate(`${base}/assignments/new`)}>+ New Assignment</Button>
       </div>
-      <ul className="space-y-2">
-        {assignments.length === 0 ? (
-          <li className="text-gray-500">No assignments yet. Assign an exam to a class to get started.</li>
-        ) : (
-          assignments.map((a) => (
-            <li key={a.id}>
-              <div className="p-3 bg-white rounded shadow hover:bg-gray-50 flex justify-between items-center gap-4">
-                <div className="min-w-0">
-                  <div className="flex justify-between items-start">
-                    <span className="font-medium">{a.exam_title}</span>
-                    <span className="text-xs text-gray-500 ml-2 shrink-0">{a.class_name}</span>
+
+      <Card className="border border-slate-100 shadow-sm">
+        <div className="max-w-md">
+          <Input placeholder="Search assignments..." value={q} onChange={(e) => setQ(e.target.value)} />
+        </div>
+
+        <div className="mt-4">
+          {filtered.length === 0 ? (
+            <div className="py-12 text-center text-sm text-slate-500">
+              No assignments yet.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {filtered.map((a) => (
+                <div
+                  key={a.id}
+                  className="rounded-xl border border-slate-100 bg-white px-4 py-3 hover:bg-slate-50 transition flex items-center justify-between gap-4"
+                >
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <div className="text-sm font-medium text-slate-900 truncate">{a.exam_title}</div>
+                      <div className="text-xs text-slate-500 truncate">{a.class_name}</div>
+                    </div>
+                    <div className="text-xs text-slate-500 mt-1">
+                      {formatDateTimeVietnam(a.start_time)} – {formatDateTimeVietnam(a.end_time)} · {a.duration_minutes} min
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-600 mt-1">
-                    {formatDateTimeVietnam(a.start_time)} – {formatDateTimeVietnam(a.end_time)} · {a.duration_minutes} min
-                  </div>
+                  {base === "/teacher" && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      type="button"
+                      onClick={() => navigate(`/teacher/assignments/${a.id}/report`)}
+                    >
+                      View report →
+                    </Button>
+                  )}
                 </div>
-                {base === "/teacher" && (
-                  <Link
-                    to={`/teacher/assignments/${a.id}/report`}
-                    className="shrink-0 px-3 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700"
-                  >
-                    View report
-                  </Link>
-                )}
-              </div>
-            </li>
-          ))
-        )}
-      </ul>
+              ))}
+            </div>
+          )}
+        </div>
+      </Card>
     </div>
   );
 }

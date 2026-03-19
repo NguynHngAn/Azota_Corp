@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { Button } from "../components/ui/Button";
-import dashboardPreview from "../../../frontend_new/src/assets/dashboard-preview.png";
 
 export function LandingPage() {
   return (
@@ -56,7 +55,7 @@ export function LandingPage() {
           <div className="absolute inset-0 bg-indigo-200/60 blur-3xl rounded-full -z-10" />
           <div className="rounded-2xl bg-white shadow-xl border border-slate-100 overflow-hidden h-[320px] md:h-[360px]">
             <img
-              src={dashboardPreview}
+              src="/dashboard-preview.png"
               alt="Exam analytics preview"
               className="w-full h-full object-cover"
             />

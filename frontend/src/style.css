@@ -1,5 +1,101 @@
 @import "tailwindcss";
 
+:root {
+  /* Primary color tokens (default: blue) */
+  --primary: #2563eb; /* blue-600 */
+  --primary-hover: #1d4ed8; /* blue-700 */
+  --primary-soft: #eff6ff; /* blue-50 */
+  --primary-ring: rgba(59, 130, 246, 0.35); /* blue-500 @ 35% */
+
+  /* App surfaces (light) */
+  --app-bg: #f8fafc; /* slate-50 */
+  --panel-bg: #ffffff;
+  --panel-bg-80: rgba(255, 255, 255, 0.8);
+  --text: #0f172a; /* slate-900 */
+  --muted: #64748b; /* slate-500 */
+  --border: #e2e8f0; /* slate-200 */
+  --border-soft: #f1f5f9; /* slate-100 */
+
+  /* Density + layout sizing (comfortable defaults) */
+  --page-px: 16px;
+  --page-py: 24px;
+  --card-p: 16px;
+  --control-h-sm: 32px;
+  --control-h: 40px;
+  --control-h-lg: 44px;
+
+  /* Sidebar sizing */
+  --sidebar-w: 16rem; /* 256px */
+}
+
+:root[data-theme-color="green"] {
+  --primary: #059669; /* emerald-600 */
+  --primary-hover: #047857; /* emerald-700 */
+  --primary-soft: #ecfdf5; /* emerald-50 */
+  --primary-ring: rgba(16, 185, 129, 0.35);
+}
+
+:root[data-theme-color="purple"] {
+  --primary: #7c3aed; /* violet-600 */
+  --primary-hover: #6d28d9; /* violet-700 */
+  --primary-soft: #f5f3ff; /* violet-50 */
+  --primary-ring: rgba(139, 92, 246, 0.35);
+}
+
+.dark {
+  color-scheme: dark;
+  --app-bg: #0b1220;
+  --panel-bg: #0f172a; /* slate-900-ish */
+  --panel-bg-80: rgba(15, 23, 42, 0.78);
+  --text: #e2e8f0; /* slate-200 */
+  --muted: #94a3b8; /* slate-400 */
+  --border: rgba(148, 163, 184, 0.18);
+  --border-soft: rgba(148, 163, 184, 0.12);
+}
+
+body {
+  background: var(--app-bg);
+  color: var(--text);
+}
+
+/* Density: compact */
+:root[data-density="compact"] {
+  --page-px: 12px;
+  --page-py: 16px;
+  --card-p: 12px;
+  --control-h-sm: 30px;
+  --control-h: 36px;
+  --control-h-lg: 40px;
+}
+
+/* Sidebar mode */
+:root[data-sidebar="collapsed"] {
+  --sidebar-w: 5rem; /* 80px */
+}
+
+@media (max-width: 1024px) {
+  :root[data-sidebar="auto"] {
+    --sidebar-w: 5rem;
+  }
+}
+
+/* Helpers used by layouts */
+.app-sidebar {
+  width: var(--sidebar-w);
+}
+
+:root[data-sidebar="collapsed"] .sidebar-label,
+:root[data-sidebar="collapsed"] .sidebar-brand {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  :root[data-sidebar="auto"] .sidebar-label,
+  :root[data-sidebar="auto"] .sidebar-brand {
+    display: none;
+  }
+}
+
 @keyframes float-soft {
   0% {
     transform: translateY(0px);
@@ -14,4 +110,42 @@
 
 .animate-float-soft {
   animation: float-soft 6s ease-in-out infinite;
+}
+
+@keyframes fade-up {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0px);
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.admin-page-enter {
+  animation: fade-up 260ms ease-out both;
+}
+
+.admin-modal-enter {
+  animation: pop-in 200ms ease-out both;
+}
+
+.admin-overlay {
+  animation: fade-up 160ms ease-out both;
+}
+
+.settings-panel-enter {
+  animation: fade-up 220ms ease-out both;
 }

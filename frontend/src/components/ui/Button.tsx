@@ -2,25 +2,55 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 import clsx from "clsx";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger";
+type Size = "sm" | "md" | "lg";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
+  size?: Size;
+  selected?: boolean;
   children: ReactNode;
 }
 
 const base =
-  "inline-flex items-center justify-center rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
+  "inline-flex items-center justify-center select-none font-medium outline-none transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
-  secondary: "bg-gray-100 text-gray-800 hover:bg-gray-200 focus:ring-gray-400",
-  ghost: "bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-400",
-  danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
+  primary:
+    "bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-sm hover:shadow focus:ring-2 focus:ring-[var(--primary-ring)]",
+  secondary:
+    "bg-slate-50 text-slate-800 hover:bg-slate-100 border border-slate-200 shadow-sm hover:shadow focus:ring-2 focus:ring-[var(--primary-ring)]",
+  ghost:
+    "bg-transparent text-slate-700 hover:bg-slate-50 focus:ring-2 focus:ring-[var(--primary-ring)]",
+  danger:
+    "bg-rose-600 text-white hover:bg-rose-700 shadow-sm hover:shadow focus:ring-2 focus:ring-rose-200",
 };
 
-export function Button({ variant = "primary", className, children, ...props }: ButtonProps) {
+const sizes: Record<Size, string> = {
+  sm: "h-[var(--control-h-sm)] px-3 text-xs rounded-lg",
+  md: "h-[var(--control-h)] px-4 text-sm rounded-xl",
+  lg: "h-[var(--control-h-lg)] px-5 text-sm rounded-xl",
+};
+
+export function Button({
+  variant = "primary",
+  size = "md",
+  selected = false,
+  className,
+  children,
+  ...props
+}: ButtonProps) {
   return (
-    <button className={clsx(base, variants[variant], "px-4 py-2", className)} {...props}>
+    <button
+      className={clsx(
+        base,
+        variants[variant],
+        sizes[size],
+        "active:scale-[0.98] hover:-translate-y-[1px] active:translate-y-0",
+        selected ? "ring-2 ring-[var(--primary-ring)] bg-[var(--primary-soft)] text-[var(--primary)]" : "",
+        className,
+      )}
+      {...props}
+    >
       {children}
     </button>
   );

@@ -4,7 +4,7 @@ from sqlalchemy import text
 
 from app.config import settings
 from app.database import get_db
-from app.api.v1 import auth, users, classes, exams, assignments
+from app.api.v1 import auth, users, classes, exams, assignments, anti_cheat
 
 app = FastAPI(title=settings.app_name)
 app.include_router(auth.router, prefix="/api/v1")
@@ -12,6 +12,7 @@ app.include_router(users.router, prefix="/api/v1")
 app.include_router(classes.router, prefix="/api/v1")
 app.include_router(exams.router, prefix="/api/v1")
 app.include_router(assignments.router, prefix="/api/v1")
+app.include_router(anti_cheat.router, prefix="/api/v1")
 
 
 @app.get("/routes")

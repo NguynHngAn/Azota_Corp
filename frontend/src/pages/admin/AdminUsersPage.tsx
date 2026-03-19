@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import {
   listUsers,
@@ -15,6 +15,8 @@ import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableCaption } from "../../components/ui/Table";
 import { ConfirmDialog } from "../../components/ui/Dialog";
+import { AdminModal } from "../../components/admin/AdminModal";
+import { FilterChips } from "../../components/admin/FilterChips";
 
 export function AdminUsersPage() {
   const { token } = useAuth();
@@ -22,12 +24,14 @@ export function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filterRole, setFilterRole] = useState<"teacher" | "student" | "all">("all");
+  const [query, setQuery] = useState("");
 
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"teacher" | "student">("teacher");
   const [creating, setCreating] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const [confirmUser, setConfirmUser] = useState<UserResponse | null>(null);
   const [confirmMode, setConfirmMode] = useState<"toggleActive" | "delete">("toggleActive");
@@ -54,6 +58,12 @@ export function AdminUsersPage() {
       .finally(() => setLoading(false));
   }, [token, filterRole]);
 
+  const filteredUsers = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return users;
+    return users.filter((u) => u.email.toLowerCase().includes(q) || u.full_name.toLowerCase().includes(q));
+  }, [users, query]);
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!token) return;
@@ -69,6 +79,8 @@ export function AdminUsersPage() {
       setFullName("");
       setPassword("");
       setRole("teacher");
+      setCreateOpen(false);
+      setNotice("User created successfully.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create user");
     } finally {
@@ -163,7 +175,7 @@ export function AdminUsersPage() {
     }
   }
 
-  if (loading) return <p className="text-gray-600">Loading users...</p>;
+  if (loading) return <p className="text-slate-500">Loading users...</p>;
   if (error) return <p className="text-red-600">{error}</p>;
 
   const confirmOpen = !!confirmUser;
@@ -186,74 +198,40 @@ export function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-semibold">Users</h2>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">Users</h1>
+          <p className="text-sm text-slate-500">Manage accounts, roles and access.</p>
+        </div>
+        <Button onClick={() => setCreateOpen(true)}>Create User</Button>
+      </div>
       {notice && (
         <p className={`text-sm ${notice.toLowerCase().includes("fail") ? "text-red-600" : "text-green-700"}`}>
           {notice}
         </p>
       )}
 
-      <Card className="max-w-xl space-y-3">
-        <h3 className="text-sm font-semibold text-gray-800">Create user</h3>
-        <form onSubmit={handleCreate} className="space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
+      <Card className="border border-slate-100 shadow-sm">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3">
+          <h3 className="text-sm font-semibold text-slate-900">User Management</h3>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="w-full sm:w-72">
               <Input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
+                placeholder="Search by name or email..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
               />
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Full name</label>
-              <Input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Password</label>
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Role</label>
-              <Select
-                value={role}
-                onChange={(e) => setRole(e.target.value as "teacher" | "student")}
-              >
-                <option value="teacher">Teacher</option>
-                <option value="student">Student</option>
-              </Select>
-            </div>
+            <FilterChips
+              value={filterRole}
+              onChange={setFilterRole}
+              options={[
+                { value: "all", label: "All" },
+                { value: "teacher", label: "Teacher" },
+                { value: "student", label: "Student" },
+              ]}
+            />
           </div>
-          <Button type="submit" disabled={creating}>
-            {creating ? "Creating..." : "Create"}
-          </Button>
-        </form>
-      </Card>
-
-      <Card>
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="text-sm font-semibold text-gray-800">Existing users</h3>
-          <Select
-            value={filterRole}
-            onChange={(e) => setFilterRole(e.target.value as "teacher" | "student" | "all")}
-            className="w-auto"
-          >
-            <option value="all">All roles</option>
-            <option value="teacher">Teachers</option>
-            <option value="student">Students</option>
-          </Select>
         </div>
         <Table>
           <TableHeader>
@@ -266,14 +244,14 @@ export function AdminUsersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.length === 0 ? (
+            {filteredUsers.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-gray-500">
                   No users found.
                 </TableCell>
               </TableRow>
             ) : (
-              users.map((u) => (
+              filteredUsers.map((u) => (
                 <TableRow key={u.id}>
                   <TableCell>{u.full_name}</TableCell>
                   <TableCell>{u.email}</TableCell>
@@ -288,41 +266,35 @@ export function AdminUsersPage() {
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-3">
-                      <button
-                        type="button"
-                        onClick={() => openEdit(u)}
-                        className="text-xs text-slate-700 hover:underline"
-                      >
+                    <div className="flex justify-end gap-2 flex-wrap">
+                      <Button size="sm" variant="ghost" type="button" onClick={() => openEdit(u)}>
                         Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPasswordUser(u)}
-                        className="text-xs text-indigo-700 hover:underline"
-                      >
+                      </Button>
+                      <Button size="sm" variant="ghost" type="button" onClick={() => setPasswordUser(u)}>
                         Reset password
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
                         type="button"
                         onClick={() => {
                           setConfirmMode("toggleActive");
                           setConfirmUser(u);
                         }}
-                        className="text-xs text-blue-600 hover:underline"
                       >
                         {u.is_active ? "Deactivate" : "Activate"}
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="danger"
                         type="button"
                         onClick={() => {
                           setConfirmMode("delete");
                           setConfirmUser(u);
                         }}
-                        className="text-xs text-red-600 hover:underline"
                       >
                         Delete
-                      </button>
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -354,82 +326,156 @@ export function AdminUsersPage() {
         onCancel={() => setConfirmUser(null)}
       />
 
-      {editingUser && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
-            <h3 className="text-lg font-semibold mb-4">Edit user</h3>
+      <AdminModal
+        open={createOpen}
+        title="Create New User"
+        onClose={() => !creating && setCreateOpen(false)}
+      >
+        <form onSubmit={handleCreate} className="space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Full Name *</label>
+            <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="e.g. John Doe" required />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Email *</label>
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="user@example.com" required />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Password *</label>
+            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={6} required />
+            <p className="mt-1 text-[11px] text-slate-400">Min 6 characters</p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Role *</label>
+            <Select value={role} onChange={(e) => setRole(e.target.value as "teacher" | "student")}>
+              <option value="teacher">Teacher</option>
+              <option value="student">Student</option>
+            </Select>
+          </div>
+          <Button type="submit" disabled={creating} className="w-full">
+            {creating ? "Creating..." : "Create Account"}
+          </Button>
+        </form>
+      </AdminModal>
+
+      <AdminModal
+        open={!!editingUser}
+        title="Edit user"
+        onClose={() => !savingEdit && setEditingUser(null)}
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" type="button" onClick={() => setEditingUser(null)} disabled={savingEdit}>
+              Cancel
+            </Button>
+            <Button type="button" disabled={savingEdit} onClick={saveEdit}>
+              {savingEdit ? "Saving..." : "Save"}
+            </Button>
+          </div>
+        }
+      >
+        {editingUser && (
+          <div className="space-y-4">
+            {notice && notice.toLowerCase().includes("fail") && (
+              <div className="text-sm text-rose-700 bg-rose-50 border border-rose-100 rounded-xl px-3 py-2">
+                {notice}
+              </div>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="sm:col-span-2">
-                <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-xs font-medium text-slate-700 mb-1">Email</label>
                 <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-xs font-medium text-gray-700 mb-1">Full name</label>
+                <label className="block text-xs font-medium text-slate-700 mb-1">Full name</label>
                 <Input value={editFullName} onChange={(e) => setEditFullName(e.target.value)} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Role</label>
+                <label className="block text-xs font-medium text-slate-700 mb-1">Role</label>
                 <Select value={editRole} onChange={(e) => setEditRole(e.target.value as "teacher" | "student")}>
                   <option value="teacher">Teacher</option>
                   <option value="student">Student</option>
                 </Select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
-                <Select value={editIsActive ? "active" : "inactive"} onChange={(e) => setEditIsActive(e.target.value === "active")}>
+                <label className="block text-xs font-medium text-slate-700 mb-1">Status</label>
+                <Select
+                  value={editIsActive ? "active" : "inactive"}
+                  onChange={(e) => setEditIsActive(e.target.value === "active")}
+                >
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
                 </Select>
               </div>
             </div>
-            <div className="flex justify-end gap-2 mt-6">
-              <Button variant="secondary" type="button" onClick={() => setEditingUser(null)}>
-                Cancel
-              </Button>
-              <Button type="button" disabled={savingEdit} onClick={saveEdit}>
-                {savingEdit ? "Saving..." : "Save"}
-              </Button>
-            </div>
           </div>
-        </div>
-      )}
+        )}
+      </AdminModal>
 
-      {passwordUser && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold mb-1">Reset password</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Set a new password for <span className="font-medium">{passwordUser.email}</span>.
-            </p>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">New password</label>
-                <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} minLength={6} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Confirm new password</label>
-                <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} minLength={6} />
-              </div>
+      <AdminModal
+        open={!!passwordUser}
+        title="Reset password"
+        onClose={() => !savingPassword && setPasswordUser(null)}
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="secondary"
+              type="button"
+              disabled={savingPassword}
+              onClick={() => {
+                setPasswordUser(null);
+                setNewPassword("");
+                setConfirmPassword("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="button" disabled={savingPassword} onClick={savePassword}>
+              {savingPassword ? "Saving..." : "Update password"}
+            </Button>
+          </div>
+        }
+      >
+        {passwordUser && (
+          <div className="space-y-4">
+            <div className="text-sm text-slate-600">
+              Set a new password for <span className="font-medium text-slate-900">{passwordUser.email}</span>.
             </div>
-            <div className="flex justify-end gap-2 mt-6">
-              <Button
-                variant="secondary"
-                type="button"
-                onClick={() => {
-                  setPasswordUser(null);
-                  setNewPassword("");
-                  setConfirmPassword("");
-                }}
+            {notice && (
+              <div
+                className={`text-sm rounded-xl px-3 py-2 border ${
+                  notice.toLowerCase().includes("fail") || notice.toLowerCase().includes("must") || notice.toLowerCase().includes("match")
+                    ? "text-rose-700 bg-rose-50 border-rose-100"
+                    : "text-emerald-800 bg-emerald-50 border-emerald-100"
+                }`}
               >
-                Cancel
-              </Button>
-              <Button type="button" disabled={savingPassword} onClick={savePassword}>
-                {savingPassword ? "Saving..." : "Update password"}
-              </Button>
+                {notice}
+              </div>
+            )}
+            <div className="grid grid-cols-1 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">New password</label>
+                <Input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  minLength={6}
+                  placeholder="Minimum 6 characters"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">Confirm new password</label>
+                <Input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  minLength={6}
+                  placeholder="Re-enter password"
+                />
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </AdminModal>
     </div>
   );
 }

@@ -7,6 +7,16 @@ interface CardProps {
 }
 
 export function Card({ children, className }: CardProps) {
-  return <div className={clsx("bg-white rounded-lg shadow p-4", className)}>{children}</div>;
+  return (
+    <div
+      className={clsx(
+        "bg-[var(--panel-bg)] text-[var(--text)] rounded-2xl border border-[var(--border-soft)] shadow-sm p-[var(--card-p)]",
+        "transition-shadow hover:shadow-md",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
 }
 

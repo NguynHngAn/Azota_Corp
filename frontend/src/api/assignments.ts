@@ -106,6 +106,31 @@ export function getSubmissionResult(submissionId: number, token: string): Promis
   return get<SubmissionResultResponse>(`/api/v1/assignments/submissions/${submissionId}/result`, token);
 }
 
+export interface MySubmissionSummary {
+  submission_id: number;
+  assignment_id: number;
+  exam_title: string;
+  class_name: string;
+  submitted_at: string;
+  score: number | null;
+}
+
+export interface MyAssignmentSubmissionResponse {
+  submission_id: number;
+  assignment_id: number;
+  exam_title: string;
+  submitted_at: string;
+  score: number | null;
+}
+
+export function listMySubmissions(token: string): Promise<MySubmissionSummary[]> {
+  return get<MySubmissionSummary[]>("/api/v1/assignments/submissions/my", token);
+}
+
+export function getMySubmissionForAssignment(assignmentId: number, token: string): Promise<MyAssignmentSubmissionResponse> {
+  return get<MyAssignmentSubmissionResponse>(`/api/v1/assignments/${assignmentId}/my-submission`, token);
+}
+
 // Reporting
 export interface ScoreBucket {
   label: string;

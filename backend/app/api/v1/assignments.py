@@ -22,6 +22,8 @@ from app.schemas.assignment_schema import (
     QuestionResultItem,
     QuestionResultDetail,
     OptionResultItem,
+    MySubmissionSummary,
+    MyAssignmentSubmissionResponse,
     AssignmentReportResponse,
     AdminOverviewReportResponse,
     ScoreBucket,
@@ -32,6 +34,65 @@ from app.services.grading_service import grade_submission
 from app.services.ai_explanation_service import generate_explanations_for_submission
 
 router = APIRouter(prefix="/assignments", tags=["assignments"])
+
+
+@router.get("/submissions/my", response_model=list[MySubmissionSummary])
+def list_my_submissions(
+    current_user: Annotated[User, Depends(require_role(Role.student))],
+    db: Session = Depends(get_db),
+):
+    # Return submitted submissions only, newest first
+    rows = (
+        db.query(Submission, Assignment, Class, Exam)
+        .join(Assignment, Submission.assignment_id == Assignment.id)
+        .join(Class, Assignment.class_id == Class.id)
+        .join(Exam, Assignment.exam_id == Exam.id)
+        .filter(Submission.user_id == current_user.id, Submission.submitted_at.is_not(None))
+        .order_by(Submission.submitted_at.desc())
+        .all()
+    )
+    return [
+        MySubmissionSummary(
+            submission_id=s.id,
+            assignment_id=s.assignment_id,
+            exam_title=exam.title,
+            class_name=class_.name,
+            submitted_at=s.submitted_at,  # type: ignore[arg-type]
+            score=s.score,
+        )
+        for (s, _a, class_, exam) in rows
+    ]
+
+
+@router.get("/{assignment_id}/my-submission", response_model=MyAssignmentSubmissionResponse)
+def get_my_submission_for_assignment(
+    assignment_id: int,
+    current_user: Annotated[User, Depends(require_role(Role.student))],
+    db: Session = Depends(get_db),
+):
+    assignment = db.query(Assignment).filter(Assignment.id == assignment_id).first()
+    if not assignment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found")
+    if not is_in_class(db, assignment.class_id, current_user.id):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not in this class")
+    submission = (
+        db.query(Submission)
+        .filter(
+            Submission.assignment_id == assignment_id,
+            Submission.user_id == current_user.id,
+            Submission.submitted_at.is_not(None),
+        )
+        .first()
+    )
+    if not submission:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No submitted submission")
+    return MyAssignmentSubmissionResponse(
+        submission_id=submission.id,
+        assignment_id=assignment_id,
+        exam_title=assignment.exam.title,
+        submitted_at=submission.submitted_at,  # type: ignore[arg-type]
+        score=submission.score,
+    )
 
 
 @router.post("/submissions/{submission_id}/submit", response_model=SubmissionResponse)

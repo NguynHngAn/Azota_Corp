@@ -1,13 +1,21 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { listExams, type ExamResponse } from "../../api/exams";
+import { Card } from "../../components/ui/Card";
+import { Input } from "../../components/ui/Input";
+import { Button } from "../../components/ui/Button";
+import { FilterChips } from "../../components/admin/FilterChips";
+import { Badge } from "../../components/ui/Badge";
 
 export function ExamListPage() {
   const { token } = useAuth();
+  const navigate = useNavigate();
   const [exams, setExams] = useState<ExamResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [q, setQ] = useState("");
+  const [filter, setFilter] = useState<"all" | "draft" | "published">("all");
 
   useEffect(() => {
     if (!token) return;
@@ -17,39 +25,66 @@ export function ExamListPage() {
       .finally(() => setLoading(false));
   }, [token]);
 
-  if (loading) return <p className="text-gray-600">Loading...</p>;
+  const filtered = useMemo(() => {
+    const query = q.trim().toLowerCase();
+    return exams.filter((e) => {
+      if (filter === "draft" && !e.is_draft) return false;
+      if (filter === "published" && e.is_draft) return false;
+      if (!query) return true;
+      return e.title.toLowerCase().includes(query);
+    });
+  }, [exams, q, filter]);
+
+  if (loading) return <p className="text-slate-500">Loading...</p>;
   if (error) return <p className="text-red-600">{error}</p>;
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">Exams</h2>
-        <Link
-          to="/teacher/exams/new"
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Create exam
-        </Link>
+    <div className="space-y-6">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">Exams</h1>
+          <p className="text-sm text-slate-500">Manage and create exams for your classes.</p>
+        </div>
+        <Button onClick={() => navigate("/teacher/exams/new")}>+ Create Exam</Button>
       </div>
-      <ul className="space-y-2">
-        {exams.length === 0 ? (
-          <li className="text-gray-500">No exams yet.</li>
-        ) : (
-          exams.map((e) => (
-            <li key={e.id}>
-              <Link
-                to={`/teacher/exams/${e.id}`}
-                className="block p-3 bg-white rounded shadow hover:bg-gray-50 flex justify-between items-center"
-              >
-                <span className="font-medium">{e.title}</span>
-                <span className={`text-xs px-2 py-0.5 rounded ${e.is_draft ? "bg-yellow-100" : "bg-green-100"}`}>
-                  {e.is_draft ? "Draft" : "Published"}
-                </span>
-              </Link>
-            </li>
-          ))
-        )}
-      </ul>
+
+      <Card className="border border-slate-100 shadow-sm">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="w-full sm:w-96">
+            <Input placeholder="Search exams..." value={q} onChange={(e) => setQ(e.target.value)} />
+          </div>
+          <FilterChips
+            value={filter}
+            onChange={setFilter}
+            options={[
+              { value: "all", label: "All" },
+              { value: "published", label: "Published" },
+              { value: "draft", label: "Draft" },
+            ]}
+          />
+        </div>
+
+        <div className="mt-4">
+          {filtered.length === 0 ? (
+            <div className="py-12 text-center text-sm text-slate-500">No exams found.</div>
+          ) : (
+            <div className="space-y-2">
+              {filtered.map((e) => (
+                <Link
+                  key={e.id}
+                  to={`/teacher/exams/${e.id}`}
+                  className="block rounded-xl border border-slate-100 bg-white px-4 py-3 hover:bg-slate-50 transition"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-sm font-medium text-slate-900">{e.title}</div>
+                    <Badge variant={e.is_draft ? "warning" : "success"}>{e.is_draft ? "Draft" : "Published"}</Badge>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </Card>
     </div>
   );
 }
