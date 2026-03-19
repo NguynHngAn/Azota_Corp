@@ -1,19 +1,35 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
 from sqlalchemy.orm import Session
+from pathlib import Path
 
 from app.database import get_db
 from app.models.user import Role, User
 from app.schemas.user import AdminResetPasswordRequest, UserCreate, UserResponse, UserUpdate
 from app.api.deps import get_current_user, require_role
 from app.core.security import hash_password
+from app.services.avatar_service import save_avatar_file
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: Annotated[User, Depends(get_current_user)]):
+    return current_user
+
+
+@router.post("/me/avatar", response_model=UserResponse)
+def upload_my_avatar(
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Session = Depends(get_db),
+    file: UploadFile = File(...),
+):
+    static_dir = Path(__file__).resolve().parent.parent.parent / "static"
+    url = save_avatar_file(static_dir, file, current_user.id)
+    current_user.avatar_url = url
+    db.commit()
+    db.refresh(current_user)
     return current_user
 
 

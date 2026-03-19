@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
@@ -10,6 +10,8 @@ import { Toggle } from "../../components/settings/Toggle";
 import { OptionCard } from "../../components/settings/OptionCard";
 import { useLocalStorageState } from "../../components/settings/useLocalStorageState";
 import { notifyLanguageChanged, t, useLanguage } from "../../i18n";
+import { uploadMyAvatar } from "../../api/users";
+import { resolveStaticUrl } from "../../utils/url";
 
 function initials(text: string): string {
   const t = (text || "").trim();
@@ -38,10 +40,11 @@ type LanguageState = {
 };
 
 export function SharedSettingsPage() {
-  const { user } = useAuth();
+  const { user, token, refreshMe } = useAuth();
   const [tab, setTab] = useState<SettingsTab>("profile");
   const [switching, setSwitching] = useState(false);
   const langUi = useLanguage();
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
   const [notifications, setNotifications] = useLocalStorageState<NotificationsState>("settings.notifications", {
     examSubmissions: true,
@@ -187,10 +190,45 @@ export function SharedSettingsPage() {
             {!switching && tab === "profile" && (
               <div className="mt-4 space-y-4">
                 <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-[var(--primary-soft)] text-[var(--primary)] flex items-center justify-center font-semibold">
-                    {initials(user?.full_name || user?.email || "U")}
+                  <div className="h-12 w-12 rounded-full bg-[var(--primary-soft)] text-[var(--primary)] flex items-center justify-center font-semibold overflow-hidden">
+                    {user?.avatar_url ? (
+                      <img
+                        src={resolveStaticUrl(user.avatar_url)}
+                        alt="Avatar"
+                        className="h-full w-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      initials(user?.full_name || user?.email || "U")
+                    )}
                   </div>
-                  <Button size="sm" variant="secondary" type="button">
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const f = e.target.files?.[0];
+                      if (!f || !token) return;
+                      setNotice(null);
+                      try {
+                        await uploadMyAvatar(f, token);
+                        await refreshMe();
+                        setNotice({ kind: "success", message: "Avatar updated." });
+                      } catch (err) {
+                        setNotice({ kind: "error", message: err instanceof Error ? err.message : "Upload failed" });
+                      } finally {
+                        // allow re-selecting same file
+                        if (fileRef.current) fileRef.current.value = "";
+                      }
+                    }}
+                  />
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                  >
                     Change Photo
                   </Button>
                 </div>

@@ -56,3 +56,19 @@ export {
   type AntiCheatMonitorRow,
   type AntiCheatMonitorSummary,
 } from "./antiCheat";
+
+export {
+  listBankQuestions,
+  createBankQuestion,
+  getBankQuestion,
+  updateBankQuestion,
+  deleteBankQuestion,
+  addFromBankToExam,
+  type BankQuestionCreate,
+  type BankQuestionUpdate,
+  type BankQuestionListItem,
+  type BankQuestionListResponse,
+  type BankQuestionResponse,
+  type BankAnswerOptionCreate,
+  type BankAnswerOptionResponse,
+} from "./questionBank";

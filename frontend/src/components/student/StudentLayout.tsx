@@ -6,6 +6,7 @@ import { useExam } from "../../context";
 import { Icons } from "../admin/icons";
 import { Button } from "../ui/Button";
 import { t, useLanguage } from "../../i18n";
+import { resolveStaticUrl } from "../../utils/url";
 
 type NavItem = { to: string; label: string; key: string; icon: () => React.ReactElement };
 
@@ -139,8 +140,17 @@ export function StudentLayout() {
                 >
                   <Icons.Bell />
                 </button>
-                <div className="h-9 w-9 rounded-full bg-[var(--border-soft)] text-[var(--text)] flex items-center justify-center font-semibold">
-                  {initials(user?.full_name || user?.email || "S")}
+                <div className="h-9 w-9 rounded-full bg-[var(--border-soft)] text-[var(--text)] flex items-center justify-center font-semibold overflow-hidden">
+                  {user?.avatar_url ? (
+                    <img
+                      src={resolveStaticUrl(user.avatar_url)}
+                      alt="Avatar"
+                      className="h-full w-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    initials(user?.full_name || user?.email || "S")
+                  )}
                 </div>
               </div>
             </div>

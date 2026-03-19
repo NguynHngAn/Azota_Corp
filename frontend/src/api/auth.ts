@@ -12,6 +12,7 @@ export interface UserResponse {
   full_name: string;
   role: "admin" | "teacher" | "student";
   is_active: boolean;
+  avatar_url?: string | null;
   created_at: string;
 }
 

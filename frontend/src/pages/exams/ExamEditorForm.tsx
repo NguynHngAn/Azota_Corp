@@ -13,6 +13,7 @@ interface ExamEditorFormProps {
   state: ExamFormState;
   setState: Dispatch<SetStateAction<ExamFormState>>;
   onAddQuestion: () => void;
+  onAddFromBank?: () => void;
   onSave: () => void;
   saving: boolean;
   saveLabel: string;
@@ -67,6 +68,7 @@ export function ExamEditorForm({
   state,
   setState,
   onAddQuestion,
+  onAddFromBank,
   onSave,
   saving,
   saveLabel,
@@ -168,9 +170,16 @@ export function ExamEditorForm({
             <Card className="shadow-sm hover:shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <div className="text-sm text-slate-600">{questionCount} question(s)</div>
-                <Button size="sm" variant="secondary" type="button" onClick={onAddQuestion}>
-                  + Add Question
-                </Button>
+                <div className="flex items-center gap-2">
+                  {onAddFromBank ? (
+                    <Button size="sm" variant="secondary" type="button" onClick={onAddFromBank}>
+                      + Add from bank
+                    </Button>
+                  ) : null}
+                  <Button size="sm" variant="secondary" type="button" onClick={onAddQuestion}>
+                    + Add Question
+                  </Button>
+                </div>
               </div>
 
               {state.questions.length === 0 ? (

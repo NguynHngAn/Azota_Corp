@@ -6,7 +6,7 @@ from alembic import context
 
 from app.config import settings
 from app.database import Base
-from app.models import User, Class, ClassMember, Exam, Question, AnswerOption, Assignment, Submission, SubmissionAnswer, AntiCheatEvent  # noqa: F401
+from app.models import User, Class, ClassMember, Exam, Question, AnswerOption, Assignment, Submission, SubmissionAnswer, AntiCheatEvent, BankQuestion, BankAnswerOption, BankTag, BankQuestionTag  # noqa: F401
 
 config = context.config
 if config.config_file_name is not None:

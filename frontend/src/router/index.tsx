@@ -1,11 +1,12 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { lazy, Suspense } from "react";
 import { AuthProvider, useAuth, ExamProvider } from "../context";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { AdminLayout } from "../components/admin/AdminLayout";
 import { TeacherLayout } from "../components/teacher/TeacherLayout";
 import { StudentLayout } from "../components/student/StudentLayout";
 import { Login } from "../pages/Login";
-import { LandingPage } from "../pages/LandingPage";
+const LazyLandingPage = lazy(() => import("../pages/LandingPage"));
 import {
   ClassListPage,
   CreateClassPage,
@@ -42,10 +43,27 @@ import { StudentSettingsPage } from "../pages/student/StudentSettingsPage";
 import { ROLES } from "../utils/constants";
 import { PreferencesBootstrap } from "../components/settings/PreferencesBootstrap";
 
+function FullPageLoading({ label = "Loading..." }: { label?: string }) {
+  return (
+    <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text)] flex items-center justify-center px-4">
+      <div className="w-full max-w-md rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-bg)] p-[var(--card-p)] shadow-sm">
+        <div className="h-4 w-24 rounded bg-slate-50 animate-pulse" />
+        <div className="mt-3 h-4 w-2/3 rounded bg-slate-50 animate-pulse" />
+        <div className="mt-6 text-sm text-[var(--muted)]">{label}</div>
+      </div>
+    </div>
+  );
+}
+
 function RootRedirect() {
   const { user, token, loading } = useAuth();
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-  if (!token || !user) return <LandingPage />;
+  if (loading) return <FullPageLoading label="Loading session..." />;
+  if (!token || !user)
+    return (
+      <Suspense fallback={<FullPageLoading label="Loading landing page..." />}>
+        <LazyLandingPage />
+      </Suspense>
+    );
   if (user.role === "admin") return <Navigate to="/admin/classes" replace />;
   if (user.role === "teacher") return <Navigate to="/teacher/dashboard" replace />;
   return <Navigate to="/student/dashboard" replace />;
@@ -53,7 +71,7 @@ function RootRedirect() {
 
 function LoginRedirect() {
   const { user, token, loading } = useAuth();
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (loading) return <FullPageLoading label="Loading session..." />;
   if (!token || !user) return <Login />;
   if (user.role === "admin") return <Navigate to="/admin/classes" replace />;
   if (user.role === "teacher") return <Navigate to="/teacher/dashboard" replace />;

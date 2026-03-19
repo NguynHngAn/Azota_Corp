@@ -1,4 +1,5 @@
 import { get, post, put, del } from "./client";
+import { API_BASE_URL } from "../utils/constants";
 
 export type Role = "admin" | "teacher" | "student";
 
@@ -8,6 +9,7 @@ export interface UserResponse {
   full_name: string;
   role: Role;
   is_active: boolean;
+  avatar_url?: string | null;
   created_at: string;
 }
 
@@ -45,5 +47,21 @@ export function deactivateUser(userId: number, token: string): Promise<void> {
 
 export function resetUserPassword(userId: number, newPassword: string, token: string): Promise<void> {
   return put(`/api/v1/users/${userId}/password`, { new_password: newPassword }, token);
+}
+
+export async function uploadMyAvatar(file: File, token: string): Promise<UserResponse> {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`${API_BASE_URL}/api/v1/users/me/avatar`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const detail = (data as { detail?: unknown }).detail;
+    throw new Error(typeof detail === "string" ? detail : res.statusText);
+  }
+  return data as UserResponse;
 }
 

@@ -1,10 +1,12 @@
 from fastapi import FastAPI, Depends
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from app.config import settings
 from app.database import get_db
-from app.api.v1 import auth, users, classes, exams, assignments, anti_cheat
+from app.api.v1 import auth, users, classes, exams, assignments, anti_cheat, question_bank
 
 app = FastAPI(title=settings.app_name)
 app.include_router(auth.router, prefix="/api/v1")
@@ -13,6 +15,12 @@ app.include_router(classes.router, prefix="/api/v1")
 app.include_router(exams.router, prefix="/api/v1")
 app.include_router(assignments.router, prefix="/api/v1")
 app.include_router(anti_cheat.router, prefix="/api/v1")
+app.include_router(question_bank.router, prefix="/api/v1")
+
+# Static files (avatars uploads)
+_static_dir = Path(__file__).resolve().parent / "static"
+_static_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
 
 
 @app.get("/routes")

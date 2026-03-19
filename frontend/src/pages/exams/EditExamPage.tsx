@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
   getExam,
@@ -9,6 +9,12 @@ import {
   deleteQuestion,
   type ExamDetail,
 } from "../../api/exams";
+import { addFromBankToExam, listBankQuestions, type BankQuestionListItem } from "../../api/questionBank";
+import { ConfirmDialog } from "../../components/ui/Dialog";
+import { Button } from "../../components/ui/Button";
+import { Card } from "../../components/ui/Card";
+import { Input } from "../../components/ui/Input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/Table";
 import type { ExamFormState } from "./types";
 import { validateExamForm } from "./types";
 import { ExamEditorForm } from "./ExamEditorForm";
@@ -36,12 +42,20 @@ export function EditExamPage() {
   const { id } = useParams<{ id: string }>();
   const { token } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const examId = id ? parseInt(id, 10) : NaN;
   const [state, setState] = useState<ExamFormState | null>(null);
   const [originalQuestionIds, setOriginalQuestionIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [bankOpen, setBankOpen] = useState(false);
+  const [bankLoading, setBankLoading] = useState(false);
+  const [bankError, setBankError] = useState("");
+  const [bankQuery, setBankQuery] = useState("");
+  const [bankItems, setBankItems] = useState<BankQuestionListItem[]>([]);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [bankAutoOpened, setBankAutoOpened] = useState(false);
 
   useEffect(() => {
     if (!token || !id || isNaN(examId)) return;
@@ -53,6 +67,52 @@ export function EditExamPage() {
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load"))
       .finally(() => setLoading(false));
   }, [token, id, examId]);
+
+  useEffect(() => {
+    if (!token) return;
+    if (loading) return;
+    if (bankAutoOpened) return;
+    const params = new URLSearchParams(location.search);
+    if (params.get("openBank") !== "1") return;
+    setBankAutoOpened(true);
+    setBankOpen(true);
+    void loadBank();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bankAutoOpened, loading, location.search, token]);
+
+  async function loadBank() {
+    if (!token) return;
+    setBankLoading(true);
+    setBankError("");
+    try {
+      const res = await listBankQuestions(token, { q: bankQuery.trim() || undefined, limit: 50, offset: 0, is_active: true });
+      setBankItems(res.items);
+    } catch (e) {
+      setBankError(e instanceof Error ? e.message : "Failed to load question bank");
+      setBankItems([]);
+    } finally {
+      setBankLoading(false);
+    }
+  }
+
+  async function importSelected() {
+    if (!token) return;
+    if (selectedIds.length === 0) return;
+    setBankLoading(true);
+    setBankError("");
+    try {
+      await addFromBankToExam(examId, selectedIds, token);
+      const exam = await getExam(examId, token);
+      setState(examToFormState(exam));
+      setOriginalQuestionIds(exam.questions.map((q) => q.id));
+      setBankOpen(false);
+      setSelectedIds([]);
+    } catch (e) {
+      setBankError(e instanceof Error ? e.message : "Failed to import questions");
+    } finally {
+      setBankLoading(false);
+    }
+  }
 
   async function handleSave() {
     if (!state || !token) return;
@@ -158,10 +218,117 @@ export function EditExamPage() {
         state={state}
         setState={setState as React.Dispatch<React.SetStateAction<ExamFormState>>}
         onAddQuestion={addQuestionLocal}
+        onAddFromBank={() => {
+          setBankOpen(true);
+          void loadBank();
+        }}
         onSave={handleSave}
         saving={submitting}
         saveLabel="Save exam"
       />
+
+      <ConfirmDialog
+        open={bankOpen}
+        title="Add from Question Bank"
+        description=""
+        confirmLabel="Close"
+        cancelLabel="Close"
+        onCancel={() => setBankOpen(false)}
+        onConfirm={() => setBankOpen(false)}
+      />
+
+      {bankOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-[var(--panel-bg)] text-[var(--text)] rounded-2xl shadow-lg w-full max-w-3xl p-5 border border-[var(--border-soft)]">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold">Add from Question Bank</div>
+                <div className="text-xs text-slate-500 mt-1">Select questions to copy into this exam (snapshot).</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="secondary" onClick={() => setBankOpen(false)} disabled={bankLoading}>
+                  Cancel
+                </Button>
+                <Button onClick={importSelected} disabled={bankLoading || selectedIds.length === 0}>
+                  {bankLoading ? "Adding..." : `Add (${selectedIds.length})`}
+                </Button>
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-center gap-2">
+              <div className="flex-1">
+                <Input
+                  placeholder="Search bank questions..."
+                  value={bankQuery}
+                  onChange={(e) => setBankQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void loadBank();
+                  }}
+                />
+              </div>
+              <Button variant="secondary" onClick={loadBank} disabled={bankLoading}>
+                Search
+              </Button>
+            </div>
+
+            {bankError ? <div className="mt-3 text-sm text-rose-700">{bankError}</div> : null}
+
+            <Card className="mt-4 border border-[var(--border-soft)] shadow-sm hover:shadow-sm">
+              {bankLoading ? (
+                <div className="space-y-3">
+                  <div className="h-10 w-full rounded-xl bg-slate-50 animate-pulse" />
+                  <div className="h-10 w-full rounded-xl bg-slate-50 animate-pulse" />
+                  <div className="h-10 w-full rounded-xl bg-slate-50 animate-pulse" />
+                </div>
+              ) : bankItems.length === 0 ? (
+                <div className="py-10 text-center text-sm text-slate-500">No questions found.</div>
+              ) : (
+                <div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead />
+                        <TableHead>Question</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Difficulty</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {bankItems.map((it) => {
+                        const checked = selectedIds.includes(it.id);
+                        return (
+                          <TableRow key={it.id}>
+                            <TableCell>
+                              <input
+                                type="checkbox"
+                                className="h-4 w-4"
+                                checked={checked}
+                                onChange={(e) => {
+                                  const next = e.target.checked;
+                                  setSelectedIds((prev) =>
+                                    next ? Array.from(new Set([...prev, it.id])) : prev.filter((x) => x !== it.id),
+                                  );
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell className="max-w-[520px]">
+                              <div className="font-medium text-slate-900 line-clamp-2">{it.text}</div>
+                            </TableCell>
+                            <TableCell className="text-slate-700">
+                              {it.question_type === "single_choice" ? "Single" : "Multiple"}
+                            </TableCell>
+                            <TableCell className="text-slate-700">{it.difficulty}</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </Card>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

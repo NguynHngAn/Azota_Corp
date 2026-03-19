@@ -18,6 +18,7 @@ interface AuthState {
 interface AuthContextValue extends AuthState {
   login: (email: string, password: string) => Promise<UserResponse>;
   logout: () => void;
+  refreshMe: () => Promise<UserResponse | null>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -42,6 +43,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return me;
   }, []);
 
+  const refreshMe = useCallback(async (): Promise<UserResponse | null> => {
+    const currentToken = token ?? localStorage.getItem(AUTH_TOKEN_KEY);
+    if (!currentToken) return null;
+    try {
+      const me = await getMe(currentToken);
+      setToken(currentToken);
+      setUser(me);
+      return me;
+    } catch {
+      return null;
+    }
+  }, [token]);
+
   useEffect(() => {
     const stored = localStorage.getItem(AUTH_TOKEN_KEY);
     if (!stored) {
@@ -65,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading,
     login,
     logout,
+    refreshMe,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

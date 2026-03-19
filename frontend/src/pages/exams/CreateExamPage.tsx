@@ -20,6 +20,39 @@ export function CreateExamPage() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  async function createDraftAndGo(openBank: boolean) {
+    if (!token) return;
+    if (!state.title.trim()) {
+      setError("Exam title is required.");
+      return;
+    }
+    setError("");
+    setSubmitting(true);
+    try {
+      const payload = {
+        title: state.title.trim(),
+        description: state.description.trim() || null,
+        is_draft: true,
+        questions: state.questions.map((q, i) => ({
+          order_index: i,
+          question_type: q.question_type,
+          text: q.text.trim(),
+          options: q.options.map((o, j) => ({
+            order_index: j,
+            text: o.text.trim(),
+            is_correct: o.is_correct,
+          })),
+        })),
+      };
+      const created = await createExam(payload, token);
+      navigate(`/teacher/exams/${created.id}${openBank ? "?openBank=1" : ""}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   async function handleSave() {
     const errors = validateExamForm(state);
     if (errors.length > 0) {
@@ -76,6 +109,7 @@ export function CreateExamPage() {
         state={state}
         setState={setState}
         onAddQuestion={addQuestion}
+        onAddFromBank={() => void createDraftAndGo(true)}
         onSave={handleSave}
         saving={submitting}
         saveLabel="Save"
