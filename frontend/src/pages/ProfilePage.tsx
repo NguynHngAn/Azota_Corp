@@ -1,6 +1,6 @@
 import { useAuth } from "../context/AuthContext";
-import { Card } from "../components/ui/Card";
-import { Input } from "../components/ui/Input";
+import { Card } from "../components/ui/card";
+import { Input } from "../components/ui/input";
 
 export function ProfilePage() {
   const { user } = useAuth();

@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Card } from "../../components/ui/Card";
+import { useNavigate } from "react-router";
+import { Card } from "../../components/ui/card";
 import { useAuth } from "../../context/AuthContext";
 import { getSubmissionResult, listMySubmissions, type MySubmissionSummary } from "../../api/assignments";
 import { formatDateTimeVietnam } from "../../utils/date";
-import { Button } from "../../components/ui/Button";
-import { Badge } from "../../components/ui/Badge";
+import { Button } from "../../components/ui/button";
+import { Badge } from "../../components/ui/badge";
 
 export function StudentResultsPage() {
   const { token } = useAuth();

@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import { createExam } from "../../api/exams";
 import { type ExamFormState, emptyQuestion, validateExamForm } from "./types";
 import { ExamEditorForm } from "./ExamEditorForm";
-import { Card } from "../../components/ui/Card";
+import { Card } from "../../components/ui/card";
 
 const initialState: ExamFormState = {
   title: "",

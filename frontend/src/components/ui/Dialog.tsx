@@ -50,4 +50,3 @@ export function ConfirmDialog({
   const root = document.body;
   return ReactDOM.createPortal(content, root);
 }
-

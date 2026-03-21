@@ -1,9 +1,9 @@
 import type React from "react";
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router";
 import { useMemo } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { Icons } from "./icons";
-import { Button } from "../ui/Button";
+import { Button } from "../ui/button";
 import { t, useLanguage } from "../../i18n";
 import { resolveStaticUrl } from "../../utils/url";
 

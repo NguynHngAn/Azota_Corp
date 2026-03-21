@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import { listMyClasses, type ClassResponse } from "../../api/classes";
-import { Card } from "../../components/ui/Card";
+import { Card } from "../../components/ui/card";
 import { JoinClassPanel } from "../../components/student/JoinClassPanel";
 
 export function MyClassesPage() {

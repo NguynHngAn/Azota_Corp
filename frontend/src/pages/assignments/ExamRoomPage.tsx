@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import { useExam } from "../../context";
 import {
@@ -11,8 +11,8 @@ import {
 } from "../../api/assignments";
 import { useFullScreen } from "../../hooks/useFullScreen";
 import { useTabVisibility } from "../../hooks/useTabVisibility";
-import { Card } from "../../components/ui/Card";
-import { Button } from "../../components/ui/Button";
+import { Card } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
 import { logAntiCheatEvent } from "../../api/antiCheat";
 
 function formatCountdown(ms: number): string {

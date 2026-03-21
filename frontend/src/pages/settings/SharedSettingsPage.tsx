@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { Card } from "../../components/ui/Card";
-import { Input } from "../../components/ui/Input";
-import { Select } from "../../components/ui/Select";
-import { Button } from "../../components/ui/Button";
+import { Card } from "../../components/ui/card";
+import { Input } from "../../components/ui/input";
+import { Select } from "../../components/ui/select";
+import { Button } from "../../components/ui/button";
 import { Icons } from "../../components/admin/icons";
 import { SettingsTabsNav, type SettingsTab } from "../../components/settings/SettingsTabsNav";
 import { Toggle } from "../../components/settings/Toggle";

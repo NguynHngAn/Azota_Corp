@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import { getClass, type ClassDetail } from "../../api/classes";
 

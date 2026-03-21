@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router";
 import { joinClass } from "../../api/classes";
 import { useAuth } from "../../context/AuthContext";
-import { Card } from "../ui/Card";
-import { Input } from "../ui/Input";
-import { Button } from "../ui/Button";
+import { Card } from "../ui/card";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
 
 export function JoinClassPanel({
   title = "Join a Class",

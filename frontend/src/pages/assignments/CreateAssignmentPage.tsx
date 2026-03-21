@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import { listExams, type ExamResponse } from "../../api/exams";
 import { listClasses, type ClassResponse } from "../../api/classes";

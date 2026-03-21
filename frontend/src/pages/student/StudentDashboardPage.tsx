@@ -5,9 +5,9 @@ import { listMyAssignments, type AssignmentDetail } from "../../api/assignments"
 import { StatsCard } from "../../components/admin/StatsCard";
 import { Icons } from "../../components/admin/icons";
 import { JoinClassPanel } from "../../components/student/JoinClassPanel";
-import { Card } from "../../components/ui/Card";
+import { Card } from "../../components/ui/card";
 import { formatDateTimeVietnam } from "../../utils/date";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 function firstName(fullNameOrEmail?: string | null): string {
   const raw = (fullNameOrEmail || "").trim();

@@ -5,7 +5,7 @@ import { getAssignmentReport, listAssignments, type AssignmentDetail, type Assig
 import { useAuth } from "../../context/AuthContext";
 import { StatsCard } from "../../components/admin/StatsCard";
 import { Icons } from "../../components/admin/icons";
-import { Card } from "../../components/ui/Card";
+import { Card } from "../../components/ui/card";
 
 // In-memory caches (persist across SPA navigation)
 const classCache = new Map<number, ClassDetail>();

@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import { listExams, type ExamResponse } from "../../api/exams";
-import { Card } from "../../components/ui/Card";
-import { Input } from "../../components/ui/Input";
-import { Button } from "../../components/ui/Button";
+import { Card } from "../../components/ui/card";
+import { Input } from "../../components/ui/input";
+import { Button } from "../../components/ui/button";
 import { FilterChips } from "../../components/admin/FilterChips";
-import { Badge } from "../../components/ui/Badge";
+import { Badge } from "../../components/ui/badge";
 
 export function ExamListPage() {
   const { token } = useAuth();

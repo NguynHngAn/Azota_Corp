@@ -2,12 +2,12 @@ import type { Dispatch, SetStateAction } from "react";
 import type { ExamFormState, QuestionRow, QuestionType } from "./types";
 import { emptyOption } from "./types";
 import { useMemo, useState } from "react";
-import { Card } from "../../components/ui/Card";
-import { Input } from "../../components/ui/Input";
-import { Select } from "../../components/ui/Select";
-import { Textarea } from "../../components/ui/Textarea";
-import { Button } from "../../components/ui/Button";
-import { Badge } from "../../components/ui/Badge";
+import { Card } from "../../components/ui/card";
+import { Input } from "../../components/ui/input";
+import { Select } from "../../components/ui/select";
+import { Textarea } from "../../components/ui/textarea";
+import { Button } from "../../components/ui/button";
+import { Badge } from "../../components/ui/badge";
 
 interface ExamEditorFormProps {
   state: ExamFormState;

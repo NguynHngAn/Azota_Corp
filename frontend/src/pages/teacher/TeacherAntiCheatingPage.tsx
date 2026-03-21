@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { getTeacherAntiCheatMonitor, type AntiCheatMonitorResponse, type AntiCheatMonitorRow } from "../../api/antiCheat";
-import { Badge } from "../../components/ui/Badge";
-import { Card } from "../../components/ui/Card";
+import { Badge } from "../../components/ui/badge";
+import { Card } from "../../components/ui/card";
 import { StatsCard } from "../../components/admin/StatsCard";
 import { Icons } from "../../components/admin/icons";
-import { Input } from "../../components/ui/Input";
+import { Input } from "../../components/ui/input";
 import { FilterChips } from "../../components/admin/FilterChips";
-import { Button } from "../../components/ui/Button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/Table";
+import { Button } from "../../components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 import { formatDateTimeVietnam } from "../../utils/date";
 
 type Filter = "all" | "suspicious";

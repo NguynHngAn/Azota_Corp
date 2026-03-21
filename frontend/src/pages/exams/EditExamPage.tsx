@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
+import { useParams, useNavigate, Link, useLocation } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import {
   getExam,
@@ -10,11 +10,11 @@ import {
   type ExamDetail,
 } from "../../api/exams";
 import { addFromBankToExam, listBankQuestions, type BankQuestionListItem } from "../../api/questionBank";
-import { ConfirmDialog } from "../../components/ui/Dialog";
-import { Button } from "../../components/ui/Button";
-import { Card } from "../../components/ui/Card";
-import { Input } from "../../components/ui/Input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/Table";
+import { ConfirmDialog } from "../../components/ui/dialog";
+import { Button } from "../../components/ui/button";
+import { Card } from "../../components/ui/card";
+import { Input } from "../../components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 import type { ExamFormState } from "./types";
 import { validateExamForm } from "./types";
 import { ExamEditorForm } from "./ExamEditorForm";

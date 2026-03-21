@@ -1,5 +1,5 @@
-import { Button } from "../components/ui/Button";
-import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router";
 import {
   ArrowRight,
   Play,
@@ -126,7 +126,7 @@ function FloatingOrb({ className, delay = 0 }: { className: string; delay?: numb
 }
 
 /* ─── Main Component ─── */
-export const LandingPage = () => {
+const LandingPage = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
@@ -134,13 +134,13 @@ export const LandingPage = () => {
   const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
   return (
-    <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text)] overflow-x-hidden">
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* ─── Navigation ─── */}
       <motion.nav
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="sticky top-0 z-50 border-b border-[var(--border-soft)] bg-[var(--panel-bg-80)] backdrop-blur-2xl"
+        className="sticky top-0 z-50 border-b border-border/50 bg-background/60 backdrop-blur-2xl"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -148,26 +148,20 @@ export const LandingPage = () => {
               <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/25">
                 <GraduationCap className="w-4.5 h-4.5 text-primary-foreground" />
               </div>
-              <span className="text-lg font-bold text-[var(--text)] tracking-tight">EduFlow</span>
+              <span className="text-lg font-bold text-foreground tracking-tight">EduFlow</span>
             </div>
             <div className="hidden md:flex items-center gap-1">
               {["Features", "How it works", "Pricing", "FAQ"].map((item) => (
-                <a
-                  key={item}
-                  href={`#${item.toLowerCase().replace(/ /g, "-")}`}
-                  className="px-4 py-2 text-sm text-[var(--muted)] hover:text-[var(--text)] rounded-lg hover:bg-[var(--app-bg)] transition-all duration-200"
-                >
+                <a key={item} href={`#${item.toLowerCase().replace(/ /g, "-")}`} className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted/50 transition-all duration-200">
                   {item}
                 </a>
               ))}
             </div>
             <div className="flex items-center gap-3">
               <Link to="/login">
-                <Button variant="ghost" size="sm" className="text-[var(--muted)] hover:text-[var(--text)]">
-                  Log in
-                </Button>
+                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">Log in</Button>
               </Link>
-              <Link to="/login">
+              <Link to="/signup">
                 <Button size="sm" className="rounded-full px-5 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-shadow">
                   Get started
                 </Button>
@@ -184,7 +178,7 @@ export const LandingPage = () => {
           <FloatingOrb className="w-[600px] h-[600px] bg-primary/40 -top-40 -left-40" />
           <FloatingOrb className="w-[500px] h-[500px] bg-accent/30 top-20 right-[-10%]" delay={2} />
           <FloatingOrb className="w-[400px] h-[400px] bg-info/25 bottom-0 left-1/3" delay={4} />
-          <div className="absolute inset-0 bg-[var(--app-bg)]/80 backdrop-blur-[100px]" />
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-[100px]" />
           {/* Grid pattern */}
           <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(hsl(var(--foreground)) 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
         </div>
@@ -208,7 +202,7 @@ export const LandingPage = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-[var(--text)] leading-[1.05]"
+              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-foreground leading-[1.05]"
             >
               Create, manage, and{" "}
               <span className="relative">
@@ -228,7 +222,7 @@ export const LandingPage = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.35 }}
-              className="mt-8 text-lg sm:text-xl text-[var(--muted)] max-w-2xl mx-auto leading-relaxed"
+              className="mt-8 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
             >
               An all-in-one platform for teachers to create tests, monitor exams, and analyze student performance — saving hours every week.
             </motion.p>
@@ -239,13 +233,13 @@ export const LandingPage = () => {
               transition={{ duration: 0.6, delay: 0.5 }}
               className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
             >
-              <Link to="/login">
+              <Link to="/signup">
                 <Button size="lg" className="rounded-full px-8 h-13 text-base gap-2 shadow-xl shadow-primary/25 hover:shadow-primary/40 hover:scale-[1.02] transition-all duration-300 group">
                   Start for free
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                 </Button>
               </Link>
-              <Button variant="secondary" size="lg" className="rounded-full px-8 h-13 text-base gap-2">
+              <Button variant="outline" size="lg" className="rounded-full px-8 h-13 text-base gap-2 bg-background/50 backdrop-blur-sm border-border/80 hover:bg-muted/80 hover:scale-[1.02] transition-all duration-300">
                 <Play className="w-4 h-4" /> Watch demo
               </Button>
             </motion.div>
@@ -254,7 +248,7 @@ export const LandingPage = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.7 }}
-              className="mt-5 text-xs text-[var(--muted)] flex items-center justify-center gap-4"
+              className="mt-5 text-xs text-muted-foreground flex items-center justify-center gap-4"
             >
               <span className="flex items-center gap-1"><CheckCircle className="w-3 h-3 text-accent" /> No credit card</span>
               <span className="flex items-center gap-1"><CheckCircle className="w-3 h-3 text-accent" /> Free forever plan</span>
@@ -538,7 +532,7 @@ export const LandingPage = () => {
                 ))}
               </motion.div>
               <motion.div variants={fadeUp} className="mt-10">
-                <Link to="/login">
+                <Link to="/signup">
                   <Button className="rounded-full px-6 gap-2 shadow-lg shadow-accent/20 hover:shadow-accent/30 transition-shadow group bg-accent text-accent-foreground hover:bg-accent/90">
                     Try automatic grading <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                   </Button>
@@ -891,10 +885,10 @@ export const LandingPage = () => {
                     </li>
                   ))}
                 </ul>
-                <Link to="/login">
+                <Link to="/signup">
                   <Button
                     className={`w-full rounded-full h-11 transition-all duration-300 ${plan.highlighted ? "shadow-lg shadow-primary/20 hover:shadow-primary/30" : ""}`}
-                    variant={plan.highlighted ? "primary" : "secondary"}
+                    variant={plan.highlighted ? "default" : "outline"}
                   >
                     {plan.cta}
                   </Button>
@@ -1152,8 +1146,8 @@ export const LandingPage = () => {
                 Join thousands of educators who save hours every week with EduFlow.
               </p>
               <div className="mt-10">
-                <Link to="/login">
-                  <Button size="lg" className="rounded-full px-10 h-13 text-base gap-2 bg-white text-[var(--primary)] hover:bg-white/90 shadow-2xl hover:scale-[1.03] transition-all duration-300 group">
+                <Link to="/signup">
+                  <Button size="lg" className="rounded-full px-10 h-13 text-base gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90 shadow-2xl hover:scale-[1.03] transition-all duration-300 group">
                     Get started free <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                   </Button>
                 </Link>

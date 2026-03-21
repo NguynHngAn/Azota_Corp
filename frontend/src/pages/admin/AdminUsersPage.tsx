@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 import {
   listUsers,
   createUser,
@@ -7,16 +7,16 @@ import {
   deactivateUser,
   resetUserPassword,
   type UserResponse,
-} from "../../api/users";
-import { Input } from "../../components/ui/Input";
-import { Select } from "../../components/ui/Select";
-import { Button } from "../../components/ui/Button";
-import { Card } from "../../components/ui/Card";
-import { Badge } from "../../components/ui/Badge";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableCaption } from "../../components/ui/Table";
-import { ConfirmDialog } from "../../components/ui/Dialog";
-import { AdminModal } from "../../components/admin/AdminModal";
-import { FilterChips } from "../../components/admin/FilterChips";
+} from "@/api/users";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableCaption } from "@/components/ui/table";
+import { ConfirmDialog } from "@/components/ui/dialog";
+import { AdminModal } from "@/components/admin/AdminModal";
+import { FilterChips } from "@/components/admin/FilterChips";
 
 export function AdminUsersPage() {
   const { token } = useAuth();
@@ -286,7 +286,7 @@ export function AdminUsersPage() {
                       </Button>
                       <Button
                         size="sm"
-                        variant="danger"
+                        variant="destructive"
                         type="button"
                         onClick={() => {
                           setConfirmMode("delete");

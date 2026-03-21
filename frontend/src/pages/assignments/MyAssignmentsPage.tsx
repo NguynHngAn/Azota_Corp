@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
-import { listMyAssignments, type AssignmentDetail } from "../../api/assignments";
-import { formatDateTimeVietnam } from "../../utils/date";
-import { PageHeader } from "../../components/ui/PageHeader";
-import { Card } from "../../components/ui/Card";
-import { Badge } from "../../components/ui/Badge";
-import { Button } from "../../components/ui/Button";
+import { Link } from "react-router";
+import { useAuth } from "@/context/AuthContext";
+import { listMyAssignments, type AssignmentDetail } from "@/api/assignments";
+import { formatDateTimeVietnam } from "@/utils/date";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 function getStatus(a: AssignmentDetail): { label: string; variant: "default" | "success" | "warning" } {
   const now = new Date();

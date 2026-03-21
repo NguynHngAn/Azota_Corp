@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../../context/AuthContext";
-import { getAdminOverviewReport, type AdminOverviewReportResponse } from "../../api/assignments";
-import { ScoreBarChart } from "../../components/ScoreBarChart";
-import { Card } from "../../components/ui/Card";
-import { PageHeader } from "../../components/ui/PageHeader";
+import { useAuth } from "@/context/AuthContext";
+import { getAdminOverviewReport, type AdminOverviewReportResponse } from "@/api/assignments";
+import { ScoreBarChart } from "@/components/ScoreBarChart";
+import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 
 export function AdminOverviewReportPage() {
   const { token } = useAuth();

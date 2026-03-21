@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useLocation, Link } from "react-router-dom";
+import { useParams, useLocation, Link } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import {
   getClass,
@@ -13,13 +13,13 @@ import {
   type ClassMemberResponse,
 } from "../../api/classes";
 import { listUsers, type UserResponse } from "../../api/users";
-import { Card } from "../../components/ui/Card";
-import { Select } from "../../components/ui/Select";
-import { Button } from "../../components/ui/Button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/Table";
-import { Badge } from "../../components/ui/Badge";
-import { ConfirmDialog } from "../../components/ui/Dialog";
-import { Input } from "../../components/ui/Input";
+import { Card } from "../../components/ui/card";
+import { Select } from "../../components/ui/select";
+import { Button } from "../../components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
+import { Badge } from "../../components/ui/badge";
+import { ConfirmDialog } from "../../components/ui/dialog";
+import { Input } from "../../components/ui/input";
 
 function basePath(pathname: string): string {
   if (pathname.startsWith("/admin")) return "/admin";

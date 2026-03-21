@@ -1,5 +1,6 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router";
 import { lazy, Suspense } from "react";
+import { Loader2, Sparkles } from "lucide-react";
 import { AuthProvider, useAuth, ExamProvider } from "../context";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { AdminLayout } from "../components/admin/AdminLayout";
@@ -45,11 +46,33 @@ import { PreferencesBootstrap } from "../components/settings/PreferencesBootstra
 
 function FullPageLoading({ label = "Loading..." }: { label?: string }) {
   return (
-    <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text)] flex items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-bg)] p-[var(--card-p)] shadow-sm">
-        <div className="h-4 w-24 rounded bg-slate-50 animate-pulse" />
-        <div className="mt-3 h-4 w-2/3 rounded bg-slate-50 animate-pulse" />
-        <div className="mt-6 text-sm text-[var(--muted)]">{label}</div>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 text-foreground">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,hsl(var(--primary)/0.12),transparent_45%)]" />
+
+      <div className="relative w-full max-w-md rounded-2xl border border-border/60 bg-card/95 p-7 shadow-xl backdrop-blur-sm">
+        <div className="mb-5 flex items-center justify-between">
+          <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Sparkles className="h-5 w-5" />
+          </div>
+          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+        </div>
+
+        <p className="text-base font-semibold tracking-tight">Preparing your workspace</p>
+        <p className="mt-1 text-sm text-muted-foreground">{label}</p>
+
+        <div className="mt-6 space-y-3">
+          <div className="h-2.5 w-5/6 rounded-full bg-secondary/80" />
+          <div className="h-2.5 w-3/5 rounded-full bg-secondary/70" />
+          <div className="h-2.5 w-4/6 rounded-full bg-secondary/60" />
+        </div>
+
+        <div className="mt-6 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+          <div className="h-full w-2/5 animate-pulse rounded-full bg-primary/80" />
+        </div>
+      </div>
+
+      <div className="pointer-events-none absolute bottom-6 text-xs text-muted-foreground/80">
+        Azota is loading resources...
       </div>
     </div>
   );
@@ -86,7 +109,7 @@ export function AppRouter() {
         <Routes>
           <Route path="/" element={<RootRedirect />} />
           <Route path="/login" element={<LoginRedirect />} />
-
+          <Route path="/signup" element={<LoginRedirect />} />
           <Route
           path="/admin"
           element={

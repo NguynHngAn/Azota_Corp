@@ -13,14 +13,14 @@ import {
   type QuestionType,
 } from "../../api/questionBank";
 import { useAuth } from "../../context/AuthContext";
-import { Badge } from "../../components/ui/Badge";
-import { Button } from "../../components/ui/Button";
-import { Card } from "../../components/ui/Card";
-import { ConfirmDialog } from "../../components/ui/Dialog";
-import { Input } from "../../components/ui/Input";
-import { Select } from "../../components/ui/Select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/Table";
-import { Textarea } from "../../components/ui/Textarea";
+import { Badge } from "../../components/ui/badge";
+import { Button } from "../../components/ui/button";
+import { Card } from "../../components/ui/card";
+import { ConfirmDialog } from "../../components/ui/dialog";
+import { Input } from "../../components/ui/input";
+import { Select } from "../../components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
+import { Textarea } from "../../components/ui/textarea";
 
 export function TeacherQuestionBankPage() {
   const { token } = useAuth();

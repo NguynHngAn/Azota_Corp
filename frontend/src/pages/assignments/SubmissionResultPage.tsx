@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import { getSubmissionResult, type SubmissionResultResponse } from "../../api/assignments";
 import { formatDateTimeVietnam } from "../../utils/date";
 import { useExam } from "../../context";
-import { Card } from "../../components/ui/Card";
-import { Badge } from "../../components/ui/Badge";
-import { Button } from "../../components/ui/Button";
+import { Card } from "../../components/ui/card";
+import { Badge } from "../../components/ui/badge";
+import { Button } from "../../components/ui/button";
 
 export function SubmissionResultPage() {
   const { submissionId } = useParams<{ submissionId: string }>();

@@ -8,9 +8,9 @@ import type { ExamResponse } from "../../api/exams";
 import type { AssignmentDetail } from "../../api/assignments";
 import { StatsCard } from "../../components/admin/StatsCard";
 import { Icons } from "../../components/admin/icons";
-import { Card } from "../../components/ui/Card";
-import { Button } from "../../components/ui/Button";
-import { useNavigate } from "react-router-dom";
+import { Card } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { useNavigate } from "react-router";
 
 // In-memory caches (persist across SPA navigation)
 const classCache = new Map<number, ClassDetail>();

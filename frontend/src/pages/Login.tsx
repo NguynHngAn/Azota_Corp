@@ -1,13 +1,26 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { Input } from "../components/ui/Input";
-import { Button } from "../components/ui/Button";
-import { Card } from "../components/ui/Card";
+import { Link, useNavigate } from "react-router";
+import { useAuth } from "@/context/AuthContext";
+import { Button } from "@/components/ui/button";
+import { GraduationCap, Mail, Lock, Eye, EyeOff } from "lucide-react";
+
+function LoginHeader() {
+  return (
+    <div className="text-center">
+      <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
+        <GraduationCap className="h-7 w-7 text-primary-foreground" />
+      </div>
+      <h1 className="text-2xl font-bold text-foreground">Welcome back</h1>
+      <p className="mt-1 text-sm text-muted-foreground">Sign in to your Azota account</p>
+    </div>
+  );
+}
 
 export function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const { login } = useAuth();
@@ -30,54 +43,85 @@ export function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-slate-100 flex items-center justify-center px-4">
-      <div className="max-w-md w-full">
-        <Card>
-          <div className="mb-6 text-center">
-            <div className="mx-auto mb-4 h-12 w-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-xl font-semibold shadow-lg shadow-indigo-400/40">
-              A
-            </div>
-            <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Đăng nhập</h1>
-            <p className="mt-1 text-sm text-slate-500">Chào mừng bạn quay lại Azota Basic</p>
-          </div>
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="w-full max-w-md space-y-8 animate-in">
+        <LoginHeader />
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
-                Email
-              </label>
-              <Input
+        <form onSubmit={handleSubmit} className="glass-card space-y-4 p-6">
+          <div>
+            <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-foreground">
+              Email
+            </label>
+            <div className="relative">
+              <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                autoComplete="username"
+                autoComplete={rememberMe ? "username" : "off"}
                 required
+                className="w-full rounded-lg border border-input bg-background py-2.5 pl-10 pr-3 text-sm text-foreground transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                placeholder="you@school.edu"
               />
             </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">
-                Mật khẩu
-              </label>
-              <Input
+          </div>
+
+          <div>
+            <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-foreground">
+              Password
+            </label>
+            <div className="relative">
+              <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
                 id="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
+                autoComplete={rememberMe ? "current-password" : "off"}
                 required
+                className="w-full rounded-lg border border-input bg-background py-2.5 pl-10 pr-10 text-sm text-foreground transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                placeholder="••••••••"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
-            {error && <p className="text-sm text-red-600">{error}</p>}
-            <Button type="submit" disabled={submitting} className="w-full mt-2">
-              {submitting ? "Đang đăng nhập..." : "Đăng nhập"}
-            </Button>
-          </form>
+          </div>
 
-          <p className="mt-4 text-xs text-slate-400 text-center">
-            Đây là hệ thống thi online nội bộ. Tài khoản do quản trị viên cung cấp.
-          </p>
-        </Card>
+          <div className="flex items-center justify-between text-sm">
+            <label className="flex cursor-pointer items-center gap-2 text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="rounded border-input accent-primary"
+              />
+              Remember me
+            </label>
+            <Link to="/" className="font-medium text-primary hover:underline">
+              Back to home
+            </Link>
+          </div>
+
+          {error && <p className="text-sm text-destructive">{error}</p>}
+
+          <Button type="submit" disabled={submitting} className="w-full rounded-lg">
+            {submitting ? "Signing in..." : "Sign In"}
+          </Button>
+        </form>
+
+        <p className="text-center text-sm text-muted-foreground">
+          Need an account?{" "}
+          <Link to="/" className="font-medium text-primary hover:underline">
+            Contact admin
+          </Link>
+        </p>
       </div>
     </div>
   );
