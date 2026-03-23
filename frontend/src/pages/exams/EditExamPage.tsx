@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link, useLocation } from "react-router";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 import {
   getExam,
   updateExam,
@@ -8,16 +8,16 @@ import {
   updateQuestion,
   deleteQuestion,
   type ExamDetail,
-} from "../../api/exams";
-import { addFromBankToExam, listBankQuestions, type BankQuestionListItem } from "../../api/questionBank";
-import { ConfirmDialog } from "../../components/ui/dialog";
-import { Button } from "../../components/ui/button";
-import { Card } from "../../components/ui/card";
-import { Input } from "../../components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
-import type { ExamFormState } from "./types";
-import { validateExamForm } from "./types";
-import { ExamEditorForm } from "./ExamEditorForm";
+} from "@/services/exams.service";
+import { addFromBankToExam, listBankQuestions, type BankQuestionListItem } from "@/services/questionBank.service";
+import { ConfirmDialog } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import type { ExamFormState } from "@/pages/exams/types";
+import { validateExamForm } from "@/pages/exams/types";
+import { ExamEditorForm } from "@/pages/exams/ExamEditorForm";
 
 function examToFormState(exam: ExamDetail): ExamFormState {
   return {
@@ -239,7 +239,7 @@ export function EditExamPage() {
 
       {bankOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-[var(--panel-bg)] text-[var(--text)] rounded-2xl shadow-lg w-full max-w-3xl p-5 border border-[var(--border-soft)]">
+          <div className="bg-card text-foreground rounded-2xl shadow-lg w-full max-w-3xl p-5 border border-border">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold">Add from Question Bank</div>
@@ -273,7 +273,7 @@ export function EditExamPage() {
 
             {bankError ? <div className="mt-3 text-sm text-rose-700">{bankError}</div> : null}
 
-            <Card className="mt-4 border border-[var(--border-soft)] shadow-sm hover:shadow-sm">
+            <Card className="mt-4 border border-border shadow-sm hover:shadow-sm">
               {bankLoading ? (
                 <div className="space-y-3">
                   <div className="h-10 w-full rounded-xl bg-slate-50 animate-pulse" />

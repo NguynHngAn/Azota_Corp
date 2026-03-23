@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { Card } from "../../components/ui/card";
-import { useAuth } from "../../context/AuthContext";
-import { getSubmissionResult, listMySubmissions, type MySubmissionSummary } from "../../api/assignments";
-import { formatDateTimeVietnam } from "../../utils/date";
-import { Button } from "../../components/ui/button";
-import { Badge } from "../../components/ui/badge";
+import { useAuth } from "@/context/AuthContext";
+import { getSubmissionResult, listMySubmissions, type MySubmissionSummary } from "@/services/assignments.service";
+import { formatDateTimeVietnam } from "@/utils/date";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 export function StudentResultsPage() {
   const { token } = useAuth();
@@ -66,7 +65,7 @@ export function StudentResultsPage() {
         <p className="text-sm text-slate-500">Review your exam submissions and scores.</p>
       </div>
 
-      <Card className="border border-slate-100 shadow-sm hover:shadow-sm">
+      <div className="">
         {loading ? (
           <div className="py-10 animate-pulse space-y-3">
             <div className="h-10 bg-slate-50 rounded-xl" />
@@ -83,20 +82,20 @@ export function StudentResultsPage() {
             </div>
           </div>
         ) : !hasAny ? (
-          <div className="py-14 text-center">
-            <div className="text-sm font-medium text-slate-700">No submissions yet.</div>
-            <div className="text-sm text-slate-500 mt-1">
-              Your results will appear here after you submit an exam.
+            <div className="text-center py-20 text-muted-foreground text-sm">No submissions yet.
+              <div className="text-center text-muted-foreground text-sm mt-2">
+                Your results will appear here after you submit an exam.
+              </div>
             </div>
-          </div>
         ) : (
           <div className="mt-2 space-y-2">
             {items.map((it) => (
-              <button
+              <Button
                 key={it.submission_id}
                 type="button"
+                variant="outline"
                 onClick={() => navigate(`/student/assignments/result/${it.submission_id}`)}
-                className="w-full text-left rounded-2xl border border-slate-100 bg-white px-4 py-3 hover:bg-slate-50 transition flex items-center justify-between gap-4"
+                className="h-auto w-full justify-between gap-4 rounded-2xl border-slate-100 bg-white px-4 py-3 text-left font-normal hover:bg-slate-50"
               >
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
@@ -131,11 +130,11 @@ export function StudentResultsPage() {
                   <div className="text-xs text-slate-500">Open</div>
                   <div className="text-sm font-semibold text-slate-900">View →</div>
                 </div>
-              </button>
+              </Button>
             ))}
           </div>
         )}
-      </Card>
+      </div>
     </div>
   );
 }

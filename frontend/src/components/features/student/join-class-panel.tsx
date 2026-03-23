@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { joinClass } from "../../api/classes";
-import { useAuth } from "../../context/AuthContext";
-import { Card } from "../ui/card";
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
+import { joinClass } from "@/services/classes.service";
+import { useAuth } from "@/context/AuthContext";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Icons } from "@/components/layouts/icons";
 
 export function JoinClassPanel({
   title = "Join a Class",
@@ -50,17 +50,19 @@ export function JoinClassPanel({
   }
 
   return (
-    <Card className="border border-slate-100 shadow-sm hover:shadow-sm">
+    <div className="glass-card p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="text-sm font-semibold text-slate-900">{title}</div>
-          {!compact && <div className="text-xs text-slate-500 mt-1">Use an invite code from your teacher.</div>}
+          <div className="text-sm font-semibold text-foreground mb-3">{title}</div>
+          {!compact && <div className="flex items-center gap-3">Use an invite code from your teacher.</div>}
         </div>
       </div>
 
       <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
-        <div className="flex-1">
+        <div className="flex items-center gap-3">
           <Input
+            type="text"
+            className="flex-1 max-w-xs px-3 py-2.5 rounded-lg border border-input bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
             value={inviteCode}
             onChange={(e) => setInviteCode(e.target.value)}
             placeholder={description}
@@ -70,15 +72,17 @@ export function JoinClassPanel({
           size="sm"
           onClick={handleJoin}
           disabled={submitting}
-          className="sm:w-auto w-full"
+          className="gap-1.5 rounded-lg"
+          
         >
-          {submitting ? "Joining..." : "+ Join"}
+          <Icons.Plus />
+          {submitting ? "Joining..." : "Join"}
         </Button>
       </div>
 
       {notice && (
         <div
-          className={`mt-3 text-sm rounded-xl px-3 py-2 border ${
+          className={`mt-3 text-sm rounded-xl px-3 py-2.5 border max-w-xs ${
             notice.kind === "error"
               ? "text-rose-700 bg-rose-50 border-rose-100"
               : "text-emerald-800 bg-emerald-50 border-emerald-100"
@@ -87,7 +91,7 @@ export function JoinClassPanel({
           {notice.message}
         </div>
       )}
-    </Card>
+    </div>
   );
 }
 

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { useAuth } from "../../context/AuthContext";
-import { listMyClasses, type ClassResponse } from "../../api/classes";
-import { Card } from "../../components/ui/card";
-import { JoinClassPanel } from "../../components/student/JoinClassPanel";
+import { useAuth } from "@/context/AuthContext";
+import { listMyClasses, type ClassResponse } from "@/services/classes.service";
+import { Card } from "@/components/ui/card";
+import { JoinClassPanel } from "@/components/features/student/join-class-panel";
 
 export function MyClassesPage() {
   const { token } = useAuth();

@@ -1,4 +1,5 @@
 import type React from "react";
+import { Button } from "@/components/ui/button";
 
 export type SettingsTab = "profile" | "notifications" | "security" | "appearance" | "language";
 
@@ -12,27 +13,28 @@ export function SettingsTabsNav({
   items: { id: SettingsTab; label: string; icon: () => React.ReactElement }[];
 }) {
   return (
-    <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-bg)] p-2 shadow-sm">
+    <div className="">
       <div className="space-y-1">
         {items.map((it) => {
           const active = tab === it.id;
           const Icon = it.icon;
           return (
-            <button
+            <Button
               key={it.id}
               type="button"
+              variant="ghost"
               onClick={() => onChange(it.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors ${
+              className={`w-full justify-start gap-3 px-3 py-2.5 rounded-xl text-sm font-normal transition-colors ${
                 active
-                  ? "bg-[var(--primary-soft)] text-[var(--primary)]"
-                  : "text-slate-600 hover:text-[var(--text)] hover:bg-[var(--app-bg)]"
+                  ? "bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary"
+                  : "text-slate-600 hover:text-foreground hover:bg-background"
               }`}
             >
-              <span className={`${active ? "text-[var(--primary)]" : "text-slate-500"}`}>
+              <span className={`${active ? "text-primary" : "text-slate-500"}`}>
                 <Icon />
               </span>
               <span className="font-medium">{it.label}</span>
-            </button>
+            </Button>
           );
         })}
       </div>

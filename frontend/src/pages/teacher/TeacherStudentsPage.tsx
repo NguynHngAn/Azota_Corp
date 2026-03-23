@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { listMembers, listMyClasses, type ClassMemberResponse, type ClassResponse } from "../../api/classes";
+import {
+  listMembers,
+  listMyClasses,
+  type ClassMemberResponse,
+  type ClassResponse,
+} from "@/services/classes.service";
 import { useAuth } from "@/context/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
-import { formatDateTimeVietnam } from "../../utils/date";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { formatDateTimeVietnam } from "@/utils/date";
 
 // In-memory caches (persist across SPA navigation)
 const membersCache = new Map<number, ClassMemberResponse[]>();

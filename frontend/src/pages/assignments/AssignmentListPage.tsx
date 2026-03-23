@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { useAuth } from "../../context/AuthContext";
-import { listAssignments, type AssignmentDetail } from "../../api/assignments";
-import { formatDateTimeVietnam } from "../../utils/date";
-import { Card } from "../../components/ui/card";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
+import { useAuth } from "@/context/AuthContext";
+import { listAssignments, type AssignmentDetail } from "@/services/assignments.service";
+import { formatDateTimeVietnam } from "@/utils/date";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 function basePath(pathname: string): string {
   if (pathname.startsWith("/admin")) return "/admin";

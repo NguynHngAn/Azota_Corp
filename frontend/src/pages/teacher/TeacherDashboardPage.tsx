@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useAuth } from "../../context/AuthContext";
-import { getClass, listMyClasses, type ClassDetail } from "../../api/classes";
-import { listExams } from "../../api/exams";
-import { getAssignmentReport, listAssignments, type AssignmentReportResponse } from "../../api/assignments";
-import type { ClassResponse } from "../../api/classes";
-import type { ExamResponse } from "../../api/exams";
-import type { AssignmentDetail } from "../../api/assignments";
-import { StatsCard } from "../../components/admin/StatsCard";
-import { Icons } from "../../components/admin/icons";
-import { Card } from "../../components/ui/card";
-import { Button } from "../../components/ui/button";
+import { useAuth } from "@/context/AuthContext";
+import { getClass, listMyClasses, type ClassDetail, type ClassResponse } from "@/services/classes.service";
+import { listExams, type ExamResponse } from "@/services/exams.service";
+import {
+  getAssignmentReport,
+  listAssignments,
+  type AssignmentReportResponse,
+  type AssignmentDetail,
+} from "@/services/assignments.service";
+import { StatsCard } from "@/components/layouts/stats-card";
+import { Icons } from "@/components/layouts/icons";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router";
 
 // In-memory caches (persist across SPA navigation)
@@ -213,8 +215,8 @@ export function TeacherDashboardPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard icon={<Icons.Users />} value={stats.myStudents} label="My Students" tone="blue" />
-        <StatsCard icon={<Icons.Book />} value={stats.myExams} label="My Exams" tone="violet" />
-        <StatsCard icon={<Icons.Clipboard />} value={stats.submissions} label="Submissions" tone="slate" />
+        <StatsCard icon={<Icons.BookOpen />} value={stats.myExams} label="My Exams" tone="violet" />
+        <StatsCard icon={<Icons.CheckCircle />} value={stats.submissions} label="Submissions" tone="slate" />
         <StatsCard icon={<Icons.Chart />} value={stats.avgScore} label="Avg Score" tone="green" />
       </div>
 
@@ -250,15 +252,16 @@ export function TeacherDashboardPage() {
           ) : (
             <div className="space-y-2">
               {exams.slice(0, 3).map((e) => (
-                <button
+                <Button
                   key={e.id}
                   type="button"
+                  variant="outline"
                   onClick={() => navigate(`/teacher/exams/${e.id}`)}
-                  className="w-full text-left rounded-xl border border-slate-100 bg-white px-4 py-3 hover:bg-slate-50 transition"
+                  className="h-auto w-full flex-col items-stretch rounded-xl border-slate-100 bg-white px-4 py-3 text-left font-normal hover:bg-slate-50"
                 >
                   <div className="text-sm font-medium text-slate-900">{e.title}</div>
                   <div className="text-xs text-slate-500">{e.is_draft ? "Draft" : "Published"}</div>
-                </button>
+                </Button>
               ))}
             </div>
           )}

@@ -1,4 +1,4 @@
-import { get, post, put, del } from "./client";
+import { get, post, put, del } from "@/api/client";
 
 export type QuestionType = "single_choice" | "multiple_choice";
 

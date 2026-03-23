@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { useAuth } from "@/context/AuthContext";
-import { listMyAssignments, type AssignmentDetail } from "@/api/assignments";
+import { listMyAssignments, type AssignmentDetail } from "@/services/assignments.service";
 import { formatDateTimeVietnam } from "@/utils/date";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -41,11 +41,9 @@ export function MyAssignmentsPage() {
         description="Exams that have been assigned to your classes."
       />
       {assignments.length === 0 ? (
-        <Card>
-          <p className="text-sm text-gray-500">
+          <div className="text-center py-20 text-muted-foreground text-sm">
             No assigned exams. Join a class to see assignments.
-          </p>
-        </Card>
+          </div>
       ) : (
         <div className="space-y-2">
           {assignments.map((a) => {

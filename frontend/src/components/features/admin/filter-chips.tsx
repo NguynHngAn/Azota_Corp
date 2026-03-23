@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+
 export function FilterChips<T extends string>({
   value,
   options,
@@ -8,22 +10,22 @@ export function FilterChips<T extends string>({
   onChange: (v: T) => void;
 }) {
   return (
-    <div className="inline-flex items-center gap-2 rounded-full bg-[var(--app-bg)] border border-[var(--border-soft)] p-1">
+    <div className="inline-flex items-center gap-2 rounded-full bg-background border border-border p-1">
       {options.map((opt) => {
         const active = opt.value === value;
         return (
-          <button
+          <Button
             key={opt.value}
             type="button"
+            variant={active ? "default" : "ghost"}
+            size="sm"
             onClick={() => onChange(opt.value)}
-            className={`px-3 py-1.5 text-xs rounded-full transition-colors ${
-              active
-                ? "bg-[var(--primary)] text-white shadow-sm"
-                : "text-slate-600 hover:text-[var(--text)] hover:bg-[var(--panel-bg)]"
+            className={`px-3 py-1.5 text-xs rounded-full h-auto ${
+              active ? "shadow-sm" : "text-slate-600 hover:text-foreground hover:bg-card"
             }`}
           >
             {opt.label}
-          </button>
+          </Button>
         );
       })}
     </div>

@@ -1,13 +1,11 @@
 import { Navigate, Route, Routes } from "react-router";
 import { lazy, Suspense } from "react";
 import { Loader2, Sparkles } from "lucide-react";
-import { AuthProvider, useAuth, ExamProvider } from "../context";
-import { ProtectedRoute } from "./ProtectedRoute";
-import { AdminLayout } from "../components/admin/AdminLayout";
-import { TeacherLayout } from "../components/teacher/TeacherLayout";
-import { StudentLayout } from "../components/student/StudentLayout";
-import { Login } from "../pages/Login";
-const LazyLandingPage = lazy(() => import("../pages/LandingPage"));
+import { AuthProvider, useAuth, ExamProvider } from "@/context";
+import { ProtectedRoute } from "@/router/ProtectedRoute";
+import { DashboardLayout } from "@/components/layouts/DashboardLayout";
+import { Login } from "@/pages/Login";
+const LazyLandingPage = lazy(() => import("@/pages/LandingPage"));
 import {
   ClassListPage,
   CreateClassPage,
@@ -15,34 +13,35 @@ import {
   MyClassesPage,
   JoinClassPage,
   StudentClassDetailPage,
-} from "../pages/classes";
-import { ExamListPage, CreateExamPage, EditExamPage } from "../pages/exams";
+} from "@/pages/classes";
+import { ExamListPage, CreateExamPage, EditExamPage } from "@/pages/exams";
 import {
   AssignmentListPage,
   CreateAssignmentPage,
   MyAssignmentsPage,
   ExamRoomPage,
   SubmissionResultPage,
-} from "../pages/assignments";
-import { AssignmentReportPage } from "../pages/reports";
-import { ProfilePage } from "../pages/ProfilePage";
-import { AdminUsersPage } from "../pages/admin/AdminUsersPage";
-import { AdminDashboardPage } from "../pages/admin/AdminDashboardPage";
-import { AdminClassesPage } from "../pages/admin/AdminClassesPage";
-import { AdminExamsPage } from "../pages/admin/AdminExamsPage";
-import { AdminAssignmentsPage } from "../pages/admin/AdminAssignmentsPage";
-import { AdminAnalyticsPage } from "../pages/admin/AdminAnalyticsPage";
-import { AdminSettingsPage } from "../pages/admin/AdminSettingsPage";
-import { TeacherDashboardPage } from "../pages/teacher/TeacherDashboardPage";
-import { TeacherQuestionBankPage } from "../pages/teacher/TeacherQuestionBankPage";
-import { TeacherStudentsPage } from "../pages/teacher/TeacherStudentsPage";
-import { TeacherAntiCheatingPage } from "../pages/teacher/TeacherAntiCheatingPage";
-import { TeacherSettingsPage } from "../pages/teacher/TeacherSettingsPage";
-import { StudentDashboardPage } from "../pages/student/StudentDashboardPage";
-import { StudentResultsPage } from "../pages/student/StudentResultsPage";
-import { StudentSettingsPage } from "../pages/student/StudentSettingsPage";
-import { ROLES } from "../utils/constants";
-import { PreferencesBootstrap } from "../components/settings/PreferencesBootstrap";
+} from "@/pages/assignments";
+import { AssignmentReportPage } from "@/pages/reports";
+import { ProfilePage } from "@/pages/ProfilePage";
+import { AdminUsersPage } from "@/pages/admin/AdminUsersPage";
+import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage";
+import { AdminClassesPage } from "@/pages/admin/AdminClassesPage";
+import { AdminExamsPage } from "@/pages/admin/AdminExamsPage";
+import { AdminAssignmentsPage } from "@/pages/admin/AdminAssignmentsPage";
+import { AdminAnalyticsPage } from "@/pages/admin/AdminAnalyticsPage";
+import { AdminSettingsPage } from "@/pages/admin/AdminSettingsPage";
+import { TeacherDashboardPage } from "@/pages/teacher/TeacherDashboardPage";
+import { TeacherQuestionBankPage } from "@/pages/teacher/TeacherQuestionBankPage";
+import { TeacherStudentsPage } from "@/pages/teacher/TeacherStudentsPage";
+import { TeacherAntiCheatingPage } from "@/pages/teacher/TeacherAntiCheatingPage";
+import { TeacherAnalyticsPage } from "@/pages/teacher/TeacherAnalyticsPage";
+import { TeacherSettingsPage } from "@/pages/teacher/TeacherSettingsPage";
+import { StudentDashboardPage } from "@/pages/student/StudentDashboardPage";
+import { StudentResultsPage } from "@/pages/student/StudentResultsPage";
+import { StudentSettingsPage } from "@/pages/student/StudentSettingsPage";
+import { ROLES } from "@/utils/constants";
+import { PreferencesBootstrap } from "@/components/settings/preferences-bootstrap";
 
 function FullPageLoading({ label = "Loading..." }: { label?: string }) {
   return (
@@ -114,7 +113,7 @@ export function AppRouter() {
           path="/admin"
           element={
             <ProtectedRoute allowedRoles={[ROLES[0]]}>
-              <AdminLayout />
+              <DashboardLayout role="admin" />
             </ProtectedRoute>
           }
         >
@@ -135,7 +134,7 @@ export function AppRouter() {
           path="/teacher"
           element={
             <ProtectedRoute allowedRoles={[ROLES[1]]}>
-              <TeacherLayout />
+              <DashboardLayout role="teacher" />
             </ProtectedRoute>
           }
         >
@@ -154,6 +153,7 @@ export function AppRouter() {
           <Route path="assignments/:id/report" element={<AssignmentReportPage />} />
           <Route path="students" element={<TeacherStudentsPage />} />
           <Route path="anti-cheating" element={<TeacherAntiCheatingPage />} />
+          <Route path="analytics" element={<TeacherAnalyticsPage />} />
           <Route path="settings" element={<TeacherSettingsPage />} />
         </Route>
 
@@ -161,7 +161,7 @@ export function AppRouter() {
           path="/student"
           element={
             <ProtectedRoute allowedRoles={[ROLES[2]]}>
-              <StudentLayout />
+              <DashboardLayout role="student" />
             </ProtectedRoute>
           }
         >

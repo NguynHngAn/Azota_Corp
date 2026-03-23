@@ -1,15 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { useAuth } from "../../context/AuthContext";
-import { getTeacherAntiCheatMonitor, type AntiCheatMonitorResponse, type AntiCheatMonitorRow } from "../../api/antiCheat";
-import { Badge } from "../../components/ui/badge";
-import { Card } from "../../components/ui/card";
-import { StatsCard } from "../../components/admin/StatsCard";
-import { Icons } from "../../components/admin/icons";
-import { Input } from "../../components/ui/input";
-import { FilterChips } from "../../components/admin/FilterChips";
-import { Button } from "../../components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
-import { formatDateTimeVietnam } from "../../utils/date";
+import { useAuth } from "@/context/AuthContext";
+import {
+  getTeacherAntiCheatMonitor,
+  type AntiCheatMonitorResponse,
+  type AntiCheatMonitorRow,
+} from "@/services/antiCheat.service";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { StatsCard } from "@/components/layouts/stats-card";
+import { Icons } from "@/components/layouts/icons"; 
+import { Input } from "@/components/ui/input";
+import { FilterChips } from "@/components/features/admin/filter-chips";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { formatDateTimeVietnam } from "@/utils/date";
 
 type Filter = "all" | "suspicious";
 
@@ -72,7 +76,7 @@ export function TeacherAntiCheatingPage() {
         <StatsCard icon={<Icons.Users />} value={data?.summary.total_students ?? (loading ? "—" : 0)} label="Total Students" tone="blue" />
         <StatsCard icon={<Icons.Chart />} value={data?.summary.active_now ?? (loading ? "—" : 0)} label="Active Now" tone="green" />
         <StatsCard icon={<Icons.Settings />} value={data?.summary.suspicious ?? (loading ? "—" : 0)} label="Suspicious" tone="amber" />
-        <StatsCard icon={<Icons.Clipboard />} value={data?.summary.submitted ?? (loading ? "—" : 0)} label="Submitted" tone="slate" />
+        <StatsCard icon={<Icons.CheckCircle />} value={data?.summary.submitted ?? (loading ? "—" : 0)} label="Submitted" tone="slate" />
       </div>
 
       <Card className="border border-slate-100 shadow-sm">

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router";
-import { useAuth } from "../../context/AuthContext";
-import { getClass, type ClassDetail } from "../../api/classes";
+import { useAuth } from "@/context/AuthContext";
+import { getClass, type ClassDetail } from "@/services/classes.service";
 
 export function StudentClassDetailPage() {
   const { token } = useAuth();

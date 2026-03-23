@@ -1,4 +1,4 @@
-import type { ScoreBucket } from "../api/assignments";
+import type { ScoreBucket } from "@/services/assignments.service";
 
 interface ScoreBarChartProps {
   buckets: ScoreBucket[];

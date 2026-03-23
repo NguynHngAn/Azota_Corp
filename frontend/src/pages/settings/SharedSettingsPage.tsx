@@ -1,17 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useAuth } from "../../context/AuthContext";
-import { Card } from "../../components/ui/card";
-import { Input } from "../../components/ui/input";
-import { Select } from "../../components/ui/select";
-import { Button } from "../../components/ui/button";
-import { Icons } from "../../components/admin/icons";
-import { SettingsTabsNav, type SettingsTab } from "../../components/settings/SettingsTabsNav";
-import { Toggle } from "../../components/settings/Toggle";
-import { OptionCard } from "../../components/settings/OptionCard";
-import { useLocalStorageState } from "../../components/settings/useLocalStorageState";
-import { notifyLanguageChanged, t, useLanguage } from "../../i18n";
-import { uploadMyAvatar } from "../../api/users";
-import { resolveStaticUrl } from "../../utils/url";
+import { useAuth } from "@/context/AuthContext";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Icons } from "@/components/layouts/icons";
+import { SettingsTabsNav, type SettingsTab } from "@/components/settings/settings-tabs-nav";
+import { Toggle } from "@/components/settings/toggle";
+import { OptionCard } from "@/components/settings/option-card";
+import { useLocalStorageState } from "@/components/settings/use-local-storage-state";
+import { notifyLanguageChanged, t, useLanguage } from "@/i18n";
+import { uploadMyAvatar } from "@/services/users.service";
+import { resolveStaticUrl } from "@/utils/url";
 
 function initials(text: string): string {
   const t = (text || "").trim();
@@ -144,14 +143,15 @@ export function SharedSettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">{t("settings.title", langUi)}</h1>
-        <p className="text-sm text-slate-500">{t("settings.subtitle", langUi)}</p>
+        <h1 className="text-2xl font-bold text-foreground">{t("settings.title", langUi)}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t("settings.subtitle", langUi)}</p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[260px_1fr] items-start">
-        <div className="lg:sticky lg:top-20">
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* Tabs */}
+        <div className="md:w-48 shrink-0 space-y-1">
           <SettingsTabsNav
             tab={tab}
             onChange={(t) => {
@@ -161,8 +161,8 @@ export function SharedSettingsPage() {
             items={navItems}
           />
         </div>
-
-        <Card className="border border-slate-100 shadow-sm hover:shadow-sm">
+        {/* Content */}
+        <div className="flex-1 glass-card p-6">
           <div className="settings-panel-enter">
             <div className="text-sm font-semibold text-slate-900">{panelTitle}</div>
 
@@ -190,7 +190,7 @@ export function SharedSettingsPage() {
             {!switching && tab === "profile" && (
               <div className="mt-4 space-y-4">
                 <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-[var(--primary-soft)] text-[var(--primary)] flex items-center justify-center font-semibold overflow-hidden">
+                  <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold overflow-hidden">
                     {user?.avatar_url ? (
                       <img
                         src={resolveStaticUrl(user.avatar_url)}
@@ -399,7 +399,7 @@ export function SharedSettingsPage() {
                       title="Blue"
                       selected={appearance.color === "blue"}
                       onSelect={() => setAppearance((a) => ({ ...a, color: "blue" }))}
-                      icon={<span className="h-3 w-3 rounded-full bg-[var(--primary)] inline-block" />}
+                      icon={<span className="h-3 w-3 rounded-full bg-primary inline-block" />}
                     />
                     <OptionCard
                       title="Green"
@@ -471,44 +471,47 @@ export function SharedSettingsPage() {
                 <div>
                   <div className="text-sm font-semibold text-slate-900">{t("settings.language.title", langUi)}</div>
                   <div className="mt-2 rounded-2xl border border-slate-100 overflow-hidden">
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
                       onClick={() => setLanguageDraft((l) => ({ ...l, language: "en" }))}
-                      className={`w-full px-4 py-3 flex items-center justify-between text-sm transition ${
+                      className={`w-full justify-between px-4 py-3 h-auto rounded-none text-sm font-normal transition ${
                         languageDraft.language === "en"
-                          ? "bg-[var(--primary-soft)] text-[var(--primary)]"
-                          : "bg-[var(--panel-bg)] hover:bg-[var(--app-bg)] text-slate-700"
+                          ? "bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary"
+                          : "bg-card hover:bg-background text-slate-700"
                       }`}
                     >
                       <span>English</span>
-                      {languageDraft.language === "en" ? <span className="text-[var(--primary)]">✓</span> : null}
-                    </button>
-                    <button
+                      {languageDraft.language === "en" ? <span className="text-primary">✓</span> : null}
+                    </Button>
+                    <Button
                       type="button"
+                      variant="ghost"
                       onClick={() => setLanguageDraft((l) => ({ ...l, language: "vi" }))}
-                      className={`w-full px-4 py-3 flex items-center justify-between text-sm transition border-t border-[var(--border-soft)] ${
+                      className={`w-full justify-between px-4 py-3 h-auto rounded-none text-sm font-normal transition border-t border-border ${
                         languageDraft.language === "vi"
-                          ? "bg-[var(--primary-soft)] text-[var(--primary)]"
-                          : "bg-[var(--panel-bg)] hover:bg-[var(--app-bg)] text-slate-700"
+                          ? "bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary"
+                          : "bg-card hover:bg-background text-slate-700"
                       }`}
                     >
                       <span>Tiếng Việt</span>
-                      {languageDraft.language === "vi" ? <span className="text-[var(--primary)]">✓</span> : null}
-                    </button>
+                      {languageDraft.language === "vi" ? <span className="text-primary">✓</span> : null}
+                    </Button>
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1">{t("settings.language.timezone", langUi)}</label>
-                  <Select
+                  <select
                     value={languageDraft.timezone}
                     onChange={(e) =>
                       setLanguageDraft((l) => ({ ...l, timezone: e.target.value as LanguageState["timezone"] }))
                     }
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                   >
                     <option value="Asia/Ho_Chi_Minh">Asia/Ho_Chi_Minh (UTC+7)</option>
                     <option value="UTC">UTC</option>
-                  </Select>
+                  </select>
                 </div>
 
                 <div className="pt-2">
@@ -528,7 +531,7 @@ export function SharedSettingsPage() {
               </div>
             )}
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );

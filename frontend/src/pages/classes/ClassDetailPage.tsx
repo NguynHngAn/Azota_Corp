@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useLocation, Link } from "react-router";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 import {
   getClass,
   listMembers,
@@ -11,15 +11,14 @@ import {
   removeClassTeacher,
   type ClassDetail,
   type ClassMemberResponse,
-} from "../../api/classes";
-import { listUsers, type UserResponse } from "../../api/users";
-import { Card } from "../../components/ui/card";
-import { Select } from "../../components/ui/select";
-import { Button } from "../../components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
-import { Badge } from "../../components/ui/badge";
-import { ConfirmDialog } from "../../components/ui/dialog";
-import { Input } from "../../components/ui/input";
+} from "@/services/classes.service";
+import { listUsers, type UserResponse } from "@/services/users.service";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 function basePath(pathname: string): string {
   if (pathname.startsWith("/admin")) return "/admin";
@@ -173,19 +172,19 @@ export function ClassDetailPage() {
           {base === "/admin" && (
             <div className="mt-2 sm:mt-0">
               <label className="text-xs font-medium text-gray-700 mr-2">Primary teacher:</label>
-              <Select
-                value={cls.created_by}
+              <select
+                value={String(cls.created_by)}
                 onChange={handleChangeTeacher}
                 disabled={updatingTeacher}
-                className="w-56 inline-block"
+                className="inline-block w-56 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {teachers.length === 0 && <option value={cls.created_by}>—</option>}
+                {teachers.length === 0 && <option value={String(cls.created_by)}>—</option>}
                 {teachers.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.full_name} ({t.email})
                   </option>
                 ))}
-              </Select>
+              </select>
             </div>
           )}
         </div>
@@ -231,15 +230,16 @@ export function ClassDetailPage() {
                     </TableCell>
                     <TableCell>{t.email}</TableCell>
                     <TableCell className="text-right">
-                      <button
+                      <Button
                         type="button"
+                        variant="link"
                         onClick={() => setTeacherToRemove(t)}
-                        className={`text-xs hover:underline ${t.id === cls.created_by ? "text-gray-400 cursor-not-allowed" : "text-red-600"}`}
+                        className={`h-auto p-0 text-xs ${t.id === cls.created_by ? "text-gray-400 cursor-not-allowed no-underline" : "text-red-600"}`}
                         disabled={t.id === cls.created_by}
                         title={t.id === cls.created_by ? "Reassign primary teacher first" : "Remove from class"}
                       >
                         Remove
-                      </button>
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -292,13 +292,14 @@ export function ClassDetailPage() {
                   <TableCell>{m.user?.full_name ?? "—"}</TableCell>
                   <TableCell>{m.user?.email ?? ""}</TableCell>
                   <TableCell className="text-right">
-                    <button
+                    <Button
                       type="button"
+                      variant="link"
                       onClick={() => setMemberToRemove(m)}
-                      className="text-xs text-red-600 hover:underline"
+                      className="h-auto p-0 text-xs text-red-600"
                     >
                       Remove
-                    </button>
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

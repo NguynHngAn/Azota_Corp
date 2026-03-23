@@ -7,16 +7,15 @@ import {
   deactivateUser,
   resetUserPassword,
   type UserResponse,
-} from "@/api/users";
+} from "@/services/users.service";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableCaption } from "@/components/ui/table";
 import { ConfirmDialog } from "@/components/ui/dialog";
-import { AdminModal } from "@/components/admin/AdminModal";
-import { FilterChips } from "@/components/admin/FilterChips";
+import { AdminModal } from "@/components/features/admin/admin-modal";
+import { FilterChips } from "@/components/features/admin/filter-chips";
 
 export function AdminUsersPage() {
   const { token } = useAuth();
@@ -347,10 +346,14 @@ export function AdminUsersPage() {
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1">Role *</label>
-            <Select value={role} onChange={(e) => setRole(e.target.value as "teacher" | "student")}>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as "teacher" | "student")}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            >
               <option value="teacher">Teacher</option>
               <option value="student">Student</option>
-            </Select>
+            </select>
           </div>
           <Button type="submit" disabled={creating} className="w-full">
             {creating ? "Creating..." : "Create Account"}
@@ -391,20 +394,25 @@ export function AdminUsersPage() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-700 mb-1">Role</label>
-                <Select value={editRole} onChange={(e) => setEditRole(e.target.value as "teacher" | "student")}>
+                <select
+                  value={editRole}
+                  onChange={(e) => setEditRole(e.target.value as "teacher" | "student")}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                >
                   <option value="teacher">Teacher</option>
                   <option value="student">Student</option>
-                </Select>
+                </select>
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-700 mb-1">Status</label>
-                <Select
+                <select
                   value={editIsActive ? "active" : "inactive"}
                   onChange={(e) => setEditIsActive(e.target.value === "active")}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 >
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
-                </Select>
+                </select>
               </div>
             </div>
           </div>

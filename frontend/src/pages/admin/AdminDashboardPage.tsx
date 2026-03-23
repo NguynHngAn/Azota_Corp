@@ -1,17 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { listUsers, type UserResponse } from "../../api/users";
-import { useAuth } from "../../context/AuthContext";
-import { StatsCard } from "../../components/admin/StatsCard";
-import { Card } from "../../components/ui/card";
-import { Input } from "../../components/ui/input";
-import { FilterChips } from "../../components/admin/FilterChips";
-import { Badge } from "../../components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
-import { Button } from "../../components/ui/button";
-import { AdminModal } from "../../components/admin/AdminModal";
-import { createUser } from "../../api/users";
-import { Select } from "../../components/ui/select";
-import { Icons } from "../../components/admin/icons";
+import { listUsers, type UserResponse } from "@/services/users.service";
+import { useAuth } from "@/context/AuthContext";
+import { StatsCard } from "@/components/layouts/stats-card";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { FilterChips } from "@/components/features/admin/filter-chips";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { AdminModal } from "@/components/features/admin/admin-modal";
+import { createUser } from "@/services/users.service";
+import { Icons } from "@/components/layouts/icons";
 
 type Filter = "all" | "admin" | "teacher" | "student";
 
@@ -221,10 +220,14 @@ export function AdminDashboardPage() {
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1">Role *</label>
-            <Select value={role} onChange={(e) => setRole(e.target.value as "teacher" | "student")}>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as "teacher" | "student")}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            >
               <option value="teacher">Teacher</option>
               <option value="student">Student</option>
-            </Select>
+            </select>
           </div>
           {notice && <p className="text-sm text-red-600">{notice}</p>}
         </div>

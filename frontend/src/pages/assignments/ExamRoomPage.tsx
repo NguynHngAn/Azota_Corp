@@ -1,19 +1,19 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router";
-import { useAuth } from "../../context/AuthContext";
-import { useExam } from "../../context";
+import { useAuth } from "@/context/AuthContext";
+import { useExam } from "@/context";
 import {
   startAssignment,
   submitSubmission,
   getMySubmissionForAssignment,
   type ExamRoomQuestion,
   type SubmissionStartResponse,
-} from "../../api/assignments";
-import { useFullScreen } from "../../hooks/useFullScreen";
-import { useTabVisibility } from "../../hooks/useTabVisibility";
-import { Card } from "../../components/ui/card";
-import { Button } from "../../components/ui/button";
-import { logAntiCheatEvent } from "../../api/antiCheat";
+} from "@/services/assignments.service";
+import { useFullScreen } from "@/hooks/useFullScreen";
+import { useTabVisibility } from "@/hooks/useTabVisibility";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { logAntiCheatEvent } from "@/services/antiCheat.service";
 
 function formatCountdown(ms: number): string {
   if (ms <= 0) return "0:00";
@@ -243,14 +243,10 @@ export function ExamRoomPage() {
               được nộp.
             </p>
             <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => navigate("/student/assignments")}
-                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-              >
+              <Button type="button" variant="secondary" onClick={() => navigate("/student/assignments")}>
                 Hủy
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={async () => {
                   await requestFullScreen();
@@ -271,10 +267,9 @@ export function ExamRoomPage() {
                   }
                   setExamStarted(true);
                 }}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               >
                 Vào full screen và bắt đầu
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -319,7 +314,7 @@ export function ExamRoomPage() {
             <h3 className="text-lg font-semibold mb-3">Cảnh báo chống gian lận</h3>
             <p className="text-sm text-gray-800 mb-4">{violationMessage}</p>
             <div className="flex justify-end">
-              <button
+              <Button
                 type="button"
                 onClick={async () => {
                   setShowViolationModal(false);
@@ -328,10 +323,9 @@ export function ExamRoomPage() {
                     lastOkRef.current = isFullScreen && isVisible;
                   }
                 }}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               >
                 Tôi hiểu
-              </button>
+              </Button>
             </div>
           </div>
         </div>

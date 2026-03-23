@@ -1,6 +1,6 @@
-export { ClassListPage } from "./ClassListPage";
-export { CreateClassPage } from "./CreateClassPage";
-export { ClassDetailPage } from "./ClassDetailPage";
-export { MyClassesPage } from "./MyClassesPage";
-export { JoinClassPage } from "./JoinClassPage";
-export { StudentClassDetailPage } from "./StudentClassDetailPage";
+export { ClassListPage } from "@/pages/classes/ClassListPage";
+export { CreateClassPage } from "@/pages/classes/CreateClassPage";
+export { ClassDetailPage } from "@/pages/classes/ClassDetailPage";
+export { MyClassesPage } from "@/pages/classes/MyClassesPage";
+export { JoinClassPage } from "@/pages/classes/JoinClassPage";
+export { StudentClassDetailPage } from "@/pages/classes/StudentClassDetailPage";

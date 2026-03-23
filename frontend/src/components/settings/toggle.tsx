@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Button } from "@/components/ui/button";
 
 export function Toggle({
   checked,
@@ -10,16 +11,17 @@ export function Toggle({
   label?: string;
 }) {
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
       role="switch"
       aria-checked={checked}
       aria-label={label}
       onClick={() => onChange(!checked)}
       className={clsx(
-        "relative inline-flex h-6 w-11 items-center rounded-full transition",
-        checked ? "bg-[var(--primary)]" : "bg-slate-200",
-        "focus:outline-none focus:ring-2 focus:ring-[var(--primary-ring)]",
+        "relative inline-flex h-6 w-11 min-h-0 min-w-[2.75rem] items-center rounded-full p-0 transition hover:bg-transparent",
+        checked ? "bg-primary hover:bg-primary" : "bg-slate-200 hover:bg-slate-200",
+        "focus-visible:ring-2 focus-visible:ring-ring",
       )}
     >
       <span
@@ -28,7 +30,7 @@ export function Toggle({
           checked ? "translate-x-5" : "translate-x-1",
         )}
       />
-    </button>
+    </Button>
   );
 }
 

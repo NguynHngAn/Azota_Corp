@@ -1,5 +1,5 @@
-export { ExamListPage } from "./ExamListPage";
-export { CreateExamPage } from "./CreateExamPage";
-export { EditExamPage } from "./EditExamPage";
-export { ExamEditorForm } from "./ExamEditorForm";
-export type { ExamFormState, QuestionRow, OptionRow, QuestionType } from "./types";
+export { ExamListPage } from "@/pages/exams/ExamListPage";
+export { CreateExamPage } from "@/pages/exams/CreateExamPage";
+export { EditExamPage } from "@/pages/exams/EditExamPage";
+export { ExamEditorForm } from "@/pages/exams/ExamEditorForm";
+export type { ExamFormState, QuestionRow, OptionRow, QuestionType } from "@/pages/exams/types";

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { useAuth } from "../../context/AuthContext";
-import { listClasses, type ClassResponse } from "../../api/classes";
-import { Card } from "../../components/ui/card";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
+import { useAuth } from "@/context/AuthContext";
+import { listClasses, type ClassResponse } from "@/services/classes.service";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 function basePath(pathname: string): string {
   if (pathname.startsWith("/admin")) return "/admin";
@@ -61,11 +61,12 @@ export function ClassListPage() {
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((c) => (
-                <button
+                <Button
                   key={c.id}
                   type="button"
+                  variant="outline"
                   onClick={() => navigate(`${base}/classes/${c.id}`)}
-                  className="text-left rounded-2xl border border-slate-100 bg-white px-4 py-4 hover:bg-slate-50 transition"
+                  className="h-auto w-full flex-col items-stretch rounded-2xl border-slate-100 bg-white px-4 py-4 text-left font-normal hover:bg-slate-50"
                 >
                   <div className="text-sm font-semibold text-slate-900">{c.name}</div>
                   {c.description ? (
@@ -73,7 +74,7 @@ export function ClassListPage() {
                   ) : (
                     <div className="mt-1 text-sm text-slate-400">No description</div>
                   )}
-                </button>
+                </Button>
               ))}
             </div>
           )}

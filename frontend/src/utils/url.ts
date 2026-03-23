@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "./constants";
+import { API_BASE_URL } from "@/utils/constants";
 
 export function resolveStaticUrl(pathOrUrl: string | null | undefined): string {
   const v = (pathOrUrl ?? "").trim();

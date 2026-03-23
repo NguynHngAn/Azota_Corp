@@ -1,4 +1,4 @@
-import { get, post } from "./client";
+import { get, post } from "@/api/client";
 
 export type AntiCheatEventType =
   | "EXAM_START"

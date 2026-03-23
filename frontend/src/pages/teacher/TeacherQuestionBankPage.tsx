@@ -11,16 +11,15 @@ import {
   type BankQuestionResponse,
   type QuestionDifficulty,
   type QuestionType,
-} from "../../api/questionBank";
-import { useAuth } from "../../context/AuthContext";
-import { Badge } from "../../components/ui/badge";
-import { Button } from "../../components/ui/button";
-import { Card } from "../../components/ui/card";
-import { ConfirmDialog } from "../../components/ui/dialog";
-import { Input } from "../../components/ui/input";
-import { Select } from "../../components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
-import { Textarea } from "../../components/ui/textarea";
+} from "@/services/questionBank.service";
+import { useAuth } from "@/context/AuthContext";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 
 export function TeacherQuestionBankPage() {
   const { token } = useAuth();
@@ -359,7 +358,7 @@ export function TeacherQuestionBankPage() {
                 />
               </div>
 
-              <div className="rounded-2xl border border-slate-100 p-4 bg-[var(--panel-bg)]">
+              <div className="rounded-2xl border border-slate-100 p-4 bg-card">
                 <div className="flex items-center justify-between">
                   <div className="text-xs font-semibold text-slate-700">Answer options</div>
                   <Button size="sm" variant="ghost" onClick={addOption} type="button">
@@ -406,33 +405,39 @@ export function TeacherQuestionBankPage() {
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-medium text-slate-700 mb-1">Type</label>
-                <Select value={draft.question_type} onChange={(e) => setQuestionType(e.target.value as QuestionType)}>
+                <select
+                  value={draft.question_type}
+                  onChange={(e) => setQuestionType(e.target.value as QuestionType)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                >
                   <option value="single_choice">Single choice</option>
                   <option value="multiple_choice">Multiple choice</option>
-                </Select>
+                </select>
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-slate-700 mb-1">Difficulty</label>
-                <Select
+                <select
                   value={draft.difficulty}
                   onChange={(e) => setDraft((d) => ({ ...d, difficulty: e.target.value as QuestionDifficulty }))}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 >
                   <option value="easy">Easy</option>
                   <option value="medium">Medium</option>
                   <option value="hard">Hard</option>
-                </Select>
+                </select>
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-slate-700 mb-1">Status</label>
-                <Select
+                <select
                   value={draft.is_active ? "active" : "inactive"}
                   onChange={(e) => setDraft((d) => ({ ...d, is_active: e.target.value === "active" }))}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 >
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
-                </Select>
+                </select>
               </div>
 
               <div>

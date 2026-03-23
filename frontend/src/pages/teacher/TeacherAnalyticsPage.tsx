@@ -1,11 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { listMyClasses, getClass, type ClassDetail, type ClassResponse } from "../../api/classes";
-import { listExams, type ExamResponse } from "../../api/exams";
-import { getAssignmentReport, listAssignments, type AssignmentDetail, type AssignmentReportResponse } from "../../api/assignments";
-import { useAuth } from "../../context/AuthContext";
-import { StatsCard } from "../../components/admin/StatsCard";
-import { Icons } from "../../components/admin/icons";
-import { Card } from "../../components/ui/card";
+import { listMyClasses, getClass, type ClassDetail, type ClassResponse } from "@/services/classes.service";
+import { listExams, type ExamResponse } from "@/services/exams.service";
+import {
+  getAssignmentReport,
+  listAssignments,
+  type AssignmentDetail,
+  type AssignmentReportResponse,
+} from "@/services/assignments.service";
+import { useAuth } from "@/context/AuthContext";
+import { StatsCard } from "@/components/layouts/stats-card";
+import { Icons } from "@/components/layouts/icons";
+import { Card } from "@/components/ui/card";
 
 // In-memory caches (persist across SPA navigation)
 const classCache = new Map<number, ClassDetail>();
@@ -204,8 +209,8 @@ export function TeacherAnalyticsPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard icon={<Icons.Users />} value={stats.myStudents} label="My Students" tone="blue" />
-        <StatsCard icon={<Icons.Book />} value={stats.myExams} label="Exams" tone="violet" />
-        <StatsCard icon={<Icons.Clipboard />} value={stats.submissions} label="Submissions" tone="slate" />
+        <StatsCard icon={<Icons.BookOpen />} value={stats.myExams} label="Exams" tone="violet" />
+        <StatsCard icon={<Icons.CheckCircle />} value={stats.submissions} label="Submissions" tone="slate" />
         <StatsCard icon={<Icons.Chart />} value={stats.avgScore} label="Avg Score" tone="green" />
       </div>
 

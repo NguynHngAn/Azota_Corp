@@ -1,5 +1,5 @@
-import { get, post, put, del } from "./client";
-import { API_BASE_URL } from "../utils/constants";
+import { get, post, put, del } from "@/api/client";
+import { API_BASE_URL } from "@/utils/constants";
 
 export type Role = "admin" | "teacher" | "student";
 

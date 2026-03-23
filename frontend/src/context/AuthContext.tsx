@@ -6,8 +6,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { login as apiLogin, getMe, type UserResponse } from "../api/auth";
-import { AUTH_TOKEN_KEY } from "../utils/constants";
+import { login as apiLogin, getMe, type UserResponse } from "@/services/auth.service";
+import { AUTH_TOKEN_KEY } from "@/utils/constants";
 
 interface AuthState {
   user: UserResponse | null;

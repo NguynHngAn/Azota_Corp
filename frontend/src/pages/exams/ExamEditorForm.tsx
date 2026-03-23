@@ -1,13 +1,12 @@
 import type { Dispatch, SetStateAction } from "react";
-import type { ExamFormState, QuestionRow, QuestionType } from "./types";
-import { emptyOption } from "./types";
+import type { ExamFormState, QuestionRow, QuestionType } from "@/pages/exams/types";
+import { emptyOption } from "@/pages/exams/types";
 import { useMemo, useState } from "react";
-import { Card } from "../../components/ui/card";
-import { Input } from "../../components/ui/input";
-import { Select } from "../../components/ui/select";
-import { Textarea } from "../../components/ui/textarea";
-import { Button } from "../../components/ui/button";
-import { Badge } from "../../components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface ExamEditorFormProps {
   state: ExamFormState;
@@ -204,13 +203,14 @@ export function ExamEditorForm({
                             </div>
                             <div>
                               <label className="block text-xs font-medium text-slate-600 mb-1">Type</label>
-                              <Select
+                              <select
                                 value={q.question_type}
                                 onChange={(e) => setQuestionType(qIndex, e.target.value as QuestionType)}
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                               >
                                 <option value="single_choice">Single Choice</option>
                                 <option value="multiple_choice">Multiple Choice</option>
-                              </Select>
+                              </select>
                             </div>
                           </div>
                         </div>

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import ReactDOM from "react-dom";
+import { Button } from "@/components/ui/button";
 
 export function AdminModal({
   open,
@@ -28,14 +29,16 @@ export function AdminModal({
       <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-100 admin-modal-enter">
         <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-slate-100">
           <div className="text-sm font-semibold text-slate-900">{title}</div>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={onClose}
-            className="h-8 w-8 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+            className="h-8 w-8 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-50"
             aria-label="Close"
           >
             ×
-          </button>
+          </Button>
         </div>
         <div className="px-6 py-5">{children}</div>
         {footer && <div className="px-6 pb-5">{footer}</div>}

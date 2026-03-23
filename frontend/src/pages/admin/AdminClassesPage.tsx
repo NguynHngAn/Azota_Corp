@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { useAuth } from "../../context/AuthContext";
-import { createClass, listClasses, type ClassResponse } from "../../api/classes";
-import { Card } from "../../components/ui/card";
-import { Input } from "../../components/ui/input";
-import { Button } from "../../components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
-import { AdminModal } from "../../components/admin/AdminModal";
+import { useAuth } from "@/context/AuthContext";
+import { createClass, listClasses, type ClassResponse } from "@/services/classes.service";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AdminModal } from "@/components/features/admin/admin-modal";
 
 export function AdminClassesPage() {
   const { token } = useAuth();

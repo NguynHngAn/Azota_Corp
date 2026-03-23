@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { useAuth } from "@/context/AuthContext";
-import { getAssignmentReport, type AssignmentReportResponse } from "@/api/assignments";
-import { ScoreBarChart } from "@/components/ScoreBarChart";
+import { getAssignmentReport, type AssignmentReportResponse } from "@/services/assignments.service";
+import { ScoreBarChart } from "@/components/score-bar-chart";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 

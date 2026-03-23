@@ -1,4 +1,4 @@
-import { get, post, del, put } from "./client";
+import { get, post, del, put } from "@/api/client";
 
 export interface ClassResponse {
   id: number;

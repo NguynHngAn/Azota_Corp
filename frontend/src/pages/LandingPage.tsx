@@ -2,9 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
 import {
   ArrowRight,
-  Play,
   FileText,
-  Database,
   CheckCircle,
   Shield,
   Eye,
@@ -17,10 +15,7 @@ import {
   GraduationCap,
   BookOpen,
   Award,
-  MousePointerClick,
   Sparkles,
-  Globe,
-  Lock,
   Languages,
   Palette,
   Sun,
@@ -28,332 +23,21 @@ import {
   Monitor,
   SlidersHorizontal,
 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
-import { motion, useInView, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { features, steps, plans, testimonials, faqs, trustedLogos } from "@/pages/landing/landing-data";
+import { fadeUp, staggerContainer } from "@/pages/landing/landing-motion";
+import { SectionHeader } from "@/pages/landing/landing-primitives";
+import { LandingNav } from "@/pages/landing/landing-nav";
+import { LandingHero } from "@/pages/landing/landing-hero";
 
-/* ─── Data ─── */
-const features = [
-  { icon: <FileText className="w-5 h-5" />, title: "Create exams in minutes", desc: "Intuitive drag-and-drop exam builder with multiple question types, auto-save, and templates. Import questions directly from PDF or Word documents.", gradient: "from-primary/20 to-info/20" },
-  { icon: <Database className="w-5 h-5" />, title: "Question bank management", desc: "Organize thousands of questions by subject, difficulty, and tags. Reuse across exams effortlessly.", gradient: "from-accent/20 to-primary/20" },
-  { icon: <CheckCircle className="w-5 h-5" />, title: "Automatic grading", desc: "Exams are graded the moment students submit — multiple choice, fill-in-the-blank, and matching questions scored instantly with zero manual effort.", gradient: "from-info/20 to-accent/20" },
-  { icon: <Eye className="w-5 h-5" />, title: "Real-time monitoring", desc: "Watch students take exams live. See progress, time remaining, and submission status in real time.", gradient: "from-warning/20 to-primary/20" },
-  { icon: <Shield className="w-5 h-5" />, title: "Anti-cheating technology", desc: "Multi-layered exam integrity: tab switch detection flags wandering students, fullscreen mode locks the browser, and optional webcam monitoring ensures identity verification.", gradient: "from-destructive/20 to-warning/20" },
-  { icon: <BarChart3 className="w-5 h-5" />, title: "Advanced analytics", desc: "Visualize score distributions, compare class performance side-by-side, and drill into per-question difficulty — all in interactive, exportable dashboards.", gradient: "from-primary/20 to-accent/20" },
-];
-
-const steps = [
-  { num: "01", title: "Create your exam", desc: "Use our intuitive builder to craft exams with multiple question types.", icon: <FileText className="w-6 h-6" /> },
-  { num: "02", title: "Share with students", desc: "Send an exam link or code. Students join with one click.", icon: <Globe className="w-6 h-6" /> },
-  { num: "03", title: "Students take the exam", desc: "Secure, timed testing with anti-cheating features.", icon: <MousePointerClick className="w-6 h-6" /> },
-  { num: "04", title: "Instant results", desc: "Students see their score, correct answers, and detailed feedback the second they submit.", icon: <Sparkles className="w-6 h-6" /> },
-];
-
-const plans = [
-  { name: "Free", price: "$0", period: "forever", desc: "For individual teachers getting started.", features: ["Up to 30 students", "5 exams per month", "Basic question types", "Auto grading", "Email support"], cta: "Start free", highlighted: false },
-  { name: "Pro", price: "$19", period: "/month", desc: "For teachers who need more power.", features: ["Unlimited students", "Unlimited exams", "All question types", "Anti-cheating tools", "Advanced analytics", "Priority support"], cta: "Start free trial", highlighted: true },
-  { name: "School", price: "$99", period: "/month", desc: "For schools and training centers.", features: ["Everything in Pro", "Unlimited teachers", "Admin dashboard", "Custom branding", "API access", "Dedicated support"], cta: "Contact sales", highlighted: false },
-];
-
-const testimonials = [
-  { quote: "This platform cut my exam grading time by 90%. I can now focus on actually teaching instead of paper management.", name: "Ms. Nguyen Thi Lan", role: "Mathematics Teacher, Hanoi", avatar: "NL" },
-  { quote: "The anti-cheating features give me confidence that exam results are fair. The real-time monitoring is a game changer.", name: "Mr. Tran Van Duc", role: "Physics Teacher, HCMC", avatar: "TD" },
-  { quote: "We deployed this across 12 departments. The admin dashboard makes managing 200+ teachers seamless.", name: "Dr. Le Minh Chau", role: "Director, ABC Training Center", avatar: "LC" },
-];
-
-const faqs = [
-  { q: "Is there a free plan?", a: "Yes! Our free plan lets you create up to 5 exams per month with 30 students. No credit card required." },
-  { q: "Do students need to install anything?", a: "No. Students access exams through any web browser on desktop, tablet, or mobile. No app download needed." },
-  { q: "How does the anti-cheating system work?", a: "We use multiple layers: tab switch detection, fullscreen enforcement, webcam monitoring, copy-paste prevention, and AI-powered behavioral analysis." },
-  { q: "Can I import existing questions?", a: "Yes, you can import questions from Excel, CSV, or Word documents. We also support bulk import with automatic formatting." },
-  { q: "Is my data secure?", a: "Absolutely. All data is encrypted at rest and in transit. We comply with GDPR and maintain SOC 2 certification." },
-  { q: "Can I customize the exam interface?", a: "Pro and School plans include custom branding options — add your logo, colors, and custom domain." },
-];
-
-const trustedLogos = ["University of Science", "Tech Academy", "Global Institute", "Metro School", "EduPrime"];
-
-/* ─── Animation helpers ─── */
-const fadeUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: (i: number = 0) => ({ opacity: 1, y: 0, transition: { duration: 0.6, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] as const } }),
-};
-
-const staggerContainer = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.08 } },
-};
-
-function SectionHeader({ badge, title, subtitle }: { badge: string; title: string; subtitle?: string }) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
-  return (
-    <motion.div ref={ref} initial="hidden" animate={inView ? "visible" : "hidden"} variants={staggerContainer} className="text-center max-w-2xl mx-auto mb-16">
-      <motion.p variants={fadeUp} className="text-sm font-semibold text-primary mb-3 tracking-wide uppercase">{badge}</motion.p>
-      <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight leading-[1.15]">{title}</motion.h2>
-      {subtitle && <motion.p variants={fadeUp} className="mt-5 text-muted-foreground text-lg leading-relaxed">{subtitle}</motion.p>}
-    </motion.div>
-  );
-}
-
-/* ─── Animated counter ─── */
-function Counter({ target, suffix = "" }: { target: number; suffix?: string }) {
-  const [count, setCount] = useState(0);
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true });
-  useEffect(() => {
-    if (!inView) return;
-    let start = 0;
-    const duration = 1500;
-    const step = (ts: number) => {
-      if (!start) start = ts;
-      const progress = Math.min((ts - start) / duration, 1);
-      setCount(Math.floor(progress * target));
-      if (progress < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  }, [inView, target]);
-  return <span ref={ref}>{count.toLocaleString()}{suffix}</span>;
-}
-
-/* ─── Floating orb for hero background ─── */
-function FloatingOrb({ className, delay = 0 }: { className: string; delay?: number }) {
-  return (
-    <motion.div
-      className={`absolute rounded-full blur-3xl opacity-30 ${className}`}
-      animate={{ y: [0, -30, 0], x: [0, 15, 0], scale: [1, 1.1, 1] }}
-      transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay }}
-    />
-  );
-}
-
-/* ─── Main Component ─── */
 const LandingPage = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const heroRef = useRef(null);
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const heroY = useTransform(scrollYProgress, [0, 1], [0, 150]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
-      {/* ─── Navigation ─── */}
-      <motion.nav
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="sticky top-0 z-50 border-b border-border/50 bg-background/60 backdrop-blur-2xl"
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/25">
-                <GraduationCap className="w-4.5 h-4.5 text-primary-foreground" />
-              </div>
-              <span className="text-lg font-bold text-foreground tracking-tight">EduFlow</span>
-            </div>
-            <div className="hidden md:flex items-center gap-1">
-              {["Features", "How it works", "Pricing", "FAQ"].map((item) => (
-                <a key={item} href={`#${item.toLowerCase().replace(/ /g, "-")}`} className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted/50 transition-all duration-200">
-                  {item}
-                </a>
-              ))}
-            </div>
-            <div className="flex items-center gap-3">
-              <Link to="/login">
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">Log in</Button>
-              </Link>
-              <Link to="/signup">
-                <Button size="sm" className="rounded-full px-5 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-shadow">
-                  Get started
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </motion.nav>
-
-      {/* ─── Hero ─── */}
-      <section ref={heroRef} className="relative overflow-hidden min-h-[90vh] flex items-center">
-        {/* Gradient mesh background */}
-        <div className="absolute inset-0">
-          <FloatingOrb className="w-[600px] h-[600px] bg-primary/40 -top-40 -left-40" />
-          <FloatingOrb className="w-[500px] h-[500px] bg-accent/30 top-20 right-[-10%]" delay={2} />
-          <FloatingOrb className="w-[400px] h-[400px] bg-info/25 bottom-0 left-1/3" delay={4} />
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-[100px]" />
-          {/* Grid pattern */}
-          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(hsl(var(--foreground)) 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
-        </div>
-
-        <motion.div style={{ y: heroY, opacity: heroOpacity }} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-24 lg:pt-20 lg:pb-32 relative w-full">
-          <div className="max-w-4xl mx-auto text-center">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium mb-8 backdrop-blur-sm"
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-accent" />
-              </span>
-              Trusted by 10,000+ educators worldwide
-            </motion.div>
-
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-foreground leading-[1.05]"
-            >
-              Create, manage, and{" "}
-              <span className="relative">
-                <span className="bg-gradient-to-r from-primary via-primary to-info bg-clip-text text-transparent">grade exams</span>
-                <motion.span
-                  className="absolute -bottom-1 left-0 right-0 h-[3px] bg-gradient-to-r from-primary to-info rounded-full"
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ duration: 0.8, delay: 0.8 }}
-                  style={{ originX: 0 }}
-                />
-              </span>{" "}
-              online effortlessly
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.35 }}
-              className="mt-8 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
-            >
-              An all-in-one platform for teachers to create tests, monitor exams, and analyze student performance — saving hours every week.
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
-            >
-              <Link to="/signup">
-                <Button size="lg" className="rounded-full px-8 h-13 text-base gap-2 shadow-xl shadow-primary/25 hover:shadow-primary/40 hover:scale-[1.02] transition-all duration-300 group">
-                  Start for free
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                </Button>
-              </Link>
-              <Button variant="outline" size="lg" className="rounded-full px-8 h-13 text-base gap-2 bg-background/50 backdrop-blur-sm border-border/80 hover:bg-muted/80 hover:scale-[1.02] transition-all duration-300">
-                <Play className="w-4 h-4" /> Watch demo
-              </Button>
-            </motion.div>
-
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.7 }}
-              className="mt-5 text-xs text-muted-foreground flex items-center justify-center gap-4"
-            >
-              <span className="flex items-center gap-1"><CheckCircle className="w-3 h-3 text-accent" /> No credit card</span>
-              <span className="flex items-center gap-1"><CheckCircle className="w-3 h-3 text-accent" /> Free forever plan</span>
-              <span className="flex items-center gap-1"><Lock className="w-3 h-3 text-accent" /> SOC 2 compliant</span>
-            </motion.p>
-          </div>
-
-          {/* ─── Hero Mockup (Glassmorphism) ─── */}
-          <motion.div
-            initial={{ opacity: 0, y: 60, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 1, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-20 max-w-5xl mx-auto perspective-[2000px]"
-          >
-            <div className="relative">
-              {/* Glow behind mockup */}
-              <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 via-accent/10 to-info/20 rounded-3xl blur-2xl opacity-60" />
-
-              <div className="relative rounded-2xl border border-border/60 bg-card/80 backdrop-blur-xl shadow-2xl shadow-primary/10 overflow-hidden">
-                {/* Browser chrome */}
-                <div className="flex items-center gap-2 px-5 py-3.5 border-b border-border/50 bg-muted/30 backdrop-blur-sm">
-                  <div className="flex gap-2">
-                    <div className="w-3 h-3 rounded-full bg-destructive/50 hover:bg-destructive transition-colors" />
-                    <div className="w-3 h-3 rounded-full bg-warning/50 hover:bg-warning transition-colors" />
-                    <div className="w-3 h-3 rounded-full bg-accent/50 hover:bg-accent transition-colors" />
-                  </div>
-                  <div className="flex-1 flex justify-center">
-                    <div className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-background/80 border border-border/50 text-xs text-muted-foreground backdrop-blur-sm">
-                      <Lock className="w-3 h-3 text-accent" />
-                      app.eduflow.com/dashboard
-                    </div>
-                  </div>
-                </div>
-
-                {/* Dashboard content */}
-                <div className="p-6 sm:p-8 bg-gradient-to-b from-muted/20 to-background/50">
-                  {/* Stat cards */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                    {[
-                      { label: "Students", val: 1248, icon: <Users className="w-4 h-4" />, color: "text-primary" },
-                      { label: "Exams", val: 86, icon: <FileText className="w-4 h-4" />, color: "text-info" },
-                      { label: "Submissions", val: 143, icon: <CheckCircle className="w-4 h-4" />, color: "text-accent" },
-                      { label: "Avg Score", val: 72, icon: <BarChart3 className="w-4 h-4" />, color: "text-warning" },
-                    ].map((s, idx) => (
-                      <motion.div
-                        key={s.label}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 1 + idx * 0.1 }}
-                        className="rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm p-4 hover:bg-card/90 transition-colors group"
-                      >
-                        <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                          <span className={`${s.color} group-hover:scale-110 transition-transform`}>{s.icon}</span>
-                          <span className="text-xs">{s.label}</span>
-                        </div>
-                        <div className="text-xl font-bold text-foreground">
-                          <Counter target={s.val} suffix={s.label === "Avg Score" ? "%" : ""} />
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-
-                  {/* Charts mockup */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="sm:col-span-2 rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm p-5 h-36">
-                      <div className="text-xs text-muted-foreground mb-3 font-medium">Weekly Submissions</div>
-                      <div className="flex items-end gap-1.5 h-20 w-full">
-                        {[40, 55, 48, 72, 65, 85, 60].map((h, i) => (
-                          <motion.div
-                            key={i}
-                            className="flex-1 rounded-t-md bg-gradient-to-t from-primary to-primary/60"
-                            initial={{ height: 0 }}
-                            animate={{ height: `${h}%` }}
-                            transition={{ duration: 0.8, delay: 1.2 + i * 0.08, ease: "easeOut" }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                    <div className="rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm p-5 h-36 flex flex-col items-center justify-center">
-                      <div className="text-xs text-muted-foreground mb-3 font-medium">Pass Rate</div>
-                      <div className="relative w-20 h-20">
-                        <svg className="w-20 h-20 -rotate-90" viewBox="0 0 36 36">
-                          <circle cx="18" cy="18" r="14" fill="none" stroke="hsl(var(--muted))" strokeWidth="3" />
-                          <motion.circle
-                            cx="18" cy="18" r="14" fill="none"
-                            stroke="hsl(var(--accent))"
-                            strokeWidth="3" strokeLinecap="round"
-                            strokeDasharray="88"
-                            initial={{ strokeDashoffset: 88 }}
-                            animate={{ strokeDashoffset: 88 * 0.06 }}
-                            transition={{ duration: 1.5, delay: 1.2, ease: "easeOut" }}
-                          />
-                        </svg>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-sm font-bold text-foreground">94%</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </motion.div>
-      </section>
+      <LandingNav />
+      <LandingHero />
 
       {/* ─── Trusted By ─── */}
       <section className="border-y border-border/50 bg-muted/20 py-12 overflow-hidden">
@@ -1089,15 +773,17 @@ const LandingPage = () => {
                 variants={fadeUp}
                 className="rounded-xl border border-border/60 bg-card/80 backdrop-blur-sm overflow-hidden hover:border-primary/20 transition-colors"
               >
-                <button
+                <Button
+                  type="button"
+                  variant="ghost"
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full flex items-center justify-between p-5 text-left group"
+                  className="h-auto w-full justify-between gap-4 rounded-none p-5 text-left font-normal group hover:bg-transparent"
                 >
                   <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{faq.q}</span>
                   <motion.div animate={{ rotate: openFaq === i ? 180 : 0 }} transition={{ duration: 0.2 }}>
                     <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
                   </motion.div>
-                </button>
+                </Button>
                 <AnimatePresence>
                   {openFaq === i && (
                     <motion.div

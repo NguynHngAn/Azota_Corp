@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { useAuth } from "../../context/AuthContext";
-import { listMyClasses, type ClassResponse } from "../../api/classes";
-import { listMyAssignments, type AssignmentDetail } from "../../api/assignments";
-import { StatsCard } from "../../components/admin/StatsCard";
-import { Icons } from "../../components/admin/icons";
-import { JoinClassPanel } from "../../components/student/JoinClassPanel";
-import { Card } from "../../components/ui/card";
-import { formatDateTimeVietnam } from "../../utils/date";
+import { useAuth } from "@/context/AuthContext";
+import { listMyClasses, type ClassResponse } from "@/services/classes.service";
+import { listMyAssignments, type AssignmentDetail } from "@/services/assignments.service";
+import { StatsCard } from "@/components/layouts/stats-card";
+import { Icons } from "@/components/layouts/icons";
+import { JoinClassPanel } from "@/components/features/student/join-class-panel";
+import { Button } from "@/components/ui/button";
+import { formatDateTimeVietnam } from "@/utils/date";
 import { useNavigate } from "react-router";
+import { Clock, Loader2 } from "lucide-react";
 
 function firstName(fullNameOrEmail?: string | null): string {
   const raw = (fullNameOrEmail || "").trim();
@@ -55,35 +56,43 @@ export function StudentDashboardPage() {
       .slice(0, 3);
   }, [assignments]);
 
+  if (loading) {
+    return (
+        <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">
+        <h1 className="text-2xl font-bold text-foreground">
           Hello, {firstName(user?.full_name || user?.email)}{" "}
-          <span className="text-slate-400">👋</span>
+          <span className="text-foreground">👋</span>
         </h1>
-        <p className="text-sm text-slate-500">Here’s your learning overview.</p>
+        <p className="text-sm text-muted-foreground mt-1">Here’s your learning overview.</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatsCard icon={<Icons.Layers />} value={stats.classes} label="My Classes" tone="violet" />
-        <StatsCard icon={<Icons.Clipboard />} value={stats.submissions} label="Submissions" tone="green" />
-        <StatsCard icon={<Icons.Book />} value={stats.upcoming} label="Upcoming" tone="blue" />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatsCard icon={<Icons.BookOpen />} value={stats.classes} label="My Classes" tone="blue"/>
+        <StatsCard icon={<Icons.CheckCircle />} value={stats.submissions} label="Submissions" tone="green" />
+        <StatsCard icon={<Icons.FileText />} value={stats.upcoming} label="Upcoming" tone="slate" />
       </div>
 
       <JoinClassPanel compact />
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="border border-slate-100 shadow-sm hover:shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="glass-card p-5">
           <div className="flex items-center justify-between gap-3">
-            <div className="text-sm font-semibold text-slate-900">Upcoming Assignments</div>
-            <button
+            <h3 className="text-sm font-semibold text-foreground mb-4">Upcoming Assignments</h3>
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => navigate("/student/assignments")}
-              className="text-xs font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 px-2 py-1 rounded-lg transition"
+              className="text-xs font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50"
             >
               View all →
-            </button>
+            </Button>
           </div>
           <div className="mt-3">
             {loading ? (
@@ -92,35 +101,72 @@ export function StudentDashboardPage() {
                 <div className="h-10 bg-slate-50 rounded-xl animate-pulse" />
               </div>
             ) : upcomingAssignments.length === 0 ? (
-              <div className="text-sm text-slate-500 py-8 text-center">
+              <p className="text-sm text-muted-foreground">
                 No upcoming assignments. Check “Assignments” to see all assigned exams.
-              </div>
+              </p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {upcomingAssignments.map((a) => (
-                  <button
-                    key={a.id}
-                    type="button"
-                    onClick={() => navigate("/student/assignments")}
-                    className="w-full text-left rounded-xl border border-slate-100 bg-white px-4 py-3 hover:bg-slate-50 transition"
-                  >
-                    <div className="text-sm font-medium text-slate-900">{a.exam_title}</div>
-                    <div className="text-xs text-slate-500 mt-1">
-                      {a.class_name} · {formatDateTimeVietnam(a.start_time)}
+                  <div key={a.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center"><Icons.FileText /></div>
+                      <div>
+                        <div className="text-sm font-medium text-foreground">{a.exam_title}</div>
+                        <div className="text-xs text-muted-foreground">{a.class_name} · {a.duration_minutes} min</div>
+                      </div>
                     </div>
-                  </button>
-                ))}
+                    <div className="text-right">
+                      <div className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {formatDateTimeVietnam(a.start_time)}
+                      </div>
+                      {new Date(a.start_time) <= new Date() && (
+                        <Button
+                        key={a.id}
+                        type="button"
+                        variant="outline"
+                        onClick={() => navigate("/student/assignments")}
+                        className="h-auto w-full flex-col items-stretch rounded-xl border-slate-100 bg-white px-4 py-3 text-left font-normal hover:bg-slate-50"
+                        >
+                          <div className="text-sm font-medium text-slate-900">{a.exam_title}</div>
+                          <div className="text-xs text-slate-500 mt-1">
+                            {a.class_name} · {formatDateTimeVietnam(a.start_time)}
+                          </div>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  ))}
+
               </div>
             )}
           </div>
-        </Card>
+        </div>
 
-        <Card className="border border-slate-100 shadow-sm hover:shadow-sm">
-          <div className="text-sm font-semibold text-slate-900">Recent Results</div>
-          <div className="mt-3">
-            <div className="text-sm text-slate-500 py-8 text-center">No submissions yet.</div>
-          </div>
-        </Card>
+        <div className="glass-card p-5">
+            <h3 className="text-sm font-semibold text-foreground mb-4">Recent Results</h3>
+            {assignments.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No submissions yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {assignments.map((a) => (
+                  <div key={a.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/30 transition-colors">
+                    <div>
+                      <div className="text-sm font-medium text-foreground">{a.exam_title}</div>
+                      <div className="text-xs text-muted-foreground">{a.start_time ? formatDateTimeVietnam(a.start_time) : "In progress"}</div>
+                    </div>
+                    <div className="text-right">
+                      {/* {a.score != null ? (
+                        <span className="text-lg font-bold text-primary">100%</span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Pending</span>
+                      )}  */}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+        </div>
       </div>
     </div>
   );
