@@ -5,7 +5,6 @@ import { createExam } from "@/services/exams.service";
 import { type ExamFormState, emptyQuestion, validateExamForm } from "@/pages/exams/types";
 import { ExamEditorForm } from "@/pages/exams/ExamEditorForm";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/layouts/icons";
 
 const initialState: ExamFormState = {

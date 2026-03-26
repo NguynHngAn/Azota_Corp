@@ -10,7 +10,6 @@ import {
 } from "@/services/assignments.service";
 import { StatCard } from "@/components/layouts/StatCard";
 import { Icons } from "@/components/layouts/icons";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router";
 
