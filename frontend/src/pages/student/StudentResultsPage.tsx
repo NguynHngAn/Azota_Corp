@@ -100,9 +100,7 @@ export function StudentResultsPage() {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="text-sm font-semibold text-slate-900 truncate">{it.exam_title}</div>
-                    <Badge variant="default" className="bg-slate-50 text-slate-700 border border-slate-100">
-                      Score: {it.score ?? 0}
-                    </Badge>
+                    <Badge variant="secondary">Score: {it.score ?? 0}</Badge>
                   </div>
                   <div className="text-xs text-slate-500 mt-1 truncate">
                     {it.class_name} · {formatDateTimeVietnam(it.submitted_at)}
@@ -117,12 +115,12 @@ export function StudentResultsPage() {
                       </>
                     ) : detailMap[it.submission_id] ? (
                       <>
-                        <Badge variant="success">Correct: {detailMap[it.submission_id].correct}</Badge>
-                        <Badge variant="danger">Wrong: {detailMap[it.submission_id].wrong}</Badge>
-                        <Badge>Total: {detailMap[it.submission_id].total}</Badge>
+                        <Badge variant="default">Correct: {detailMap[it.submission_id].correct}</Badge>
+                        <Badge variant="destructive">Wrong: {detailMap[it.submission_id].wrong}</Badge>
+                        <Badge variant="secondary">Total: {detailMap[it.submission_id].total}</Badge>
                       </>
                     ) : (
-                      <Badge className="bg-slate-50 text-slate-600 border border-slate-100">Summary: —</Badge>
+                      <Badge variant="outline">Summary: —</Badge>
                     )}
                   </div>
                 </div>

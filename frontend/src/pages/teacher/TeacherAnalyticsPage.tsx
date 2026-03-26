@@ -8,9 +8,8 @@ import {
   type AssignmentReportResponse,
 } from "@/services/assignments.service";
 import { useAuth } from "@/context/AuthContext";
-import { StatsCard } from "@/components/layouts/stats-card";
+import { StatCard } from "@/components/layouts/StatCard";
 import { Icons } from "@/components/layouts/icons";
-import { Card } from "@/components/ui/card";
 
 // In-memory caches (persist across SPA navigation)
 const classCache = new Map<number, ClassDetail>();
@@ -201,42 +200,66 @@ export function TeacherAnalyticsPage() {
   }, [avgScore, exams.length, statsLoading, studentsCount, submissionsCount]);
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Analytics</h1>
-        <p className="text-sm text-slate-500">Performance overview and insights.</p>
+        <h1 className="text-2xl font-bold text-foreground">Analytics</h1>
+        <p className="text-sm text-muted-foreground">Performance overview and insights.</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard icon={<Icons.Users />} value={stats.myStudents} label="My Students" tone="blue" />
-        <StatsCard icon={<Icons.BookOpen />} value={stats.myExams} label="Exams" tone="violet" />
-        <StatsCard icon={<Icons.CheckCircle />} value={stats.submissions} label="Submissions" tone="slate" />
-        <StatsCard icon={<Icons.Chart />} value={stats.avgScore} label="Avg Score" tone="green" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          icon={<Icons.Users className="text-primary" />}
+          value={String(stats.myStudents)}
+          title="My Students"
+          change="--"
+          trend="up"
+        />
+        <StatCard
+          icon={<Icons.BookOpen className="text-primary" />}
+          value={String(stats.myExams)}
+          title="Exams"
+          change="--"
+          trend="up"
+        />
+        <StatCard
+          icon={<Icons.CheckCircle className="text-info" />}
+          value={String(stats.submissions)}
+          title="Submissions"
+          change="--"
+          trend="up"
+        />
+        <StatCard
+          icon={<Icons.Chart className="text-success" />}
+          value={String(stats.avgScore)}
+          title="Avg Score"
+          change="--"
+          trend="up"
+        />
       </div>
 
-      <Card className="border border-slate-100 shadow-sm">
+      <div className="glass-card p-6">
         {error ? (
-          <div className="text-sm text-rose-600">{error}</div>
+          <div className="text-sm text-destructive">{error}</div>
         ) : loading ? (
           <div className="space-y-3">
-            <div className="h-4 w-2/3 rounded bg-slate-50 animate-pulse" />
-            <div className="h-4 w-1/2 rounded bg-slate-50 animate-pulse" />
+            <div className="h-4 w-2/3 rounded-lg bg-muted animate-pulse" />
+            <div className="h-4 w-1/2 rounded-lg bg-muted animate-pulse" />
           </div>
         ) : (
           <div className="space-y-2">
             {statsLoading && (
-              <div className="text-xs text-slate-400">
+              <div className="text-xs text-muted-foreground">
                 Calculating stats… {statsProgress.classesDone}/{statsProgress.classesTotal} classes,{" "}
                 {statsProgress.reportsDone}/{statsProgress.reportsTotal} assignments
               </div>
             )}
-            <div className="text-sm text-slate-600">
+            <div className="text-sm text-muted-foreground">
               This tab currently uses existing endpoints (classes + assignments reports). A dedicated analytics backend
               can be added later for charts, trends, and time-series.
             </div>
           </div>
         )}
-      </Card>
+      </div>
     </div>
   );
 }

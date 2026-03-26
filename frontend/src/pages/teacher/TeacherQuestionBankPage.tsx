@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import {
   createBankQuestion,
   deleteBankQuestion,
@@ -16,10 +16,10 @@ import { useAuth } from "@/context/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ConfirmDialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { Icons } from "@/components/layouts/icons";
 
 export function TeacherQuestionBankPage() {
   const { token } = useAuth();
@@ -45,8 +45,8 @@ export function TeacherQuestionBankPage() {
     tags: [],
   });
   const [tagsText, setTagsText] = useState("");
-
-  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const questionTextFieldId = useId();
+  const explanationFieldId = useId();
 
   const normalizedTags = useMemo(() => {
     return tagsText
@@ -211,7 +211,6 @@ export function TeacherQuestionBankPage() {
     setError("");
     try {
       await deleteBankQuestion(id, token);
-      setConfirmDeleteId(null);
       await refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to delete");
@@ -227,25 +226,29 @@ export function TeacherQuestionBankPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-3">
+    <div className="max-w-7xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Question Bank</h1>
-          <p className="text-sm text-slate-500">{loading ? "Loading..." : `${total} questions total`}</p>
+          <h1 className="text-2xl font-bold text-foreground">Question Bank</h1>
+          <p className="text-sm text-muted-foreground mt-1">{loading ? "Loading..." : `${total} questions total`}</p>
         </div>
+        
         <div className="flex items-center gap-2">
           <Button variant="secondary" onClick={() => refresh()} disabled={loading || saving}>
             Refresh
           </Button>
           <Button onClick={openCreate} disabled={saving}>
-            + New Question
+            <Icons.Plus className="size-4" /> New Question
           </Button>
         </div>
       </div>
 
-      <Card className="border border-slate-100 shadow-sm">
-        <div className="max-w-md">
-          <Input
+      <div >
+        <div className="search-input max-w-md">
+          <Icons.Search className="size-4" />
+          <input
+            type="text"
+            className="bg-transparent outline-none w-full text-foreground placeholder:text-muted-foreground text-sm"
             placeholder="Search questions..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -254,16 +257,12 @@ export function TeacherQuestionBankPage() {
             }}
           />
         </div>
-        {error ? <div className="mt-4 text-sm text-rose-700">{error}</div> : null}
+        {error ? <div className="mt-4 text-sm text-muted-foreground">{error}</div> : null}
 
         {loading ? (
-          <div className="mt-4 space-y-3">
-            <div className="h-10 w-full rounded-xl bg-slate-50 animate-pulse" />
-            <div className="h-10 w-full rounded-xl bg-slate-50 animate-pulse" />
-            <div className="h-10 w-full rounded-xl bg-slate-50 animate-pulse" />
-          </div>
+          <div className="flex items-center justify-center py-20"><Icons.Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
         ) : items.length === 0 ? (
-          <div className="py-12 text-center text-sm text-slate-500">No questions found.</div>
+          <div className="text-center py-20 text-muted-foreground text-sm">No questions found.</div>
         ) : (
           <div className="mt-4">
             <Table>
@@ -281,28 +280,32 @@ export function TeacherQuestionBankPage() {
                 {items.map((it) => (
                   <TableRow key={it.id}>
                     <TableCell className="max-w-[520px]">
-                      <div className="font-medium text-slate-900 line-clamp-2">{it.text}</div>
+                      <div className="font-medium text-muted-foreground line-clamp-2">{it.text}</div>
                     </TableCell>
-                    <TableCell className="text-slate-700">
+                    <TableCell className="text-muted-foreground">
                       {it.question_type === "single_choice" ? "Single" : "Multiple"}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={it.difficulty === "easy" ? "success" : it.difficulty === "hard" ? "danger" : "default"}>
+                      <Badge
+                        variant={
+                          it.difficulty === "easy" ? "default" : it.difficulty === "hard" ? "destructive" : "secondary"
+                        }
+                      >
                         {difficultyLabel(it.difficulty)}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={it.is_active ? "success" : "warning"}>{it.is_active ? "Active" : "Inactive"}</Badge>
+                      <Badge variant={it.is_active ? "default" : "outline"}>{it.is_active ? "Active" : "Inactive"}</Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
                         {(it.tags ?? []).slice(0, 3).map((t) => (
-                          <Badge key={t} className="bg-slate-50 text-slate-700 border border-slate-100">
+                          <Badge key={t} variant="outline">
                             {t}
                           </Badge>
                         ))}
                         {(it.tags ?? []).length > 3 ? (
-                          <span className="text-xs text-slate-500">+{(it.tags ?? []).length - 3}</span>
+                          <span className="text-xs text-muted-foreground">+{(it.tags ?? []).length - 3}</span>
                         ) : null}
                       </div>
                     </TableCell>
@@ -311,7 +314,20 @@ export function TeacherQuestionBankPage() {
                         <Button size="sm" variant="secondary" onClick={() => openEdit(it.id)} disabled={saving}>
                           Edit
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => setConfirmDeleteId(it.id)} disabled={saving}>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                "Delete question?\n\nThis will permanently remove the question from your bank.",
+                              )
+                            ) {
+                              void doDelete(it.id);
+                            }
+                          }}
+                          disabled={saving}
+                        >
                           Delete
                         </Button>
                       </div>
@@ -322,16 +338,16 @@ export function TeacherQuestionBankPage() {
             </Table>
           </div>
         )}
-      </Card>
+      </div>
 
       {editorOpen && (
-        <Card className="border border-slate-100 shadow-sm hover:shadow-sm">
+        <div className="glass-card p-6">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="text-sm font-semibold text-slate-900">
+              <div className="text-sm font-semibold text-foreground">
                 {editingId == null ? "New question" : `Edit question #${editingId}`}
               </div>
-              <div className="text-xs text-slate-500 mt-1">Changes are saved to your personal question bank.</div>
+              <div className="text-xs text-muted-foreground mt-1">Changes are saved to your personal question bank.</div>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="secondary" onClick={() => setEditorOpen(false)} disabled={saving}>
@@ -346,21 +362,31 @@ export function TeacherQuestionBankPage() {
           <div className="mt-4 grid gap-3 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-3">
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Question text *</label>
-                <Textarea value={draft.text} onChange={(e) => setDraft((d) => ({ ...d, text: e.target.value }))} rows={3} />
+                <label htmlFor={questionTextFieldId} className="block text-xs font-medium text-muted-foreground mb-1">
+                  Question text *
+                </label>
+                <Textarea
+                  id={questionTextFieldId}
+                  value={draft.text}
+                  onChange={(e) => setDraft((d) => ({ ...d, text: e.target.value }))}
+                  rows={3}
+                />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Explanation (optional)</label>
+                <label htmlFor={explanationFieldId} className="block text-xs font-medium text-muted-foreground mb-1">
+                  Explanation (optional)
+                </label>
                 <Textarea
+                  id={explanationFieldId}
                   value={draft.explanation ?? ""}
                   onChange={(e) => setDraft((d) => ({ ...d, explanation: e.target.value }))}
                   rows={2}
                 />
               </div>
 
-              <div className="rounded-2xl border border-slate-100 p-4 bg-card">
+              <div className="rounded-2xl border border-border p-4 bg-card">
                 <div className="flex items-center justify-between">
-                  <div className="text-xs font-semibold text-slate-700">Answer options</div>
+                  <div className="text-xs font-semibold text-muted-foreground">Answer options</div>
                   <Button size="sm" variant="ghost" onClick={addOption} type="button">
                     + Add option
                   </Button>
@@ -404,7 +430,7 @@ export function TeacherQuestionBankPage() {
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Type</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Type</label>
                 <select
                   value={draft.question_type}
                   onChange={(e) => setQuestionType(e.target.value as QuestionType)}
@@ -416,7 +442,7 @@ export function TeacherQuestionBankPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Difficulty</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Difficulty</label>
                 <select
                   value={draft.difficulty}
                   onChange={(e) => setDraft((d) => ({ ...d, difficulty: e.target.value as QuestionDifficulty }))}
@@ -429,7 +455,7 @@ export function TeacherQuestionBankPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Status</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Status</label>
                 <select
                   value={draft.is_active ? "active" : "inactive"}
                   onChange={(e) => setDraft((d) => ({ ...d, is_active: e.target.value === "active" }))}
@@ -441,12 +467,12 @@ export function TeacherQuestionBankPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Tags (comma separated)</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Tags (comma separated)</label>
                 <Input value={tagsText} onChange={(e) => setTagsText(e.target.value)} placeholder="e.g. algebra, grade 9" />
                 {normalizedTags.length > 0 ? (
                   <div className="mt-2 flex flex-wrap gap-1">
                     {normalizedTags.map((t) => (
-                      <Badge key={t} className="bg-slate-50 text-slate-700 border border-slate-100">
+                      <Badge key={t} variant="outline">
                         {t}
                       </Badge>
                     ))}
@@ -455,20 +481,9 @@ export function TeacherQuestionBankPage() {
               </div>
             </div>
           </div>
-        </Card>
+        </div>
       )}
 
-      <ConfirmDialog
-        open={confirmDeleteId != null}
-        title="Delete question?"
-        description="This will permanently remove the question from your bank."
-        confirmLabel="Delete"
-        cancelLabel="Cancel"
-        onCancel={() => setConfirmDeleteId(null)}
-        onConfirm={() => {
-          if (confirmDeleteId != null) void doDelete(confirmDeleteId);
-        }}
-      />
     </div>
   );
 }

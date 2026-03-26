@@ -3,18 +3,17 @@ import { Link } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { listMyAssignments, type AssignmentDetail } from "@/services/assignments.service";
 import { formatDateTimeVietnam } from "@/utils/date";
-import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-function getStatus(a: AssignmentDetail): { label: string; variant: "default" | "success" | "warning" } {
+function getStatus(a: AssignmentDetail): { label: string; variant: "default" | "secondary" | "outline" } {
   const now = new Date();
   const start = new Date(a.start_time);
   const end = new Date(a.end_time);
-  if (now < start) return { label: "Upcoming", variant: "default" };
-  if (now <= end) return { label: "Open", variant: "success" };
-  return { label: "Closed", variant: "warning" };
+  if (now < start) return { label: "Upcoming", variant: "outline" };
+  if (now <= end) return { label: "Open", variant: "default" };
+  return { label: "Closed", variant: "secondary" };
 }
 
 export function MyAssignmentsPage() {
@@ -36,10 +35,12 @@ export function MyAssignmentsPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader
-        title="Assigned exams"
-        description="Exams that have been assigned to your classes."
-      />
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">Assigned exams</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Exams that have been assigned to your classes.</p>
+        </div>
+      </div>
       {assignments.length === 0 ? (
           <div className="text-center py-20 text-muted-foreground text-sm">
             No assigned exams. Join a class to see assignments.

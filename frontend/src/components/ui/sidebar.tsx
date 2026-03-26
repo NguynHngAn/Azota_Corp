@@ -3,6 +3,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { PanelLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -40,18 +41,6 @@ function useSidebar() {
   return context;
 }
 
-function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState(false);
-  React.useEffect(() => {
-    const mql = window.matchMedia("(max-width: 768px)");
-    const onChange = () => setIsMobile(mql.matches);
-    mql.addEventListener("change", onChange);
-    setIsMobile(mql.matches);
-    return () => mql.removeEventListener("change", onChange);
-  }, []);
-  return isMobile;
-}
-
 const SidebarProvider = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
@@ -72,7 +61,7 @@ const SidebarProvider = React.forwardRef<
     },
     ref,
   ) => {
-    const isMobile = useIsMobile();
+    const isMobile = useMobile();
     const [openMobile, setOpenMobile] = React.useState(false);
     const [_open, _setOpen] = React.useState(defaultOpen);
     const open = openProp ?? _open;

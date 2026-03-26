@@ -11,7 +11,7 @@ import { resolveStaticUrl } from "@/utils/url";
 
 export type DashboardRole = "admin" | "teacher" | "student";
 
-type NavItem = { to: string; label: string; key: string; icon: () => React.ReactElement };
+type NavItem = { to: string; label: string; key: string; icon: React.ComponentType<{ className?: string }> };
 
 function initials(text: string, fallback: string): string {
   const trimmed = (text || "").trim();
@@ -26,9 +26,9 @@ const roleInitial: Record<DashboardRole, string> = {
 };
 
 const roleBadgeClass: Record<DashboardRole, string> = {
-  admin: "text-slate-400",
-  teacher: "text-slate-400",
-  student: "text-emerald-600",
+  admin: "text-muted-foreground",
+  teacher: "text-muted-foreground",
+  student: "text-primary",
 };
 
 const roleBadgeLabel: Record<DashboardRole, string> = {
@@ -58,20 +58,20 @@ export function DashboardLayout({ role }: { role: DashboardRole }) {
       return [
         { key: "dashboard", to: "/teacher/dashboard", label: t("nav.dashboard", lang), icon: Icons.Dashboard },
         { key: "exams", to: "/teacher/exams", label: t("nav.exams", lang), icon: Icons.FileText },
-        { key: "question-bank", to: "/teacher/question-bank", label: t("nav.questionBank", lang), icon: Icons.BookOpen },
+        { key: "question-bank", to: "/teacher/question-bank", label: t("nav.questionBank", lang), icon: Icons.Database },
         { key: "classes", to: "/teacher/classes", label: t("nav.classes", lang), icon: Icons.BookOpen },
-        { key: "assignments", to: "/teacher/assignments", label: t("nav.assignments", lang), icon: Icons.CheckCircle },
-        { key: "students", to: "/teacher/students", label: t("nav.students", lang), icon: Icons.Users },
+        { key: "assignments", to: "/teacher/assignments", label: t("nav.assignments", lang), icon: Icons.ClipboardList },
+        { key: "students", to: "/teacher/students", label: t("nav.students", lang), icon: Icons.GraduationCap },
         { key: "analytics", to: "/teacher/analytics", label: "Analytics", icon: Icons.Chart },
-        { key: "anti-cheating", to: "/teacher/anti-cheating", label: t("nav.antiCheating", lang), icon: Icons.Settings },
+        { key: "anti-cheating", to: "/teacher/anti-cheating", label: t("nav.antiCheating", lang), icon: Icons.Shield },
         { key: "settings", to: "/teacher/settings", label: t("nav.settings", lang), icon: Icons.Settings },
       ];
     }
     return [
       { key: "dashboard", to: "/student/dashboard", label: t("nav.dashboard", lang), icon: Icons.Dashboard },
       { key: "classes", to: "/student/classes", label: t("nav.myClasses", lang), icon: Icons.BookOpen },
-      { key: "assignments", to: "/student/assignments", label: t("nav.assignments", lang), icon: Icons.FileText },
-      { key: "results", to: "/student/results", label: t("nav.myResults", lang), icon: Icons.CheckCircle },
+      { key: "assignments", to: "/student/assignments", label: t("nav.assignments", lang), icon: Icons.ClipboardList },
+      { key: "results", to: "/student/results", label: t("nav.myResults", lang), icon: Icons.Chart },
       { key: "settings", to: "/student/settings", label: t("nav.settings", lang), icon: Icons.Settings },
     ];
   }, [lang, role]);
@@ -118,8 +118,8 @@ export function DashboardLayout({ role }: { role: DashboardRole }) {
               E
             </div>
             <div className="leading-tight sidebar-brand">
-              <div className="text-sm font-semibold text-slate-900">{t("app.brand", lang)}</div>
-              <div className="text-xs text-slate-500">
+              <div className="text-sm font-semibold text-foreground">{t("app.brand", lang)}</div>
+              <div className="text-xs text-muted-foreground">
                 {role === "admin" && t("role.admin", lang)}
                 {role === "teacher" && t("role.teacher", lang)}
                 {role === "student" && t("role.student", lang)}
@@ -144,10 +144,10 @@ export function DashboardLayout({ role }: { role: DashboardRole }) {
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors ${
                     active
                       ? "bg-primary/10 text-primary"
-                      : "text-slate-600 hover:text-foreground hover:bg-primary/10"
+                      : "text-muted-foreground hover:text-foreground hover:bg-primary/10"
                   }`}
                 >
-                  <span className={`text-slate-500 ${active ? "text-primary" : ""}`}>
+                  <span className={`text-muted-foreground ${active ? "text-primary" : ""}`}>
                     <Icon />
                   </span>
                   <span className="sidebar-label">{item.label}</span>
@@ -165,10 +165,10 @@ export function DashboardLayout({ role }: { role: DashboardRole }) {
                   <Input
                     type="search"
                     placeholder={searchPlaceholder}
-                    className="h-10 rounded-full border-border bg-background pl-10 pr-4 text-sm text-foreground placeholder:text-slate-400"
+                    className="h-10 rounded-full border-border bg-background pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground"
                     aria-label={searchPlaceholder}
                   />
-                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                     <Icons.Search />
                   </span>
                 </div>
@@ -191,7 +191,7 @@ export function DashboardLayout({ role }: { role: DashboardRole }) {
                       logout();
                       navigate("/", { replace: true });
                     }}
-                    className="text-slate-600"
+                    className="text-muted-foreground"
                   >
                     <span className="mr-2">
                       <Icons.Logout />
@@ -203,7 +203,7 @@ export function DashboardLayout({ role }: { role: DashboardRole }) {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-10 w-10 rounded-xl hover:bg-primary/10 text-slate-500 hover:text-foreground"
+                  className="h-10 w-10 rounded-xl text-muted-foreground hover:bg-primary/10 hover:text-foreground"
                   aria-label="Notifications"
                 >
                   <Icons.Bell />

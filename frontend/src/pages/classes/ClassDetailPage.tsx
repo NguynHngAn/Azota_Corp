@@ -13,12 +13,11 @@ import {
   type ClassMemberResponse,
 } from "@/services/classes.service";
 import { listUsers, type UserResponse } from "@/services/users.service";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ConfirmDialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Icons } from "@/components/layouts/icons";
 
 function basePath(pathname: string): string {
   if (pathname.startsWith("/admin")) return "/admin";
@@ -38,13 +37,10 @@ export function ClassDetailPage() {
   const [teachers, setTeachers] = useState<UserResponse[]>([]);
   const [classTeachers, setClassTeachers] = useState<UserResponse[]>([]);
   const [updatingTeacher, setUpdatingTeacher] = useState(false);
-  const [memberToRemove, setMemberToRemove] = useState<ClassMemberResponse | null>(null);
-
   const [addTeacherOpen, setAddTeacherOpen] = useState(false);
   const [teacherQuery, setTeacherQuery] = useState("");
   const [selectedTeacherIds, setSelectedTeacherIds] = useState<number[]>([]);
   const [savingTeachers, setSavingTeachers] = useState(false);
-  const [teacherToRemove, setTeacherToRemove] = useState<UserResponse | null>(null);
   const [teacherNotice, setTeacherNotice] = useState("");
 
   const classId = id ? parseInt(id, 10) : NaN;
@@ -151,32 +147,32 @@ export function ClassDetailPage() {
     }
   }
 
-  if (loading) return <p className="text-gray-600">Loading...</p>;
-  if (error || !cls) return <p className="text-red-600">{error || "Not found"}</p>;
+  if (loading) return <p className="text-muted-foreground">Loading...</p>;
+  if (error || !cls) return <p className="text-destructive">{error || "Not found"}</p>;
 
   return (
     <div className="space-y-4">
       <div>
-        <Link to={`${base}/classes`} className="text-sm text-blue-600 hover:underline">
+        <Link to={`${base}/classes`} className="text-sm text-primary hover:underline">
           ← Back to classes
         </Link>
       </div>
 
-      <Card>
+      <div className="glass-card p-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">{cls.name}</h2>
-            {cls.description && <p className="mt-1 text-sm text-gray-600">{cls.description}</p>}
-            <p className="mt-1 text-xs text-gray-500">Members: {cls.member_count}</p>
+            <h2 className="text-lg font-semibold text-foreground">{cls.name}</h2>
+            {cls.description && <p className="mt-1 text-sm text-muted-foreground">{cls.description}</p>}
+            <p className="mt-1 text-xs text-muted-foreground">Members: {cls.member_count}</p>
           </div>
           {base === "/admin" && (
             <div className="mt-2 sm:mt-0">
-              <label className="text-xs font-medium text-gray-700 mr-2">Primary teacher:</label>
+              <label className="text-xs font-medium text-muted-foreground mr-2">Primary teacher:</label>
               <select
                 value={String(cls.created_by)}
                 onChange={handleChangeTeacher}
                 disabled={updatingTeacher}
-                className="inline-block w-56 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-block w-56 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {teachers.length === 0 && <option value={String(cls.created_by)}>—</option>}
                 {teachers.map((t) => (
@@ -188,30 +184,30 @@ export function ClassDetailPage() {
             </div>
           )}
         </div>
-      </Card>
+      </div>
 
       {base === "/admin" && (
-        <Card>
+        <div className="glass-card p-6">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="text-sm font-semibold text-gray-800">Giáo viên phụ trách lớp</h3>
-              <p className="text-xs text-gray-500">
-                Quản lý danh sách giáo viên (role=teacher) được gán cho lớp này.
+              <h3 className="text-sm font-semibold text-muted-foreground">Class teachers</h3>
+              <p className="text-xs text-muted-foreground">
+                Manage the list of teachers (role=teacher) assigned to this class.
               </p>
             </div>
             <Button type="button" onClick={() => setAddTeacherOpen(true)}>
-              Thêm giáo viên
+              <Icons.Plus className="size-4" /> Add teacher
             </Button>
           </div>
 
           {teacherNotice && (
-            <p className={`text-sm ${teacherNotice.toLowerCase().includes("fail") ? "text-red-600" : "text-green-700"}`}>
+            <p className={`text-sm ${teacherNotice.toLowerCase().includes("fail") ? "text-destructive" : "text-success"}`}>
               {teacherNotice}
             </p>
           )}
 
           {classTeachers.length === 0 ? (
-            <p className="text-sm text-gray-500">Chưa có giáo viên nào được gán cho lớp.</p>
+            <p className="text-sm text-muted-foreground">No teachers assigned to this class.</p>
           ) : (
             <Table>
               <TableHeader>
@@ -226,15 +222,21 @@ export function ClassDetailPage() {
                   <TableRow key={t.id}>
                     <TableCell>
                       {t.full_name}{" "}
-                      {t.id === cls.created_by && <Badge variant="success">Primary</Badge>}
+                      {t.id === cls.created_by && <Badge variant="default">Primary</Badge>}
                     </TableCell>
                     <TableCell>{t.email}</TableCell>
                     <TableCell className="text-right">
                       <Button
                         type="button"
                         variant="link"
-                        onClick={() => setTeacherToRemove(t)}
-                        className={`h-auto p-0 text-xs ${t.id === cls.created_by ? "text-gray-400 cursor-not-allowed no-underline" : "text-red-600"}`}
+                        onClick={() => {
+                          if (
+                            window.confirm(`Remove ${t.full_name} (${t.email}) from this class?`)
+                          ) {
+                            void handleRemoveTeacherConfirmed(t);
+                          }
+                        }}
+                        className={`h-auto p-0 text-xs ${t.id === cls.created_by ? "text-muted-foreground cursor-not-allowed no-underline" : "text-destructive"}`}
                         disabled={t.id === cls.created_by}
                         title={t.id === cls.created_by ? "Reassign primary teacher first" : "Remove from class"}
                       >
@@ -246,12 +248,12 @@ export function ClassDetailPage() {
               </TableBody>
             </Table>
           )}
-        </Card>
+        </div>
       )}
 
-      <Card className="flex flex-wrap items-center gap-2">
-        <span className="text-sm font-medium text-gray-800">Invite code:</span>
-        <code className="px-2 py-1 bg-gray-50 border rounded text-sm">{cls.invite_code}</code>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm font-medium text-muted-foreground">Invite code:</span>
+        <code className="px-2 py-1 bg-muted border rounded text-sm text-foreground">{cls.invite_code}</code>
         <Button
           type="button"
           variant="secondary"
@@ -268,15 +270,15 @@ export function ClassDetailPage() {
         >
           {copied ? "Copied!" : "Copy invite link"}
         </Button>
-      </Card>
+      </div>
 
-      <Card>
+      <div className="glass-card p-6">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-800">Members</h3>
-          <Badge variant="default">Total: {members.length}</Badge>
+          <h3 className="text-sm font-semibold text-muted-foreground">Members</h3>
+          <Badge variant="secondary">Total: {members.length}</Badge>
         </div>
         {members.length === 0 ? (
-          <p className="text-sm text-gray-500">No members yet.</p>
+          <p className="text-sm text-muted-foreground">No members yet.</p>
         ) : (
           <Table>
             <TableHeader>
@@ -295,8 +297,13 @@ export function ClassDetailPage() {
                     <Button
                       type="button"
                       variant="link"
-                      onClick={() => setMemberToRemove(m)}
-                      className="h-auto p-0 text-xs text-red-600"
+                      onClick={() => {
+                        const label = m.user?.full_name ?? "this user";
+                        if (window.confirm(`Remove ${label} from this class?`)) {
+                          void handleRemoveConfirmed(m);
+                        }
+                      }}
+                      className="h-auto p-0 text-xs text-destructive"
                     >
                       Remove
                     </Button>
@@ -306,55 +313,19 @@ export function ClassDetailPage() {
             </TableBody>
           </Table>
         )}
-      </Card>
-
-      <ConfirmDialog
-        open={memberToRemove != null}
-        title="Remove member"
-        description={
-          memberToRemove
-            ? `Remove ${memberToRemove.user?.full_name ?? "this user"} from this class?`
-            : ""
-        }
-        confirmLabel="Remove"
-        onConfirm={() => {
-          if (memberToRemove) {
-            handleRemoveConfirmed(memberToRemove);
-          }
-          setMemberToRemove(null);
-        }}
-        onCancel={() => setMemberToRemove(null)}
-      />
-
-      <ConfirmDialog
-        open={teacherToRemove != null}
-        title="Remove teacher"
-        description={
-          teacherToRemove
-            ? `Remove ${teacherToRemove.full_name} (${teacherToRemove.email}) from this class?`
-            : ""
-        }
-        confirmLabel="Remove"
-        onConfirm={() => {
-          if (teacherToRemove) {
-            handleRemoveTeacherConfirmed(teacherToRemove);
-          }
-          setTeacherToRemove(null);
-        }}
-        onCancel={() => setTeacherToRemove(null)}
-      />
+      </div>
 
       {addTeacherOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
-            <h3 className="text-lg font-semibold mb-1">Thêm giáo viên vào lớp</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Chọn một hoặc nhiều giáo viên (role=teacher). Hệ thống sẽ tự bỏ qua giáo viên đã có trong lớp.
+        <div className="fixed inset-0 bg-background/40 flex items-center justify-center z-50">
+          <div className="bg-card rounded-lg shadow-xl max-w-lg w-full p-6">
+            <h3 className="text-lg font-semibold mb-1 text-foreground">Add teacher to class</h3>
+            <p className="text-sm text-muted-fore ground mb-4 text-foreground">
+              Select one or more teachers (role=teacher). The system will automatically skip teachers already in the class.
             </p>
 
             <div className="mb-3">
               <Input
-                placeholder="Tìm theo tên hoặc email..."
+                placeholder="Search by name or email..."
                 value={teacherQuery}
                 onChange={(e) => setTeacherQuery(e.target.value)}
               />
@@ -377,7 +348,7 @@ export function ClassDetailPage() {
                     <label
                       key={t.id}
                       className={`flex items-center gap-3 px-3 py-2 text-sm border-b last:border-b-0 ${
-                        already ? "opacity-50" : "hover:bg-gray-50"
+                        already ? "opacity-50" : "hover:bg-secondary"
                       }`}
                     >
                       <input
@@ -393,10 +364,10 @@ export function ClassDetailPage() {
                         }}
                       />
                       <span className="flex-1 min-w-0">
-                        <span className="font-medium text-gray-900">{t.full_name}</span>{" "}
-                        <span className="text-gray-500">({t.email})</span>
+                        <span className="font-medium text-foreground">{t.full_name}</span>{" "}
+                        <span className="text-muted-foreground">({t.email})</span>
                       </span>
-                      {already && <Badge variant="default">Added</Badge>}
+                      {already && <Badge variant="outline">Added</Badge>}
                     </label>
                   );
                 })}

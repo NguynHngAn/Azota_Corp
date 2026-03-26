@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { createClass } from "@/services/classes.service";
@@ -21,6 +21,7 @@ export function CreateClassPage() {
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const descriptionFieldId = useId();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -38,19 +39,26 @@ export function CreateClassPage() {
   }
 
   return (
-    <div>
-      <h2 className="text-lg font-semibold mb-4">Create class</h2>
+    <div className="space-y-4 max-w-md mx-auto mt-10">
+      <h2 className="text-lg font-semibold text-foreground">Create class</h2>
       <Card className="max-w-md p-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Name</label>
             <Input type="text" value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description (optional)</label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+            <label htmlFor={descriptionFieldId} className="block text-sm font-medium text-foreground mb-1">
+              Description (optional)
+            </label>
+            <Textarea
+              id={descriptionFieldId}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+            />
           </div>
-          {error && <p className="text-red-600 text-sm">{error}</p>}
+          {error && <p className="text-destructive text-sm">{error}</p>}
           <div className="flex gap-2">
             <Button type="submit" disabled={submitting}>
               {submitting ? "Creating..." : "Create"}

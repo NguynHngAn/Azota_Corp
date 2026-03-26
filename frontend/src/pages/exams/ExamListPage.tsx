@@ -2,11 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { listExams, type ExamResponse } from "@/services/exams.service";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FilterChips } from "@/components/features/admin/filter-chips";
 import { Badge } from "@/components/ui/badge";
+import { Icons } from "@/components/layouts/icons";
 
 export function ExamListPage() {
   const { token } = useAuth();
@@ -35,25 +34,31 @@ export function ExamListPage() {
     });
   }, [exams, q, filter]);
 
-  if (loading) return <p className="text-slate-500">Loading...</p>;
-  if (error) return <p className="text-red-600">{error}</p>;
+  if (loading) return <p className="text-muted-foreground">Loading...</p>;
+  if (error) return <p className="text-destructive">{error}</p>;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-3">
+    <div className="max-w-7xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Exams</h1>
-          <p className="text-sm text-slate-500">Manage and create exams for your classes.</p>
+          <h1 className="text-2xl font-bold text-foreground">Exams</h1>
+          <p className="text-sm text-muted-foreground mt-1">Manage and create exams for your classes.</p>
         </div>
-        <Button onClick={() => navigate("/teacher/exams/new")}>+ Create Exam</Button>
+        <Button className="gap-1.5 rounded-lg" onClick={() => navigate("/teacher/exams/new")}>+ Create Exam</Button>
       </div>
 
-      <Card className="border border-slate-100 shadow-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="w-full sm:w-96">
-            <Input placeholder="Search exams..." value={q} onChange={(e) => setQ(e.target.value)} />
-          </div>
-          <FilterChips
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="search-input flex-1 max-w-sm ">
+          <Icons.Search className="w-4 h-4" />
+          <input
+            type="text"
+            className="bg-transparent outline-none w-full text-foreground placeholder:text-muted-foreground text-sm"
+            placeholder="Search exams..."
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+        </div>
+        <FilterChips
             value={filter}
             onChange={setFilter}
             options={[
@@ -62,29 +67,28 @@ export function ExamListPage() {
               { value: "draft", label: "Draft" },
             ]}
           />
-        </div>
-
-        <div className="mt-4">
+      </div>
+      <div className="mt-4">
           {filtered.length === 0 ? (
-            <div className="py-12 text-center text-sm text-slate-500">No exams found.</div>
+            <div className="text-center py-20 text-muted-foreground text-sm">No exams found.</div>
           ) : (
             <div className="space-y-2">
               {filtered.map((e) => (
                 <Link
                   key={e.id}
                   to={`/teacher/exams/${e.id}`}
-                  className="block rounded-xl border border-slate-100 bg-white px-4 py-3 hover:bg-slate-50 transition"
+                  className="block rounded-xl border border-border bg-card px-4 py-3 hover:bg-secondary/80 transition"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <div className="text-sm font-medium text-slate-900">{e.title}</div>
-                    <Badge variant={e.is_draft ? "warning" : "success"}>{e.is_draft ? "Draft" : "Published"}</Badge>
+                    <div className="text-sm font-medium text-foreground">{e.title}</div>
+                    <Badge variant={e.is_draft ? "outline" : "default"}>{e.is_draft ? "Draft" : "Published"}</Badge>
                   </div>
                 </Link>
               ))}
             </div>
           )}
-        </div>
-      </Card>
+      </div>
+
     </div>
   );
 }

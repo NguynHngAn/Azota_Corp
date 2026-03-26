@@ -5,6 +5,8 @@ import { createExam } from "@/services/exams.service";
 import { type ExamFormState, emptyQuestion, validateExamForm } from "@/pages/exams/types";
 import { ExamEditorForm } from "@/pages/exams/ExamEditorForm";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Icons } from "@/components/layouts/icons";
 
 const initialState: ExamFormState = {
   title: "",
@@ -95,14 +97,22 @@ export function CreateExamPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Create Exam</h1>
-        <p className="text-sm text-slate-500">Set up a new exam with questions and answer options.</p>
+    <div className="max-w-3xl mx-auto space-y-8">
+      <div className="flex items-center gap-3">
+        <button
+          className="p-2 rounded-lg hover:bg-secondary transition-colors"
+          onClick={() => navigate(-1)}>
+          <Icons.ArrowLeft className="size-4 text-muted-foreground" />
+        </button>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Create Exam</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Set up a new exam with questions and answer options.</p>
+        </div>
       </div>
+        
       {error && (
-        <Card className="border border-rose-100 bg-rose-50 shadow-none hover:shadow-none">
-          <div className="text-sm text-rose-800">{error}</div>
+        <Card className="border border-border bg-secondary shadow-none hover:shadow-none">
+          <div className="text-sm text-muted-foreground">{error}</div>
         </Card>
       )}
       <ExamEditorForm

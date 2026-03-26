@@ -3,9 +3,8 @@ import { useLocation, useNavigate } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { listAssignments, type AssignmentDetail } from "@/services/assignments.service";
 import { formatDateTimeVietnam } from "@/utils/date";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Icons } from "@/components/layouts/icons";
 
 function basePath(pathname: string): string {
   if (pathname.startsWith("/admin")) return "/admin";
@@ -36,27 +35,34 @@ export function AssignmentListPage() {
     return `${a.exam_title} ${a.class_name}`.toLowerCase().includes(query);
   });
 
-  if (loading) return <p className="text-slate-500">Loading...</p>;
-  if (error) return <p className="text-red-600">{error}</p>;
+  if (loading) return <p className="text-muted-foreground">Loading...</p>;
+  if (error) return <p className="text-destructive">{error}</p>;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-3">
+    <div className="max-w-7xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Assignments</h1>
-          <p className="text-sm text-slate-500">Schedule exams to classes with time windows.</p>
+          <h1 className="text-2xl font-semibold text-foreground">Assignments</h1>
+          <p className="text-sm text-muted-foreground mt-1">Schedule exams to classes with time windows.</p>
         </div>
-        <Button onClick={() => navigate(`${base}/assignments/new`)}>+ New Assignment</Button>
+        <Button onClick={() => navigate(`${base}/assignments/new`)}><Icons.Plus className="size-4" /> New Assignment</Button>
       </div>
 
-      <Card className="border border-slate-100 shadow-sm">
-        <div className="max-w-md">
-          <Input placeholder="Search assignments..." value={q} onChange={(e) => setQ(e.target.value)} />
+      <div>
+        <div className="search-input max-w-md">
+          <Icons.Search className="size-4" />
+          <input
+            type="text"
+            className="bg-transparent outline-none w-full text-foreground placeholder:text-muted-foreground text-sm"
+            placeholder="Search assignments..."
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
         </div>
 
         <div className="mt-4">
           {filtered.length === 0 ? (
-            <div className="py-12 text-center text-sm text-slate-500">
+            <div className="py-12 text-center text-sm text-muted-foreground">
               No assignments yet.
             </div>
           ) : (
@@ -64,14 +70,14 @@ export function AssignmentListPage() {
               {filtered.map((a) => (
                 <div
                   key={a.id}
-                  className="rounded-xl border border-slate-100 bg-white px-4 py-3 hover:bg-slate-50 transition flex items-center justify-between gap-4"
+                  className="glass-card p-6 flex items-center justify-between gap-4"
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                      <div className="text-sm font-medium text-slate-900 truncate">{a.exam_title}</div>
-                      <div className="text-xs text-slate-500 truncate">{a.class_name}</div>
+                      <div className="text-sm font-medium text-foreground truncate">{a.exam_title}</div>
+                      <div className="text-xs text-muted-foreground truncate">{a.class_name}</div>
                     </div>
-                    <div className="text-xs text-slate-500 mt-1">
+                    <div className="text-xs text-muted-foreground mt-1">
                       {formatDateTimeVietnam(a.start_time)} – {formatDateTimeVietnam(a.end_time)} · {a.duration_minutes} min
                     </div>
                   </div>
@@ -90,7 +96,7 @@ export function AssignmentListPage() {
             </div>
           )}
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

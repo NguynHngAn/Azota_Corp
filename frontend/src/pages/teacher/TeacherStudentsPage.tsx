@@ -7,11 +7,9 @@ import {
 } from "@/services/classes.service";
 import { useAuth } from "@/context/AuthContext";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { PageHeader } from "@/components/ui/page-header";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDateTimeVietnam } from "@/utils/date";
+import { Icons } from "@/components/layouts/icons";
 
 // In-memory caches (persist across SPA navigation)
 const membersCache = new Map<number, ClassMemberResponse[]>();
@@ -157,34 +155,38 @@ export function TeacherStudentsPage() {
   }, [classes, membersByClass, query]);
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Students"
-        description={
-          loading
-            ? "Loading classes..."
-            : `${membershipCount} student memberships across classes · ${students.length} unique students.`
-        }
-      />
+    <div className="max-w-7xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Students</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {loading
+              ? "Loading classes..."
+              : `${membershipCount} student memberships across classes · ${students.length} unique students.`}
+          </p>
+        </div>
+      </div>
 
-      <Card className="border border-slate-100 shadow-sm">
-        <div className="max-w-md">
-          <Input
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="search-input max-w-sm">
+          <Icons.Search className="size-4" />
+          <input
+            type="text"
+            className="bg-transparent outline-none w-full text-foreground placeholder:text-muted-foreground text-sm"
             placeholder="Search students..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
         {error ? (
-          <div className="py-12 text-center text-sm text-rose-600">{error}</div>
+          <div className="py-12 text-center text-sm text-destructive">{error}</div>
         ) : loading || loadingDetails ? (
           <div className="mt-4 space-y-3">
-            <div className="h-10 w-full rounded-xl bg-slate-50 animate-pulse" />
-            <div className="h-10 w-full rounded-xl bg-slate-50 animate-pulse" />
-            <div className="h-10 w-full rounded-xl bg-slate-50 animate-pulse" />
+            <div className="h-10 w-full rounded-lg bg-muted animate-pulse" />
+            <div className="h-10 w-full rounded-lg bg-muted animate-pulse" />
           </div>
         ) : students.length === 0 ? (
-          <div className="py-12 text-center text-sm text-slate-500">No students found.</div>
+          <div className="py-12 text-center text-sm text-muted-foreground">No students found.</div>
         ) : (
           <div className="mt-4">
             <Table>
@@ -200,22 +202,22 @@ export function TeacherStudentsPage() {
                   <TableRow key={s.userId}>
                     <TableCell className="min-w-0">
                       <div className="min-w-0">
-                        <div className="font-semibold text-slate-900 truncate">{s.fullName}</div>
-                        <div className="text-xs text-slate-500 truncate">{s.email || "—"}</div>
+                        <div className="font-medium text-base truncate">{s.fullName}</div>
+                        <div className="text-sm text-muted-foreground truncate">{s.email || "—"}</div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap items-center gap-2">
-                        <Badge className="bg-slate-50 text-slate-700 border border-slate-100">
+                        <Badge variant="outline">
                           {s.classNames.length} class{s.classNames.length === 1 ? "" : "es"}
                         </Badge>
-                        <div className="text-xs text-slate-600">
+                        <div className="text-xs text-muted-foreground">
                           {s.classNames.slice(0, 2).join(", ")}
                           {s.classNames.length > 2 ? ` +${s.classNames.length - 2}` : ""}
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm text-slate-600">
+                    <TableCell className="text-sm text-muted-foreground">
                       {s.firstJoinedAt ? formatDateTimeVietnam(s.firstJoinedAt) : "—"}
                     </TableCell>
                   </TableRow>
@@ -224,7 +226,7 @@ export function TeacherStudentsPage() {
             </Table>
           </div>
         )}
-      </Card>
+      </div>
     </div>
   );
 }

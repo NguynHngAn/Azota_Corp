@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
 import {
@@ -295,9 +296,13 @@ const LandingPage = () => {
                   </div>
                   <div className="flex gap-1">
                     {["7D", "30D", "All"].map((period, i) => (
-                      <span key={period} className={`text-[10px] px-2.5 py-1 rounded-md cursor-pointer transition-colors ${i === 1 ? "bg-primary text-primary-foreground" : "bg-muted/50 text-muted-foreground hover:bg-muted"}`}>
+                      <Badge
+                        key={period}
+                        variant={i === 1 ? "default" : "secondary"}
+                        className="cursor-pointer text-[10px] rounded-md px-2.5 py-1 h-auto font-medium"
+                      >
                         {period}
-                      </span>
+                      </Badge>
                     ))}
                   </div>
                 </div>
@@ -496,10 +501,17 @@ const LandingPage = () => {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         {/* Tab switches */}
-                        <div className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full ${student.tabs > 2 ? "bg-warning/20 text-warning" : "bg-muted/50 text-muted-foreground"}`}>
+                        <Badge
+                          variant={student.tabs > 2 ? "outline" : "secondary"}
+                          className={`gap-1 text-[10px] px-2 py-0.5 h-auto font-semibold ${
+                            student.tabs > 2
+                              ? "border-warning/30 bg-warning/10 text-warning"
+                              : "border-transparent bg-muted/50 text-muted-foreground"
+                          }`}
+                        >
                           <Eye className="w-2.5 h-2.5" />
                           {student.tabs}
-                        </div>
+                        </Badge>
                         {/* Fullscreen */}
                         <div className={`w-5 h-5 rounded-full flex items-center justify-center ${student.fullscreen ? "bg-accent/20 text-accent" : "bg-destructive/20 text-destructive"}`}>
                           <Shield className="w-2.5 h-2.5" />
@@ -549,9 +561,12 @@ const LandingPage = () => {
                 }`}
               >
                 {plan.highlighted && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-xs font-semibold shadow-lg shadow-primary/25">
+                  <Badge
+                    variant="default"
+                    className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 border-0 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/25"
+                  >
                     Most popular
-                  </div>
+                  </Badge>
                 )}
                 <div className="mb-6">
                   <h3 className="text-lg font-bold text-foreground">{plan.name}</h3>

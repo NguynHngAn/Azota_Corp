@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { listMyClasses, type ClassResponse } from "@/services/classes.service";
 import { listMyAssignments, type AssignmentDetail } from "@/services/assignments.service";
-import { StatsCard } from "@/components/layouts/stats-card";
+import { StatCard } from "@/components/layouts/StatCard";
 import { Icons } from "@/components/layouts/icons";
 import { JoinClassPanel } from "@/components/features/student/join-class-panel";
 import { Button } from "@/components/ui/button";
@@ -73,9 +73,27 @@ export function StudentDashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatsCard icon={<Icons.BookOpen />} value={stats.classes} label="My Classes" tone="blue"/>
-        <StatsCard icon={<Icons.CheckCircle />} value={stats.submissions} label="Submissions" tone="green" />
-        <StatsCard icon={<Icons.FileText />} value={stats.upcoming} label="Upcoming" tone="slate" />
+        <StatCard
+          icon={<Icons.BookOpen className="text-primary" />}
+          value={String(stats.classes)}
+          title="My Classes"
+          change="--"
+          trend="up"
+        />
+        <StatCard
+          icon={<Icons.CheckCircle className="text-success" />}
+          value={String(stats.submissions)}
+          title="Submissions"
+          change="--"
+          trend="up"
+        />
+        <StatCard
+          icon={<Icons.FileText className="text-info" />}
+          value={String(stats.upcoming)}
+          title="Upcoming"
+          change="--"
+          trend="up"
+        />
       </div>
 
       <JoinClassPanel compact />

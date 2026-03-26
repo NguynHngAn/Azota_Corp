@@ -1,24 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
 import { listUsers, type UserResponse } from "@/services/users.service";
 import { useAuth } from "@/context/AuthContext";
-import { StatsCard } from "@/components/layouts/stats-card";
-import { Card } from "@/components/ui/card";
+import { StatCard } from "@/components/layouts/StatCard";
 import { Input } from "@/components/ui/input";
 import { FilterChips } from "@/components/features/admin/filter-chips";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { AdminModal } from "@/components/features/admin/admin-modal";
 import { createUser } from "@/services/users.service";
 import { Icons } from "@/components/layouts/icons";
+import { DataTableLayout } from "@/components/features/admin/data-table-layout";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type Filter = "all" | "admin" | "teacher" | "student";
 
-function roleBadgeVariant(role: string): "default" | "success" | "warning" | "danger" {
+function roleBadgeVariant(role: string): "default" | "secondary" | "outline" | "destructive" {
   if (role === "teacher") return "default";
-  if (role === "student") return "success";
-  if (role === "admin") return "danger";
-  return "default";
+  if (role === "student") return "secondary";
+  if (role === "admin") return "destructive";
+  return "outline";
 }
 
 export function AdminDashboardPage() {
@@ -93,34 +93,65 @@ export function AdminDashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-3">
+    <div className="max-w-7xl mx-auto space-y-6">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Admin Dashboard</h1>
-          <p className="text-sm text-slate-500">Platform overview and user management.</p>
+          <h1 className="text-2xl font-semibold text-foreground">Admin Dashboard</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Platform overview and user management.</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>Create User</Button>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button className="gap-1.5 rounded-lg" onClick={() => setCreateOpen(true)}>
+            <Icons.UserPlus className="size-4" />
+            Create User
+          </Button>
+        </div>
       </div>
 
       {notice && (
-        <p className={`text-sm ${notice.toLowerCase().includes("fail") ? "text-red-600" : "text-emerald-700"}`}>
+        <p className={`text-sm ${notice.toLowerCase().includes("fail") ? "text-destructive" : "text-primary"}`}>
           {notice}
         </p>
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard icon={<Icons.Users />} value={stats.total} label="Total Users" tone="blue" />
-        <StatsCard icon={<Icons.Book />} value={stats.teachers} label="Teachers" tone="violet" />
-        <StatsCard icon={<Icons.Users />} value={stats.students} label="Students" tone="green" />
-        <StatsCard icon={<Icons.Clipboard />} value={"—"} label="Total Exams" tone="slate" />
+        <StatCard
+          icon={<Icons.Users className="text-primary" />}
+          value={String(stats.total)}
+          title="Total Users"
+          change="--"
+          trend="up"
+        />
+        <StatCard
+          icon={<Icons.Bell className="text-violet-700" />}
+          value={String(stats.teachers)}
+          title="Teachers"
+          change="--"
+          trend="up"
+        />
+        <StatCard
+          icon={<Icons.Users className="text-success" />}
+          value={String(stats.students)}
+          title="Students"
+          change="--"
+          trend="up"
+        />
+        <StatCard
+          icon={<Icons.FileText className="text-info" />}
+          value="—"
+          title="Total Exams"
+          change="--"
+          trend="up"
+        />
       </div>
 
-      <Card className="border border-slate-100 shadow-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-sm font-semibold text-slate-900">User Management</h2>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+      <DataTableLayout
+        title="User Management"
+        loading={loading}
+        error={error}
+        isEmpty={filtered.length === 0}
+        emptyMessage="No users found."
+        controls={
+          <>
             <div className="w-full sm:w-72">
               <Input
                 placeholder="Search by name or email..."
@@ -138,88 +169,63 @@ export function AdminDashboardPage() {
                 { value: "student", label: "Student" },
               ]}
             />
-          </div>
-        </div>
-
-        <div className="mt-4">
-          {loading ? (
-            <div className="py-8">
-              <div className="h-10 bg-slate-50 rounded-xl animate-pulse mb-3" />
-              <div className="h-10 bg-slate-50 rounded-xl animate-pulse mb-3" />
-              <div className="h-10 bg-slate-50 rounded-xl animate-pulse" />
-            </div>
-          ) : error ? (
-            <div className="py-10 text-center text-sm text-red-600">{error}</div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Joined</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-slate-500">
-                      No users found.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filtered.slice(0, 8).map((u) => (
-                    <TableRow key={u.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-semibold text-slate-700">
-                            {(u.full_name || u.email)[0]?.toUpperCase()}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="text-sm font-medium text-slate-900 truncate">{u.full_name}</div>
-                            <div className="text-xs text-slate-500 truncate">{u.email}</div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={roleBadgeVariant(u.role)}>{u.role}</Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-slate-600">
-                        {new Date(u.created_at).toLocaleDateString()}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </div>
-      </Card>
-
-      <AdminModal
-        open={createOpen}
-        title="Create New User"
-        onClose={() => !creating && setCreateOpen(false)}
-        footer={
-          <Button className="w-full" disabled={creating} onClick={handleCreate}>
-            {creating ? "Creating..." : "Create Account"}
-          </Button>
+          </>
         }
       >
-        <div className="space-y-4">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>User</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Joined</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.slice(0, 8).map((u) => (
+              <TableRow key={u.id}>
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-foreground">
+                      {(u.full_name || u.email)[0]?.toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-foreground truncate">{u.full_name}</div>
+                      <div className="text-xs text-muted-foreground truncate">{u.email}</div>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={roleBadgeVariant(u.role)}>{u.role}</Badge>
+                </TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  {new Date(u.created_at).toLocaleDateString()}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </DataTableLayout>
+
+      <Dialog open={createOpen} onOpenChange={(open) => !creating && setCreateOpen(open)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New User</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">Full Name *</label>
+              <label className="mb-1 block text-xs font-medium text-foreground">Full Name *</label>
             <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="e.g. John Doe" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">Email *</label>
+              <label className="mb-1 block text-xs font-medium text-foreground">Email *</label>
             <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="user@example.com" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">Password *</label>
+              <label className="mb-1 block text-xs font-medium text-foreground">Password *</label>
             <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min 6 characters" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">Role *</label>
+              <label className="mb-1 block text-xs font-medium text-foreground">Role *</label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as "teacher" | "student")}
@@ -229,9 +235,15 @@ export function AdminDashboardPage() {
               <option value="student">Student</option>
             </select>
           </div>
-          {notice && <p className="text-sm text-red-600">{notice}</p>}
-        </div>
-      </AdminModal>
+            {notice && <p className="text-sm text-destructive">{notice}</p>}
+          </div>
+          <DialogFooter className="mt-4">
+            <Button className="w-full" disabled={creating} onClick={handleCreate}>
+              {creating ? "Creating..." : "Create Account"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { Link } from "react-router";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, Play, CheckCircle, Lock, Users, FileText, BarChart3 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Counter, FloatingOrb } from "@/pages/landing/landing-primitives";
 
@@ -33,13 +34,18 @@ export function LandingHero() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium mb-8 backdrop-blur-sm"
+            className="mb-8"
           >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-accent" />
-            </span>
-            Trusted by 10,000+ educators worldwide
+            <Badge
+              variant="outline"
+              className="gap-2 px-4 py-1.5 border-primary/20 bg-primary/10 text-primary font-medium backdrop-blur-sm"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-accent" />
+              </span>
+              Trusted by 10,000+ educators worldwide
+            </Badge>
           </motion.div>
 
           <motion.h1

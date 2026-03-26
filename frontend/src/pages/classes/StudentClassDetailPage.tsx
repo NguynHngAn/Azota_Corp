@@ -20,19 +20,19 @@ export function StudentClassDetailPage() {
       .finally(() => setLoading(false));
   }, [token, id, classId]);
 
-  if (loading) return <p className="text-gray-600">Loading...</p>;
-  if (error || !cls) return <p className="text-red-600">{error || "Not found"}</p>;
+  if (loading) return <p className="text-muted-foreground">Loading...</p>;
+  if (error || !cls) return <p className="text-destructive">{error || "Not found"}</p>;
 
   return (
     <div>
       <div className="mb-4">
-        <Link to="/student/classes" className="text-blue-600 hover:underline">
+        <Link to="/student/classes" className="text-primary hover:underline">
           ← Back to my classes
         </Link>
       </div>
-      <h2 className="text-lg font-semibold">{cls.name}</h2>
-      {cls.description && <p className="text-gray-600 mt-1">{cls.description}</p>}
-      <p className="text-sm text-gray-500 mt-2">Teacher: {cls.creator?.full_name ?? "—"}</p>
+      <h2 className="text-lg font-semibold text-foreground">{cls.name}</h2>
+      {cls.description && <p className="text-muted-foreground mt-1">{cls.description}</p>}
+      <p className="text-sm text-muted-foreground mt-2">Teacher: {cls.creator?.full_name ?? "—"}</p>
     </div>
   );
 }

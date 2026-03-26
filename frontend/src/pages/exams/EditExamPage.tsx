@@ -10,7 +10,6 @@ import {
   type ExamDetail,
 } from "@/services/exams.service";
 import { addFromBankToExam, listBankQuestions, type BankQuestionListItem } from "@/services/questionBank.service";
-import { ConfirmDialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -225,16 +224,6 @@ export function EditExamPage() {
         onSave={handleSave}
         saving={submitting}
         saveLabel="Save exam"
-      />
-
-      <ConfirmDialog
-        open={bankOpen}
-        title="Add from Question Bank"
-        description=""
-        confirmLabel="Close"
-        cancelLabel="Close"
-        onCancel={() => setBankOpen(false)}
-        onConfirm={() => setBankOpen(false)}
       />
 
       {bankOpen ? (

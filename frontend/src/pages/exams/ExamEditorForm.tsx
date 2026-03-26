@@ -1,12 +1,13 @@
 import type { Dispatch, SetStateAction } from "react";
 import type { ExamFormState, QuestionRow, QuestionType } from "@/pages/exams/types";
 import { emptyOption } from "@/pages/exams/types";
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Icons } from "@/components/layouts/icons";
 
 interface ExamEditorFormProps {
   state: ExamFormState;
@@ -42,17 +43,17 @@ function Stepper({ step }: { step: Step }) {
                 <div className="flex items-center gap-3">
                   <div
                     className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-semibold transition ${
-                      done ? "bg-emerald-100 text-emerald-800" : active ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-500"
+                      done ? "bg-success text-success-foreground" : active ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
                     }`}
                   >
                     {done ? "✓" : it.n}
                   </div>
-                  <div className={`text-sm ${active ? "text-slate-900 font-medium" : "text-slate-500"}`}>
+                  <div className={`text-sm ${active ? "text-foreground font-medium" : "text-muted-foreground"}`}>
                     {it.label}
                   </div>
                 </div>
                 {idx < items.length - 1 && (
-                  <div className="mt-3 h-px bg-slate-100" />
+                  <div className="mt-3 h-px bg-border" />
                 )}
               </div>
             );
@@ -73,6 +74,7 @@ export function ExamEditorForm({
   saveLabel,
 }: ExamEditorFormProps) {
   const [step, setStep] = useState<Step>(1);
+  const formFieldId = useId();
 
   function setMeta(field: keyof Pick<ExamFormState, "title" | "description" | "is_draft">, value: string | boolean) {
     setState((s) => ({ ...s, [field]: value }));
@@ -140,21 +142,30 @@ export function ExamEditorForm({
   const questionCount = state.questions.length;
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-3xl mx-auto space-y-8">
       <Stepper step={step} />
 
       <div className="flex justify-center">
         <div className="w-full max-w-3xl">
           {step === 1 && (
-            <Card className="shadow-sm hover:shadow-sm">
-              <div className="space-y-4">
+            <div className="glass-card p-6">
+              <div className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Exam Title *</label>
-                  <Input value={state.title} onChange={(e) => setMeta("title", e.target.value)} placeholder="e.g. Math Final Exam" />
+                  <label className="text-sm font-medium text-foreground mb-1.5 block">Exam Title *</label>
+                  <Input
+                    value={state.title}
+                    onChange={(e) => setMeta("title", e.target.value)}
+                    placeholder="e.g. Math Final Exam"
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                  <label htmlFor={`${formFieldId}-exam-description`}
+                    className="text-sm font-medium text-foreground mb-1.5 block"
+                  >
+                    Description
+                  </label>
                   <Textarea
+                    id={`${formFieldId}-exam-description`}
                     value={state.description}
                     onChange={(e) => setMeta("description", e.target.value)}
                     rows={4}
@@ -162,47 +173,49 @@ export function ExamEditorForm({
                   />
                 </div>
               </div>
-            </Card>
+            </div>
           )}
 
           {step === 2 && (
-            <Card className="shadow-sm hover:shadow-sm">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-sm text-slate-600">{questionCount} question(s)</div>
+            <div className="glass-card p-6">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">{questionCount} question(s)</div>
                 <div className="flex items-center gap-2">
                   {onAddFromBank ? (
-                    <Button size="sm" variant="secondary" type="button" onClick={onAddFromBank}>
-                      + Add from bank
+                    <Button size="sm" variant="outline" type="button" onClick={onAddFromBank}>
+                      <Icons.Plus className="size-4" /> Add from bank
                     </Button>
                   ) : null}
-                  <Button size="sm" variant="secondary" type="button" onClick={onAddQuestion}>
-                    + Add Question
+                  <Button size="sm" variant="outline" type="button" onClick={onAddQuestion}>
+                    <Icons.Plus className="size-4" /> Add Question
                   </Button>
                 </div>
               </div>
 
               {state.questions.length === 0 ? (
-                <div className="py-10 text-center text-sm text-slate-500">
+                <div className="text-center py-8 text-muted-foreground text-sm">
                   No questions yet. Click “Add Question” to start.
                 </div>
               ) : (
                 <div className="mt-4 space-y-4">
                   {state.questions.map((q, qIndex) => (
-                    <div key={qIndex} className="rounded-2xl border border-slate-100 bg-white p-4">
+                    <div key={qIndex} className="rounded-2xl border border-border bg-card p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <div className="text-sm font-semibold text-slate-900">Question {qIndex + 1}</div>
+                          <div className="text-sm font-semibold text-foreground">Question {qIndex + 1}</div>
                           <div className="mt-2 grid gap-3 sm:grid-cols-3">
                             <div className="sm:col-span-2">
                               <Textarea
+                                id={`${formFieldId}-question-${qIndex}`}
                                 value={q.text}
                                 onChange={(e) => setQuestion(qIndex, (qq) => ({ ...qq, text: e.target.value }))}
                                 rows={2}
                                 placeholder="Question text..."
+                                aria-label={`Question ${qIndex + 1} text`}
                               />
                             </div>
-                            <div>
-                              <label className="block text-xs font-medium text-slate-600 mb-1">Type</label>
+                            <div >
+                              <label className="block text-xs font-medium text-muted-foreground mb-1">Type</label>
                               <select
                                 value={q.question_type}
                                 onChange={(e) => setQuestionType(qIndex, e.target.value as QuestionType)}
@@ -214,18 +227,20 @@ export function ExamEditorForm({
                             </div>
                           </div>
                         </div>
-                        <Button size="sm" variant="ghost" type="button" onClick={() => removeQuestion(qIndex)}>
-                          Remove
-                        </Button>
+                        <button
+                          className="p-1 rounded hover:bg-destructive/10"
+                          onClick={() => removeQuestion(qIndex)}>
+                          <Icons.Trash2 className="size-3.5 text-muted-foreground hover:text-destructive" /> 
+                        </button>
                       </div>
 
                       <div className="mt-4">
-                        <div className="text-xs font-medium text-slate-600 mb-2">Answer Options (mark correct)</div>
+                        <div className="text-xs text-muted-foreground mb-2">Answer Options (mark correct)</div>
                         <div className="space-y-2">
                           {q.options.map((opt, oIndex) => (
-                            <div key={oIndex} className="flex items-center gap-3">
+                            <div key={oIndex} className="flex items-center gap-2">
                               <input
-                                className="h-4 w-4"
+                                className="h-4 w-4 accent-primary"
                                 type={q.question_type === "single_choice" ? "radio" : "checkbox"}
                                 name={q.question_type === "single_choice" ? `q-${qIndex}-correct` : undefined}
                                 checked={opt.is_correct}
@@ -265,38 +280,39 @@ export function ExamEditorForm({
                   ))}
                 </div>
               )}
-            </Card>
+            </div>
           )}
 
           {step === 3 && (
-            <Card className="shadow-sm hover:shadow-sm">
-              <div className="py-6 text-center">
-                <div className="mx-auto h-12 w-12 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center text-xl font-semibold">
-                  ✓
+            <Card className="text-center py-8 space-y-4">
+              <div className="py-6 ">
+                <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto">
+                  <Icons.Check className="size-8 text-success" />
                 </div>
-                <div className="mt-3 text-lg font-semibold text-slate-900">Ready to Save</div>
-                <div className="mt-1 text-sm text-slate-500">Review your exam details before saving.</div>
+                <div className="mt-3 text-lg font-semibold text-foreground">Ready to Save</div>
+                <div className="mt-1 text-sm text-muted-foreground">Review your exam details before saving.</div>
               </div>
 
-              <div className="mx-auto max-w-md rounded-2xl border border-slate-100 bg-white p-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-500">Title</span>
-                  <span className="font-medium text-slate-900 truncate max-w-[60%]">{state.title || "—"}</span>
+              <div className="glass-card p-4 max-w-sm mx-auto text-left space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Title</span>
+                  <span className="font-medium text-foreground truncate max-w-[60%]">{state.title || "—"}</span>
                 </div>
-                <div className="mt-2 flex items-center justify-between text-sm">
-                  <span className="text-slate-500">Questions</span>
-                  <span className="font-medium text-slate-900">{state.questions.length}</span>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Questions</span>
+                  <span className="font-medium text-foreground">{state.questions.length}</span>
                 </div>
               </div>
 
-              <label className="mt-5 flex items-center justify-center gap-2 text-sm text-slate-600">
+              <label className="mt-5 flex items-center justify-center gap-2 text-sm text-muted-foreground">
                 <input
+                  className="accent-primary"
                   type="checkbox"
                   checked={!state.is_draft}
                   onChange={(e) => setMeta("is_draft", !e.target.checked)}
                 />
                 <span>Publish immediately (not draft)</span>
-                <Badge variant={state.is_draft ? "warning" : "success"}>{state.is_draft ? "Draft" : "Published"}</Badge>
+                <Badge variant={state.is_draft ? "outline" : "default"} className="text-xs">{state.is_draft ? "Draft" : "Published"}</Badge>
               </label>
             </Card>
           )}

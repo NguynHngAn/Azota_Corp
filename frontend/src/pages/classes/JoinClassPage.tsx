@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { joinClass } from "@/services/classes.service";
-import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -37,14 +36,18 @@ export function JoinClassPage() {
 
   return (
     <div className="max-w-lg space-y-4">
-      <PageHeader
-        title="Join a class"
-        description="Enter the invite code from your teacher or use an invite link."
-      />
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">Join a class</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Enter the invite code from your teacher or use an invite link.
+          </p>
+        </div>
+      </div>
       <Card>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Invite code</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Invite code</label>
             <Input
               type="text"
               value={inviteCode}

@@ -3,11 +3,11 @@ import { useAuth } from "@/context/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Icons } from "@/components/layouts/icons";
-import { SettingsTabsNav, type SettingsTab } from "@/components/settings/settings-tabs-nav";
-import { Toggle } from "@/components/settings/toggle";
-import { OptionCard } from "@/components/settings/option-card";
 import { useLocalStorageState } from "@/components/settings/use-local-storage-state";
+import { useTheme } from "@/hooks/useTheme";
 import { notifyLanguageChanged, t, useLanguage } from "@/i18n";
 import { uploadMyAvatar } from "@/services/users.service";
 import { resolveStaticUrl } from "@/utils/url";
@@ -26,17 +26,11 @@ type NotificationsState = {
   systemUpdates: boolean;
 };
 
-type AppearanceState = {
-  theme: "light" | "dark" | "system";
-  color: "blue" | "green" | "purple";
-  density: "comfortable" | "compact";
-  sidebarMode: "expanded" | "collapsed" | "auto";
-};
-
 type LanguageState = {
   language: "en" | "vi";
   timezone: "Asia/Ho_Chi_Minh" | "UTC";
 };
+type SettingsTab = "profile" | "notifications" | "security" | "appearance" | "language";
 
 export function SharedSettingsPage() {
   const { user, token, refreshMe } = useAuth();
@@ -53,12 +47,7 @@ export function SharedSettingsPage() {
     systemUpdates: false,
   });
 
-  const [appearance, setAppearance] = useLocalStorageState<AppearanceState>("settings.appearance", {
-    theme: "system",
-    color: "blue",
-    density: "comfortable",
-    sidebarMode: "expanded",
-  });
+  const { theme, setTheme, themeColor, setThemeColor, density, setDensity, sidebarMode, setSidebarMode } = useTheme();
 
   // Persisted language settings (applied app-wide). Changes should only apply after clicking "Save Changes".
   const [languageSaved, setLanguageSaved] = useLocalStorageState<LanguageState>("settings.language", {
@@ -114,17 +103,6 @@ export function SharedSettingsPage() {
     return () => window.clearTimeout(t);
   }, [tab]);
 
-  // Apply appearance immediately (MVP: local preferences -> global UI behavior).
-  useEffect(() => {
-    const root = document.documentElement;
-    root.dataset.density = appearance.density;
-    root.dataset.sidebar = appearance.sidebarMode;
-    root.dataset.themeColor = appearance.color;
-
-    const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
-    const useDark = appearance.theme === "dark" || (appearance.theme === "system" && prefersDark);
-    root.classList.toggle("dark", useDark);
-  }, [appearance.color, appearance.density, appearance.sidebarMode, appearance.theme]);
   // Language is applied only when user clicks "Save Changes" in Language tab.
 
   function saveSecurity() {
@@ -149,29 +127,41 @@ export function SharedSettingsPage() {
         <p className="text-sm text-muted-foreground mt-1">{t("settings.subtitle", langUi)}</p>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* Tabs */}
-        <div className="md:w-48 shrink-0 space-y-1">
-          <SettingsTabsNav
-            tab={tab}
-            onChange={(t) => {
-              setNotice(null);
-              setTab(t);
-            }}
-            items={navItems}
-          />
+      <Tabs
+        value={tab}
+        onValueChange={(value) => {
+          setNotice(null);
+          setTab(value as SettingsTab);
+        }}
+        className="flex flex-col gap-6 md:flex-row"
+      >
+        <div className="md:w-56 shrink-0 space-y-1">
+          <TabsList className="h-auto w-full flex-col items-stretch gap-1 bg-transparent p-0">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <TabsTrigger
+                  key={item.id}
+                  value={item.id}
+                  className="w-full justify-start gap-3 rounded-xl px-3 py-2.5 text-sm font-medium data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
+                >
+                  <Icon />
+                  <span>{item.label}</span>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
         </div>
-        {/* Content */}
-        <div className="flex-1 glass-card p-6">
+        <Card className="flex-1 p-6">
           <div className="settings-panel-enter">
-            <div className="text-sm font-semibold text-slate-900">{panelTitle}</div>
+            <div className="text-sm font-semibold text-foreground">{panelTitle}</div>
 
             {notice && (
               <div
                 className={`mt-4 text-sm rounded-xl px-3 py-2 border ${
                   notice.kind === "error"
-                    ? "text-rose-700 bg-rose-50 border-rose-100"
-                    : "text-emerald-800 bg-emerald-50 border-emerald-100"
+                    ? "text-destructive bg-destructive/10 border-destructive/20"
+                    : "text-primary bg-primary/10 border-primary/20"
                 }`}
               >
                 {notice.message}
@@ -180,14 +170,15 @@ export function SharedSettingsPage() {
 
             {switching && (
               <div className="mt-4 space-y-3 animate-pulse">
-                <div className="h-10 bg-slate-50 rounded-xl" />
-                <div className="h-10 bg-slate-50 rounded-xl" />
-                <div className="h-10 bg-slate-50 rounded-xl" />
-                <div className="h-10 bg-slate-50 rounded-xl w-2/3" />
+                <div className="h-10 bg-muted rounded-xl" />
+                <div className="h-10 bg-muted rounded-xl" />
+                <div className="h-10 bg-muted rounded-xl" />
+                <div className="h-10 bg-muted rounded-xl w-2/3" />
               </div>
             )}
 
-            {!switching && tab === "profile" && (
+            <TabsContent value="profile">
+            {!switching && (
               <div className="mt-4 space-y-4">
                 <div className="flex items-center gap-4">
                   <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold overflow-hidden">
@@ -235,15 +226,15 @@ export function SharedSettingsPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Full Name</label>
+                    <label className="block text-xs font-medium text-foreground mb-1">Full Name</label>
                     <Input value={user?.full_name || ""} disabled />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Email</label>
+                    <label className="block text-xs font-medium text-foreground mb-1">Email</label>
                     <Input value={user?.email || ""} disabled />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">School</label>
+                    <label className="block text-xs font-medium text-foreground mb-1">School</label>
                     <Input
                       value={profileLocal.school}
                       onChange={(e) => setProfileLocal((p) => ({ ...p, school: e.target.value }))}
@@ -251,7 +242,7 @@ export function SharedSettingsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Subject</label>
+                    <label className="block text-xs font-medium text-foreground mb-1">Subject</label>
                     <Input
                       value={profileLocal.subject}
                       onChange={(e) => setProfileLocal((p) => ({ ...p, subject: e.target.value }))}
@@ -268,15 +259,17 @@ export function SharedSettingsPage() {
                   >
                     Save Changes
                   </Button>
-                  <div className="mt-2 text-xs text-slate-500">
+                  <div className="mt-2 text-xs text-muted-foreground">
                     Note: Some profile fields are saved locally for MVP UI (backend sync not implemented).
                   </div>
                 </div>
               </div>
             )}
+            </TabsContent>
 
-            {!switching && tab === "notifications" && (
-              <div className="mt-4 divide-y divide-slate-100 rounded-2xl border border-slate-100 overflow-hidden">
+            <TabsContent value="notifications">
+            {!switching && (
+              <div className="mt-4 overflow-hidden rounded-2xl border border-border divide-y divide-border">
                 {[
                   {
                     key: "examSubmissions" as const,
@@ -304,27 +297,29 @@ export function SharedSettingsPage() {
                     desc: "Platform news and feature updates",
                   },
                 ].map((row) => (
-                  <div key={row.key} className="bg-white px-4 py-3 flex items-start justify-between gap-4">
+                  <div key={row.key} className="bg-background px-4 py-3 flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      <div className="text-sm font-medium text-slate-900">{row.title}</div>
-                      <div className="text-xs text-slate-500 mt-1">{row.desc}</div>
+                      <div className="text-sm font-medium text-foreground">{row.title}</div>
+                      <div className="mt-1 text-xs text-muted-foreground">{row.desc}</div>
                     </div>
                     <div className="pt-0.5">
-                      <Toggle
+                      <Switch
                         checked={notifications[row.key]}
-                        onChange={(v) => setNotifications((n) => ({ ...n, [row.key]: v }))}
-                        label={row.title}
+                        onCheckedChange={(v) => setNotifications((n) => ({ ...n, [row.key]: v }))}
+                        aria-label={row.title}
                       />
                     </div>
                   </div>
                 ))}
               </div>
             )}
+            </TabsContent>
 
-            {!switching && tab === "security" && (
+            <TabsContent value="security">
+            {!switching && (
               <div className="mt-4 space-y-4 max-w-2xl">
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Current Password</label>
+                  <label className="block text-xs font-medium text-foreground mb-1">Current Password</label>
                   <Input
                     type="password"
                     value={security.current}
@@ -334,7 +329,7 @@ export function SharedSettingsPage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">New Password</label>
+                    <label className="block text-xs font-medium text-foreground mb-1">New Password</label>
                     <Input
                       type="password"
                       value={security.next}
@@ -343,7 +338,7 @@ export function SharedSettingsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Confirm Password</label>
+                    <label className="block text-xs font-medium text-foreground mb-1">Confirm Password</label>
                     <Input
                       type="password"
                       value={security.confirm}
@@ -356,102 +351,82 @@ export function SharedSettingsPage() {
                   <Button size="sm" type="button" onClick={saveSecurity}>
                     Update Password
                   </Button>
-                  <div className="mt-2 text-xs text-slate-500">
+                  <div className="mt-2 text-xs text-muted-foreground">
                     MVP note: This tab is UI-ready. If you want real password update, we’ll add a backend endpoint later.
                   </div>
                 </div>
               </div>
             )}
+            </TabsContent>
 
-            {!switching && tab === "appearance" && (
+            <TabsContent value="appearance">
+            {!switching && (
               <div className="mt-4 space-y-5">
                 <div>
-                  <div className="text-xs font-semibold text-slate-700 mb-2">Theme</div>
+                  <div className="mb-2 text-xs font-semibold text-foreground">Theme</div>
                   <div className="grid gap-3 sm:grid-cols-3">
-                    <OptionCard
-                      title="Light"
-                      description="Bright and clear"
-                      icon={<Icons.Sun />}
-                      selected={appearance.theme === "light"}
-                      onSelect={() => setAppearance((a) => ({ ...a, theme: "light" }))}
-                    />
-                    <OptionCard
-                      title="Dark"
-                      description="Dim and focused"
-                      icon={<Icons.Moon />}
-                      selected={appearance.theme === "dark"}
-                      onSelect={() => setAppearance((a) => ({ ...a, theme: "dark" }))}
-                    />
-                    <OptionCard
-                      title="System"
-                      description="Match device"
-                      icon={<Icons.Monitor />}
-                      selected={appearance.theme === "system"}
-                      onSelect={() => setAppearance((a) => ({ ...a, theme: "system" }))}
-                    />
+                    {(["light", "dark", "system"] as const).map((themeMode) => (
+                      <Button
+                        key={themeMode}
+                        type="button"
+                        variant={theme === themeMode ? "secondary" : "outline"}
+                        className="h-auto justify-start p-4"
+                        onClick={() => setTheme(themeMode)}
+                      >
+                        {themeMode}
+                      </Button>
+                    ))}
                   </div>
                 </div>
 
                 <div>
-                  <div className="text-xs font-semibold text-slate-700 mb-2">Theme Color</div>
+                  <div className="mb-2 text-xs font-semibold text-foreground">Theme Color</div>
                   <div className="grid gap-3 sm:grid-cols-3">
-                    <OptionCard
-                      title="Blue"
-                      selected={appearance.color === "blue"}
-                      onSelect={() => setAppearance((a) => ({ ...a, color: "blue" }))}
-                      icon={<span className="h-3 w-3 rounded-full bg-primary inline-block" />}
-                    />
-                    <OptionCard
-                      title="Green"
-                      selected={appearance.color === "green"}
-                      onSelect={() => setAppearance((a) => ({ ...a, color: "green" }))}
-                      icon={<span className="h-3 w-3 rounded-full bg-emerald-600 inline-block" />}
-                    />
-                    <OptionCard
-                      title="Purple"
-                      selected={appearance.color === "purple"}
-                      onSelect={() => setAppearance((a) => ({ ...a, color: "purple" }))}
-                      icon={<span className="h-3 w-3 rounded-full bg-violet-600 inline-block" />}
-                    />
+                    {(["blue", "green", "purple"] as const).map((colorMode) => (
+                      <Button
+                        key={colorMode}
+                        type="button"
+                        variant={themeColor === colorMode ? "secondary" : "outline"}
+                        className="h-auto justify-start p-4 capitalize"
+                        onClick={() => setThemeColor(colorMode)}
+                      >
+                        {colorMode}
+                      </Button>
+                    ))}
                   </div>
                 </div>
 
                 <div>
-                  <div className="text-xs font-semibold text-slate-700 mb-2">Layout Density</div>
+                  <div className="mb-2 text-xs font-semibold text-foreground">Layout Density</div>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <OptionCard
-                      title="Comfortable"
-                      description="More spacing, larger elements"
-                      selected={appearance.density === "comfortable"}
-                      onSelect={() => setAppearance((a) => ({ ...a, density: "comfortable" }))}
-                    />
-                    <OptionCard
-                      title="Compact"
-                      description="Tighter spacing, more content"
-                      selected={appearance.density === "compact"}
-                      onSelect={() => setAppearance((a) => ({ ...a, density: "compact" }))}
-                    />
+                    {(["comfortable", "compact"] as const).map((densityMode) => (
+                      <Button
+                        key={densityMode}
+                        type="button"
+                        variant={density === densityMode ? "secondary" : "outline"}
+                        className="h-auto justify-start p-4 capitalize"
+                        onClick={() => setDensity(densityMode)}
+                      >
+                        {densityMode}
+                      </Button>
+                    ))}
                   </div>
                 </div>
 
                 <div>
-                  <div className="text-xs font-semibold text-slate-700 mb-2">Sidebar Mode</div>
+                  <div className="mb-2 text-xs font-semibold text-foreground">Sidebar Mode</div>
                   <div className="grid gap-3 sm:grid-cols-3">
-                    <OptionCard
-                      title="Expanded"
-                      selected={appearance.sidebarMode === "expanded"}
-                      onSelect={() => setAppearance((a) => ({ ...a, sidebarMode: "expanded" }))}
-                    />
-                    <OptionCard
-                      title="Collapsed"
-                      selected={appearance.sidebarMode === "collapsed"}
-                      onSelect={() => setAppearance((a) => ({ ...a, sidebarMode: "collapsed" }))}
-                    />
-                    <OptionCard
-                      title="Auto"
-                      selected={appearance.sidebarMode === "auto"}
-                      onSelect={() => setAppearance((a) => ({ ...a, sidebarMode: "auto" }))}
-                    />
+                    {(["expanded", "collapsed", "auto"] as const).map((sidebarModeOption) => (
+                      <Button
+                        key={sidebarModeOption}
+                        type="button"
+                        variant={sidebarMode === sidebarModeOption ? "secondary" : "outline"}
+                        className="h-auto justify-start p-4 capitalize"
+                        onClick={() => setSidebarMode(sidebarModeOption)}
+                      >
+                        {sidebarModeOption}
+                      </Button>
+                    ))}
                   </div>
                 </div>
 
@@ -459,18 +434,20 @@ export function SharedSettingsPage() {
                   <Button size="sm" variant="secondary" type="button" onClick={() => setNotice({ kind: "success", message: "Appearance saved (local preferences)." })}>
                     Save Changes
                   </Button>
-                  <div className="mt-2 text-xs text-slate-500">
-                    MVP note: Appearance options are stored locally. If you want real theming applied across the app, we can wire it next.
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    Appearance options are stored locally and applied immediately.
                   </div>
                 </div>
               </div>
             )}
+            </TabsContent>
 
-            {tab === "language" && (
+            <TabsContent value="language">
+            {(
               <div className="mt-4 space-y-4 max-w-2xl">
                 <div>
-                  <div className="text-sm font-semibold text-slate-900">{t("settings.language.title", langUi)}</div>
-                  <div className="mt-2 rounded-2xl border border-slate-100 overflow-hidden">
+                  <div className="text-sm font-semibold text-foreground">{t("settings.language.title", langUi)}</div>
+                  <div className="mt-2 overflow-hidden rounded-2xl border border-border">
                     <Button
                       type="button"
                       variant="ghost"
@@ -478,7 +455,7 @@ export function SharedSettingsPage() {
                       className={`w-full justify-between px-4 py-3 h-auto rounded-none text-sm font-normal transition ${
                         languageDraft.language === "en"
                           ? "bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary"
-                          : "bg-card hover:bg-background text-slate-700"
+                          : "bg-card hover:bg-background text-foreground"
                       }`}
                     >
                       <span>English</span>
@@ -491,7 +468,7 @@ export function SharedSettingsPage() {
                       className={`w-full justify-between px-4 py-3 h-auto rounded-none text-sm font-normal transition border-t border-border ${
                         languageDraft.language === "vi"
                           ? "bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary"
-                          : "bg-card hover:bg-background text-slate-700"
+                          : "bg-card hover:bg-background text-foreground"
                       }`}
                     >
                       <span>Tiếng Việt</span>
@@ -501,7 +478,7 @@ export function SharedSettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">{t("settings.language.timezone", langUi)}</label>
+                  <label className="mb-1 block text-xs font-medium text-foreground">{t("settings.language.timezone", langUi)}</label>
                   <select
                     value={languageDraft.timezone}
                     onChange={(e) =>
@@ -530,9 +507,10 @@ export function SharedSettingsPage() {
                 </div>
               </div>
             )}
+            </TabsContent>
           </div>
-        </div>
-      </div>
+        </Card>
+      </Tabs>
     </div>
   );
 }

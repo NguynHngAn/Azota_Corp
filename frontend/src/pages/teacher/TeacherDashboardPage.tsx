@@ -8,7 +8,7 @@ import {
   type AssignmentReportResponse,
   type AssignmentDetail,
 } from "@/services/assignments.service";
-import { StatsCard } from "@/components/layouts/stats-card";
+import { StatCard } from "@/components/layouts/StatCard";
 import { Icons } from "@/components/layouts/icons";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -205,74 +205,98 @@ export function TeacherDashboardPage() {
   }, [avgScore, exams.length, statsLoading, studentsCount, submissionsCount]);
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Dashboard</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           Welcome back, {user?.full_name || "Teacher"}. Here’s your overview.
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard icon={<Icons.Users />} value={stats.myStudents} label="My Students" tone="blue" />
-        <StatsCard icon={<Icons.BookOpen />} value={stats.myExams} label="My Exams" tone="violet" />
-        <StatsCard icon={<Icons.CheckCircle />} value={stats.submissions} label="Submissions" tone="slate" />
-        <StatsCard icon={<Icons.Chart />} value={stats.avgScore} label="Avg Score" tone="green" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          icon={<Icons.Users className="text-primary" />}
+          value={String(stats.myStudents)}
+          title="My Students"
+          change="--"
+          trend="up"
+        />
+        <StatCard
+          icon={<Icons.BookOpen className="text-violet-700" />}
+          value={String(stats.myExams)}
+          title="My Exams"
+          change="--"
+          trend="up"
+        />
+        <StatCard
+          icon={<Icons.CheckCircle className="text-info" />}
+          value={String(stats.submissions)}
+          title="Submissions"
+          change="--"
+          trend="up"
+        />
+        <StatCard
+          icon={<Icons.Chart className="text-success" />}
+          value={String(stats.avgScore)}
+          title="Avg Score"
+          change="--"
+          trend="up"
+        />
       </div>
 
       {statsLoading && (
-        <div className="text-xs text-slate-400">
+        <div className="text-xs text-muted-foreground mt-1">
           Calculating stats… {statsProgress.classesDone}/{statsProgress.classesTotal} classes,{" "}
           {statsProgress.reportsDone}/{statsProgress.reportsTotal} assignments
         </div>
       )}
 
-      <Card className="border border-slate-100 shadow-sm">
+      <div className="glass-card p-6">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-sm font-semibold text-slate-900">Recent Exams</h2>
-            <p className="text-xs text-slate-500">Quick access to your latest work.</p>
+            <h2 className="text-sm font-semibold text-foreground">Recent Exams</h2>
+            <p className="text-xs text-muted-foreground mt-1">Quick access to your latest work.</p>
           </div>
           <Button size="sm" variant="ghost" onClick={() => navigate("/teacher/exams")}>
             View all →
           </Button>
         </div>
 
-        <div className="mt-4">
+        <div className="mt-4 space-y-2">
           {loading ? (
             <div className="py-8">
-              <div className="h-10 bg-slate-50 rounded-xl animate-pulse mb-3" />
-              <div className="h-10 bg-slate-50 rounded-xl animate-pulse mb-3" />
-              <div className="h-10 bg-slate-50 rounded-xl animate-pulse" />
+              <div className="h-10 bg-muted rounded-xl animate-pulse mb-3" />
+              <div className="h-10 bg-muted rounded-xl animate-pulse mb-3" />
+              <div className="h-10 bg-muted rounded-xl animate-pulse" />
             </div>
           ) : exams.length === 0 ? (
-            <div className="py-10 text-center text-sm text-slate-500">
+            <div className="py-10 text-center text-sm text-muted-foreground">
               No exams yet. Create your first exam to get started.
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2 mt-4">
               {exams.slice(0, 3).map((e) => (
                 <Button
                   key={e.id}
                   type="button"
                   variant="outline"
                   onClick={() => navigate(`/teacher/exams/${e.id}`)}
-                  className="h-auto w-full flex-col items-stretch rounded-xl border-slate-100 bg-white px-4 py-3 text-left font-normal hover:bg-slate-50"
+                  className="h-auto w-full flex-col items-stretch rounded-xl border-muted bg-white px-4 py-3 text-left font-normal hover:bg-muted"
                 >
-                  <div className="text-sm font-medium text-slate-900">{e.title}</div>
-                  <div className="text-xs text-slate-500">{e.is_draft ? "Draft" : "Published"}</div>
+                  <div className="text-sm font-medium text-foreground">{e.title}</div>
+                  <div className="text-xs text-muted-foreground">{e.is_draft ? "Draft" : "Published"}</div>
                 </Button>
               ))}
             </div>
           )}
         </div>
-      </Card>
+      </div>
 
-      <Card className="border border-slate-100 shadow-sm">
+      <div className="glass-card p-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-slate-900">Quick Links</h2>
-            <p className="text-xs text-slate-500">Common teacher actions.</p>
+            <h2 className="text-sm font-semibold text-foreground">Quick Links</h2>
+            <p className="text-xs text-muted-foreground mt-1">Common teacher actions.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button size="sm" onClick={() => navigate("/teacher/exams/new")}>Create Exam</Button>
@@ -281,21 +305,21 @@ export function TeacherDashboardPage() {
           </div>
         </div>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
-            <div className="text-xs text-slate-500">Classes</div>
-            <div className="text-lg font-semibold text-slate-900">{classes.length}</div>
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="rounded-xl border border-muted px-4 py-3">
+            <div className="text-xs text-muted-foreground">Classes</div>
+            <div className="text-lg font-semibold text-foreground">{classes.length}</div>
           </div>
-          <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
-            <div className="text-xs text-slate-500">Assignments</div>
-            <div className="text-lg font-semibold text-slate-900">{assignments.length}</div>
+            <div className="rounded-xl border border-muted px-4 py-3">
+            <div className="text-xs text-muted-foreground">Assignments</div>
+            <div className="text-lg font-semibold text-foreground">{assignments.length}</div>
           </div>
-          <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
-            <div className="text-xs text-slate-500">Students</div>
-            <div className="text-lg font-semibold text-slate-900">—</div>
+          <div className="rounded-xl border border-muted px-4 py-3">
+            <div className="text-xs text-muted-foreground">Students</div>
+            <div className="text-lg font-semibold text-foreground">—</div>
           </div>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

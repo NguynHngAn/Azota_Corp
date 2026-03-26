@@ -6,10 +6,8 @@ import {
   type AntiCheatMonitorRow,
 } from "@/services/antiCheat.service";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { StatsCard } from "@/components/layouts/stats-card";
+import { StatCard } from "@/components/layouts/StatCard";
 import { Icons } from "@/components/layouts/icons"; 
-import { Input } from "@/components/ui/input";
 import { FilterChips } from "@/components/features/admin/filter-chips";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -59,11 +57,11 @@ export function TeacherAntiCheatingPage() {
   }, [data, query]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-3">
+    <div className="max-w-7xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Anti-Cheating Monitor</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-2xl font-bold text-foreground">Anti-Cheating Monitor</h1>
+          <p className="text-sm text-muted-foreground">
             Event-based monitoring powered by anti-cheat logs.
           </p>
         </div>
@@ -72,17 +70,48 @@ export function TeacherAntiCheatingPage() {
         </Button>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard icon={<Icons.Users />} value={data?.summary.total_students ?? (loading ? "—" : 0)} label="Total Students" tone="blue" />
-        <StatsCard icon={<Icons.Chart />} value={data?.summary.active_now ?? (loading ? "—" : 0)} label="Active Now" tone="green" />
-        <StatsCard icon={<Icons.Settings />} value={data?.summary.suspicious ?? (loading ? "—" : 0)} label="Suspicious" tone="amber" />
-        <StatsCard icon={<Icons.CheckCircle />} value={data?.summary.submitted ?? (loading ? "—" : 0)} label="Submitted" tone="slate" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          icon={<Icons.Users className="text-primary" />}
+          value={String(data?.summary.total_students ?? (loading ? "—" : 0))}
+          title="Total Students"
+          change="--"
+          trend="up"
+        />
+        <StatCard
+          icon={<Icons.Chart className="text-success" />}
+          value={String(data?.summary.active_now ?? (loading ? "—" : 0))}
+          title="Active Now"
+          change="--"
+          trend="up"
+        />
+        <StatCard
+          icon={<Icons.Settings className="text-warning" />}
+          value={String(data?.summary.suspicious ?? (loading ? "—" : 0))}
+          title="Suspicious"
+          change="--"
+          trend="up"
+        />
+        <StatCard
+          icon={<Icons.CheckCircle className="text-info" />}
+          value={String(data?.summary.submitted ?? (loading ? "—" : 0))}
+          title="Submitted"
+          change="--"
+          trend="up"
+        />
       </div>
 
-      <Card className="border border-slate-100 shadow-sm">
+      <div className="glass-card p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="w-full sm:w-80">
-            <Input placeholder="Search students..." value={query} onChange={(e) => setQuery(e.target.value)} />
+          <div className="search-input w-full sm:w-80">
+            <Icons.Search className="size-4" />
+            <input
+              type="text"
+              className="bg-transparent outline-none w-full text-foreground placeholder:text-muted-foreground text-sm"
+              placeholder="Search students..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
           </div>
           <FilterChips
             value={filter}
@@ -95,15 +124,14 @@ export function TeacherAntiCheatingPage() {
         </div>
 
         {error ? (
-          <div className="py-10 text-center text-sm text-rose-600">{error}</div>
+          <div className="py-10 text-center text-sm text-destructive">{error}</div>
         ) : loading ? (
           <div className="mt-4 space-y-3">
-            <div className="h-10 w-full rounded-xl bg-slate-50 animate-pulse" />
-            <div className="h-10 w-full rounded-xl bg-slate-50 animate-pulse" />
-            <div className="h-10 w-full rounded-xl bg-slate-50 animate-pulse" />
+            <div className="h-10 w-full rounded-lg bg-muted animate-pulse" />
+            <div className="h-10 w-full rounded-lg bg-muted animate-pulse" />
           </div>
         ) : rows.length === 0 ? (
-          <div className="py-10 text-center text-sm text-slate-500">No students found.</div>
+          <div className="py-10 text-center text-sm text-muted-foreground">No students found.</div>
         ) : (
           <div className="mt-4">
             <Table>
@@ -123,35 +151,39 @@ export function TeacherAntiCheatingPage() {
                     <TableRow key={`${r.assignment_id}-${r.user_id}-${r.submission_id ?? "none"}`}>
                       <TableCell className="min-w-0">
                         <div className="min-w-0">
-                          <div className="font-semibold text-slate-900 truncate">{r.full_name || r.email || `#${r.user_id}`}</div>
-                          <div className="text-xs text-slate-500 truncate">{r.email || "—"}</div>
+                          <div className="font-semibold text-foreground truncate">{r.full_name || r.email || `#${r.user_id}`}</div>
+                          <div className="text-xs text-muted-foreground truncate">{r.email || "—"}</div>
                         </div>
                       </TableCell>
                       <TableCell className="min-w-0">
                         <div className="min-w-0">
-                          <div className="text-sm font-semibold text-slate-900 truncate">{r.exam_title}</div>
-                          <div className="text-xs text-slate-500 truncate">{r.class_name}</div>
+                          <div className="text-sm font-semibold text-foreground truncate">{r.exam_title}</div>
+                          <div className="text-xs text-muted-foreground truncate">{r.class_name}</div>
                         </div>
                       </TableCell>
                       <TableCell>
                         {active ? (
-                          <Badge variant="success">Active</Badge>
+                          <Badge variant="default">Active</Badge>
                         ) : (
-                          <Badge variant="default">Submitted</Badge>
+                          <Badge variant="secondary">Submitted</Badge>
                         )}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Badge variant={r.events_total >= 3 ? "danger" : r.events_total >= 1 ? "warning" : "default"}>
+                          <Badge
+                            variant={
+                              r.events_total >= 3 ? "destructive" : r.events_total >= 1 ? "outline" : "secondary"
+                            }
+                          >
                             {r.events_total}
                           </Badge>
-                          {r.suspicious && <span className="text-xs text-amber-700">Suspicious</span>}
+                          {r.suspicious ? <Badge variant="outline">Suspicious</Badge> : null}
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm text-slate-600">
+                      <TableCell className="text-sm text-muted-foreground">
                         {r.last_event_at ? (
                           <div className="space-y-0.5">
-                            <div className="text-xs text-slate-500">{r.last_event_type ?? "—"}</div>
+                            <div className="text-xs text-muted-foreground">{r.last_event_type ?? "—"}</div>
                             <div>{formatDateTimeVietnam(r.last_event_at)}</div>
                           </div>
                         ) : (
@@ -165,7 +197,7 @@ export function TeacherAntiCheatingPage() {
             </Table>
           </div>
         )}
-      </Card>
+      </div>
     </div>
   );
 }

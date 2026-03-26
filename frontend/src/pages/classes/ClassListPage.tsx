@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { listClasses, type ClassResponse } from "@/services/classes.service";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Icons } from "@/components/layouts/icons";
 
 function basePath(pathname: string): string {
   if (pathname.startsWith("/admin")) return "/admin";
@@ -35,51 +34,58 @@ export function ClassListPage() {
     return `${c.name} ${c.description || ""}`.toLowerCase().includes(query);
   });
 
-  if (loading) return <p className="text-slate-500">Loading...</p>;
-  if (error) return <p className="text-red-600">{error}</p>;
+  if (loading) return <p className="text-muted-foreground">Loading...</p>;
+  if (error) return <p className="text-destructive">{error}</p>;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-3">
+    <div className="max-w-7xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Classes</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-2xl font-bold text-foreground">Classes</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             {base === "/admin" ? "Manage all classes in the system." : "Manage classes, members, and teacher assignments."}
           </p>
         </div>
-        <Button onClick={() => navigate(`${base}/classes/new`)}>+ New Class</Button>
+        <Button onClick={() => navigate(`${base}/classes/new`)}><Icons.Plus className="size-4" /> New Class</Button>
       </div>
 
-      <Card className="shadow-sm hover:shadow-sm">
-        <div className="max-w-md">
-          <Input placeholder="Search classes..." value={q} onChange={(e) => setQ(e.target.value)} />
+      <div >
+        <div className="search-input max-w-md">
+          <Icons.Search className="size-4" />
+          <input
+            type="text"
+            className="bg-transparent outline-none w-full text-foreground placeholder:text-muted-foreground text-sm"
+            placeholder="Search classes..."
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
         </div>
 
         <div className="mt-4">
           {filtered.length === 0 ? (
-            <div className="py-12 text-center text-sm text-slate-500">No classes found.</div>
+            <div className="text-center py-20 text-muted-foreground text-sm">No classes found.</div>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {filtered.map((c) => (
                 <Button
                   key={c.id}
                   type="button"
                   variant="outline"
                   onClick={() => navigate(`${base}/classes/${c.id}`)}
-                  className="h-auto w-full flex-col items-stretch rounded-2xl border-slate-100 bg-white px-4 py-4 text-left font-normal hover:bg-slate-50"
+                  className="h-auto w-full flex-col items-stretch rounded-2xl border-border bg-card px-4 py-4 text-left font-normal hover:bg-secondary"
                 >
-                  <div className="text-sm font-semibold text-slate-900">{c.name}</div>
+                  <div className="text-sm font-semibold text-foreground">{c.name}</div>
                   {c.description ? (
-                    <div className="mt-1 text-sm text-slate-600 line-clamp-2">{c.description}</div>
+                    <div className="mt-1 text-sm text-muted-foreground line-clamp-2">{c.description}</div>
                   ) : (
-                    <div className="mt-1 text-sm text-slate-400">No description</div>
+                    <div className="mt-1 text-sm text-muted-foreground">No description</div>
                   )}
                 </Button>
               ))}
             </div>
           )}
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

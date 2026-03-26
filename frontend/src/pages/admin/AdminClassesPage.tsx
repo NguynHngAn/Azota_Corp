@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { createClass, listClasses, type ClassResponse } from "@/services/classes.service";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AdminModal } from "@/components/features/admin/admin-modal";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DataTableLayout } from "@/components/features/admin/data-table-layout";
 
 export function AdminClassesPage() {
   const { token } = useAuth();
@@ -62,88 +62,88 @@ export function AdminClassesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-3">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Classes</h1>
-          <p className="text-sm text-slate-500">Manage classes, members, and teacher assignments.</p>
+          <h1 className="text-2xl font-semibold text-foreground">Classes</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Manage classes, members, and teacher assignments.
+          </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>+ New Class</Button>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button onClick={() => setCreateOpen(true)}>+ New Class</Button>
+        </div>
       </div>
 
       {notice && (
-        <p className={`text-sm ${notice.toLowerCase().includes("fail") ? "text-red-600" : "text-emerald-700"}`}>
+        <p className={`text-sm ${notice.toLowerCase().includes("fail") ? "text-destructive" : "text-primary"}`}>
           {notice}
         </p>
       )}
 
-      <Card className="border border-slate-100 shadow-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <DataTableLayout
+        title="Class Management"
+        loading={loading}
+        error={error}
+        isEmpty={filtered.length === 0}
+        emptyMessage="No classes yet."
+        controls={
           <div className="w-full sm:w-96">
             <Input placeholder="Search classes..." value={q} onChange={(e) => setQ(e.target.value)} />
           </div>
-        </div>
-
-        <div className="mt-4">
-          {loading ? (
-            <div className="py-10 text-center text-sm text-slate-500">Loading...</div>
-          ) : error ? (
-            <div className="py-10 text-center text-sm text-red-600">{error}</div>
-          ) : filtered.length === 0 ? (
-            <div className="py-10 text-center text-sm text-slate-500">No classes yet.</div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Class</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell className="font-medium text-slate-900">{c.name}</TableCell>
-                    <TableCell className="text-slate-600">{c.description || "—"}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => navigate(`/admin/classes/${c.id}`)}
-                      >
-                        Open
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </div>
-      </Card>
-
-      <AdminModal
-        open={createOpen}
-        title="Create New Class"
-        onClose={() => !creating && setCreateOpen(false)}
-        footer={
-          <Button className="w-full" disabled={creating} onClick={handleCreate}>
-            {creating ? "Creating..." : "Create Class"}
-          </Button>
         }
       >
-        <div className="space-y-4">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Class</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.map((c) => (
+              <TableRow key={c.id}>
+                <TableCell className="font-medium text-foreground">{c.name}</TableCell>
+                <TableCell className="text-muted-foreground">{c.description || "—"}</TableCell>
+                <TableCell className="text-right">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => navigate(`/admin/classes/${c.id}`)}
+                  >
+                    Open
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </DataTableLayout>
+
+      <Dialog open={createOpen} onOpenChange={(open) => !creating && setCreateOpen(open)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Class</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">Class Name *</label>
+              <label className="mb-1 block text-xs font-medium text-foreground">Class Name *</label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Class 10A" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">Description</label>
+              <label className="mb-1 block text-xs font-medium text-foreground">Description</label>
             <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional description..." />
           </div>
-          {notice && <p className="text-sm text-red-600">{notice}</p>}
-        </div>
-      </AdminModal>
+            {notice && <p className="text-sm text-destructive">{notice}</p>}
+          </div>
+          <DialogFooter>
+            <Button className="w-full" disabled={creating} onClick={handleCreate}>
+              {creating ? "Creating..." : "Create Class"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
