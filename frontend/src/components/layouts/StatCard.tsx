@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { Icons } from "@/components/layouts/Icons";
 
 interface StatCardProps {
   title: string;
@@ -7,13 +7,14 @@ interface StatCardProps {
   change: string;
   trend: "up" | "down";
   icon: ReactNode;
+  className?: string;
 }
 
-export function StatCard({ title, value, change, trend, icon }: StatCardProps) {
+export function StatCard({ title, value, change, trend, icon, className }: StatCardProps) {
   return (
     <div className="stat-card animate-in">
-      <div className="flex items-start justify-between mb-4">
-        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+      <div className={`flex items-start justify-between mb-4 ${className}`}>
+        <div className={`size-10 rounded-lg bg-primary/10 flex items-center justify-center ${className}`}>
           {icon}
         </div>
         <div
@@ -22,9 +23,9 @@ export function StatCard({ title, value, change, trend, icon }: StatCardProps) {
           }`}
         >
           {trend === "up" ? (
-            <TrendingUp className="w-3 h-3" />
+            <Icons.TrendingUp className="w-3 h-3" />
           ) : (
-            <TrendingDown className="w-3 h-3" />
+            <Icons.TrendingDown className="w-3 h-3" />
           )}
           {change}
         </div>

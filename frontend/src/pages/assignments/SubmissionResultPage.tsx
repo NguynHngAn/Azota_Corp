@@ -6,12 +6,14 @@ import { formatDateTimeVietnam } from "@/utils/date";
 import { useExam } from "@/context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { t, useLanguage } from "@/i18n";
 
 export function SubmissionResultPage() {
   const { submissionId } = useParams<{ submissionId: string }>();
   const navigate = useNavigate();
   const { token } = useAuth();
   const { finishExam } = useExam();
+  const lang = useLanguage();
   const [data, setData] = useState<SubmissionResultResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -20,7 +22,7 @@ export function SubmissionResultPage() {
     if (!token || !submissionId) return;
     const id = parseInt(submissionId, 10);
     if (Number.isNaN(id)) {
-      setError("Invalid submission");
+      setError(t("submissionResult.invalid", lang));
       setLoading(false);
       return;
     }
@@ -29,11 +31,11 @@ export function SubmissionResultPage() {
         setData(res);
         finishExam();
       })
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load"))
+      .catch((e) => setError(e instanceof Error ? e.message : t("submissionResult.failed", lang)))
       .finally(() => setLoading(false));
   }, [token, submissionId, finishExam]);
 
-  if (loading) return <p className="text-muted-foreground">Loading result...</p>;
+  if (loading) return <p className="text-muted-foreground">{t("submissionResult.loading", lang)}</p>;
   if (error) return <p className="text-destructive">{error}</p>;
   if (!data) return null;
 
@@ -45,30 +47,30 @@ export function SubmissionResultPage() {
       <div>
         <h2 className="text-lg font-semibold text-foreground">{data.exam_title}</h2>
         <p className="text-sm text-muted-foreground">
-          Submitted at {data.submitted_at ? formatDateTimeVietnam(data.submitted_at) : "—"}
+          {t("submissionResult.submittedAt", lang)} {data.submitted_at ? formatDateTimeVietnam(data.submitted_at) : "—"}
         </p>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
         <div className="glass-card p-6">
-          <div className="text-xs uppercase text-muted-foreground mb-1">Score</div>
+          <div className="text-xs uppercase text-muted-foreground mb-1">{t("studentResults.score", lang)}</div>
           <div className="text-2xl font-bold text-primary">{data.score ?? 0}</div>
-          <div className="text-xs text-muted-foreground mt-1">0–100</div>
+          <div className="text-xs text-muted-foreground mt-1">{t("submissionResult.outOf100", lang)}</div>
         </div>
         <div className="glass-card p-6">
-          <div className="text-xs uppercase text-muted-foreground mb-1">Correct</div>
+          <div className="text-xs uppercase text-muted-foreground mb-1">{t("studentResults.correct", lang)}</div>
           <div className="text-2xl font-bold text-success">{correctCount}</div>
-          <div className="text-xs text-muted-foreground mt-1">questions</div>
+          <div className="text-xs text-muted-foreground mt-1">{t("submissionResult.questions", lang)}</div>
         </div>
         <div className="glass-card p-6">
-          <div className="text-xs uppercase text-muted-foreground mb-1">Wrong</div>
+          <div className="text-xs uppercase text-muted-foreground mb-1">{t("studentResults.wrong", lang)}</div>
           <div className="text-2xl font-bold text-destructive">{wrongCount}</div>
-          <div className="text-xs text-muted-foreground mt-1">questions</div>
+          <div className="text-xs text-muted-foreground mt-1">{t("submissionResult.questions", lang)}</div>
         </div>
         <div className="glass-card p-6">
-          <div className="text-xs uppercase text-muted-foreground mb-1">Total</div>
+          <div className="text-xs uppercase text-muted-foreground mb-1">{t("studentResults.total", lang)}</div>
           <div className="text-2xl font-bold text-foreground">{data.question_details.length}</div>
-          <div className="text-xs text-muted-foreground mt-1">questions</div>
+          <div className="text-xs text-muted-foreground mt-1">{t("submissionResult.questions", lang)}</div>
         </div>
       </div>
 
@@ -80,24 +82,24 @@ export function SubmissionResultPage() {
             <div className="glass-card p-6" key={q.question_id}>
               <div className="flex justify-between items-start gap-2 mb-2">
                 <span className="font-medium text-foreground">
-                  Question {idx + 1}: {q.question_text}
+                  {t("submissionResult.question", lang).replace("{{number}}", String(idx + 1))}: {q.question_text}
                 </span>
                 <Badge variant={q.correct ? "default" : "destructive"}>
-                  {q.correct ? "Correct" : "Wrong"}
+                  {q.correct ? t("studentResults.correct", lang) : t("studentResults.wrong", lang)}
                 </Badge>
               </div>
               <div className="text-sm space-y-1 mt-2">
                 <div>
-                  <span className="text-muted-foreground">Your answer: </span>
+                  <span className="text-muted-foreground">{t("submissionResult.yourAnswer", lang)}: </span>
                   {chosenTexts.length ? chosenTexts.join(", ") : "—"}
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Correct answer: </span>
+                  <span className="text-muted-foreground">{t("submissionResult.correctAnswer", lang)}: </span>
                   {correctTexts.length ? correctTexts.join(", ") : "—"}
                 </div>
                 {q.ai_explanation && (
                   <div className="pt-2 border-t border-muted-foreground mt-2">
-                    <span className="block text-muted-foreground mb-1">AI explanation</span>
+                    <span className="block text-muted-foreground mb-1">{t("submissionResult.aiExplanation", lang)}</span>
                     <p className="text-foreground text-sm whitespace-pre-line">{q.ai_explanation}</p>
                   </div>
                 )}
@@ -113,7 +115,7 @@ export function SubmissionResultPage() {
           variant="secondary"
           onClick={() => navigate(-1)}
         >
-          Back
+          {t("submissionResult.back", lang)}
         </Button>
       </div>
     </div>

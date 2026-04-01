@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Icons } from "@/components/layouts/icons";
+import { Icons } from "@/components/layouts/Icons";
+import { t, useLanguage } from "@/i18n";
 
 interface ExamEditorFormProps {
   state: ExamFormState;
@@ -21,14 +22,14 @@ interface ExamEditorFormProps {
 
 type Step = 1 | 2 | 3;
 
-function Stepper({ step }: { step: Step }) {
+function Stepper({ step, lang }: { step: Step; lang: ReturnType<typeof useLanguage> }) {
   const items = useMemo(
     () => [
-      { n: 1 as Step, label: "Basic Info" },
-      { n: 2 as Step, label: "Questions" },
-      { n: 3 as Step, label: "Review" },
+      { n: 1 as Step, label: t("examEditor.step.basicInfo", lang) },
+      { n: 2 as Step, label: t("examEditor.step.questions", lang) },
+      { n: 3 as Step, label: t("examEditor.step.review", lang) },
     ],
-    [],
+    [lang],
   );
 
   return (
@@ -73,8 +74,18 @@ export function ExamEditorForm({
   saving,
   saveLabel,
 }: ExamEditorFormProps) {
+  const lang = useLanguage();
   const [step, setStep] = useState<Step>(1);
   const formFieldId = useId();
+
+  function text(key: string, values?: Record<string, string | number>) {
+    const base = t(key as never, lang);
+    if (!values) return base;
+    return Object.entries(values).reduce(
+      (message, [name, value]) => message.replaceAll(`{{${name}}}`, String(value)),
+      base,
+    );
+  }
 
   function setMeta(field: keyof Pick<ExamFormState, "title" | "description" | "is_draft">, value: string | boolean) {
     setState((s) => ({ ...s, [field]: value }));
@@ -143,7 +154,7 @@ export function ExamEditorForm({
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
-      <Stepper step={step} />
+      <Stepper step={step} lang={lang} />
 
       <div className="flex justify-center">
         <div className="w-full max-w-3xl">
@@ -151,25 +162,25 @@ export function ExamEditorForm({
             <div className="glass-card p-6">
               <div className="space-y-5">
                 <div>
-                  <label className="text-sm font-medium text-foreground mb-1.5 block">Exam Title *</label>
+                  <label className="text-sm font-medium text-foreground mb-1.5 block">{t("examEditor.title", lang)}</label>
                   <Input
                     value={state.title}
                     onChange={(e) => setMeta("title", e.target.value)}
-                    placeholder="e.g. Math Final Exam"
+                    placeholder={t("examEditor.titlePlaceholder", lang)}
                   />
                 </div>
                 <div>
                   <label htmlFor={`${formFieldId}-exam-description`}
                     className="text-sm font-medium text-foreground mb-1.5 block"
                   >
-                    Description
+                    {t("examEditor.description", lang)}
                   </label>
                   <Textarea
                     id={`${formFieldId}-exam-description`}
                     value={state.description}
                     onChange={(e) => setMeta("description", e.target.value)}
                     rows={4}
-                    placeholder="Brief description..."
+                    placeholder={t("examEditor.descriptionPlaceholder", lang)}
                   />
                 </div>
               </div>
@@ -179,22 +190,22 @@ export function ExamEditorForm({
           {step === 2 && (
             <div className="glass-card p-6">
               <div className="flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">{questionCount} question(s)</div>
+                <div className="text-sm text-muted-foreground">{text("examEditor.questionCount", { count: questionCount })}</div>
                 <div className="flex items-center gap-2">
                   {onAddFromBank ? (
                     <Button size="sm" variant="outline" type="button" onClick={onAddFromBank}>
-                      <Icons.Plus className="size-4" /> Add from bank
+                      <Icons.Plus className="size-4" /> {t("examEditor.addFromBank", lang)}
                     </Button>
                   ) : null}
                   <Button size="sm" variant="outline" type="button" onClick={onAddQuestion}>
-                    <Icons.Plus className="size-4" /> Add Question
+                    <Icons.Plus className="size-4" /> {t("examEditor.addQuestion", lang)}
                   </Button>
                 </div>
               </div>
 
               {state.questions.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground text-sm">
-                  No questions yet. Click “Add Question” to start.
+                  {t("examEditor.empty", lang)}
                 </div>
               ) : (
                 <div className="mt-4 space-y-4">
@@ -202,7 +213,7 @@ export function ExamEditorForm({
                     <div key={qIndex} className="rounded-2xl border border-border bg-card p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <div className="text-sm font-semibold text-foreground">Question {qIndex + 1}</div>
+                          <div className="text-sm font-semibold text-foreground">{text("examEditor.questionTitle", { number: qIndex + 1 })}</div>
                           <div className="mt-2 grid gap-3 sm:grid-cols-3">
                             <div className="sm:col-span-2">
                               <Textarea
@@ -210,19 +221,19 @@ export function ExamEditorForm({
                                 value={q.text}
                                 onChange={(e) => setQuestion(qIndex, (qq) => ({ ...qq, text: e.target.value }))}
                                 rows={2}
-                                placeholder="Question text..."
-                                aria-label={`Question ${qIndex + 1} text`}
+                                placeholder={t("examEditor.questionTextPlaceholder", lang)}
+                                aria-label={text("examEditor.questionAria", { number: qIndex + 1 })}
                               />
                             </div>
                             <div >
-                              <label className="block text-xs font-medium text-muted-foreground mb-1">Type</label>
+                              <label className="block text-xs font-medium text-muted-foreground mb-1">{t("common.type", lang)}</label>
                               <select
                                 value={q.question_type}
                                 onChange={(e) => setQuestionType(qIndex, e.target.value as QuestionType)}
                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                               >
-                                <option value="single_choice">Single Choice</option>
-                                <option value="multiple_choice">Multiple Choice</option>
+                                <option value="single_choice">{t("questionBank.editor.singleChoice", lang)}</option>
+                                <option value="multiple_choice">{t("questionBank.editor.multipleChoice", lang)}</option>
                               </select>
                             </div>
                           </div>
@@ -235,7 +246,7 @@ export function ExamEditorForm({
                       </div>
 
                       <div className="mt-4">
-                        <div className="text-xs text-muted-foreground mb-2">Answer Options (mark correct)</div>
+                        <div className="text-xs text-muted-foreground mb-2">{t("examEditor.answerOptions", lang)} ({t("examEditor.markCorrect", lang)})</div>
                         <div className="space-y-2">
                           {q.options.map((opt, oIndex) => (
                             <div key={oIndex} className="flex items-center gap-2">
@@ -255,7 +266,7 @@ export function ExamEditorForm({
                                       options: qq.options.map((o, i) => (i === oIndex ? { ...o, text: e.target.value } : o)),
                                     }))
                                   }
-                                  placeholder={`Option ${oIndex + 1}`}
+                                  placeholder={text("examEditor.optionPlaceholder", { number: oIndex + 1 })}
                                 />
                               </div>
                               <Button
@@ -265,14 +276,14 @@ export function ExamEditorForm({
                                 onClick={() => removeOption(qIndex, oIndex)}
                                 disabled={q.options.length <= 2}
                               >
-                                Remove
+                                {t("examEditor.removeOption", lang)}
                               </Button>
                             </div>
                           ))}
                         </div>
                         <div className="mt-3">
                           <Button size="sm" variant="ghost" type="button" onClick={() => addOption(qIndex)}>
-                            + Add option
+                            + {t("examEditor.addOption", lang)}
                           </Button>
                         </div>
                       </div>
@@ -289,17 +300,17 @@ export function ExamEditorForm({
                 <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto">
                   <Icons.Check className="size-8 text-success" />
                 </div>
-                <div className="mt-3 text-lg font-semibold text-foreground">Ready to Save</div>
-                <div className="mt-1 text-sm text-muted-foreground">Review your exam details before saving.</div>
+                <div className="mt-3 text-lg font-semibold text-foreground">{t("examEditor.readyToSave", lang)}</div>
+                <div className="mt-1 text-sm text-muted-foreground">{t("examEditor.reviewMessage", lang)}</div>
               </div>
 
               <div className="glass-card p-4 max-w-sm mx-auto text-left space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Title</span>
+                  <span className="text-muted-foreground">{t("examEditor.reviewTitle", lang)}</span>
                   <span className="font-medium text-foreground truncate max-w-[60%]">{state.title || "—"}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Questions</span>
+                  <span className="text-muted-foreground">{t("examEditor.step.questions", lang)}</span>
                   <span className="font-medium text-foreground">{state.questions.length}</span>
                 </div>
               </div>
@@ -311,8 +322,8 @@ export function ExamEditorForm({
                   checked={!state.is_draft}
                   onChange={(e) => setMeta("is_draft", !e.target.checked)}
                 />
-                <span>Publish immediately (not draft)</span>
-                <Badge variant={state.is_draft ? "outline" : "default"} className="text-xs">{state.is_draft ? "Draft" : "Published"}</Badge>
+                <span>{t("examEditor.publishImmediately", lang)}</span>
+                <Badge variant={state.is_draft ? "outline" : "default"} className="text-xs">{state.is_draft ? t("common.status.draft", lang) : t("common.status.published", lang)}</Badge>
               </label>
             </Card>
           )}
@@ -324,7 +335,7 @@ export function ExamEditorForm({
               onClick={() => setStep((s) => (s === 1 ? 1 : ((s - 1) as Step)))}
               disabled={step === 1}
             >
-              ← Previous
+              ← {t("examEditor.previous", lang)}
             </Button>
             {step < 3 ? (
               <Button
@@ -332,11 +343,11 @@ export function ExamEditorForm({
                 onClick={() => setStep((s) => (s === 3 ? 3 : ((s + 1) as Step)))}
                 disabled={step === 1 && !canNextFromBasic}
               >
-                Next →
+                {t("examEditor.next", lang)} →
               </Button>
             ) : (
               <Button type="button" onClick={onSave} disabled={saving}>
-                {saving ? "Saving..." : saveLabel}
+                {saving ? t("common.saving", lang) : saveLabel}
               </Button>
             )}
           </div>

@@ -5,9 +5,11 @@ import { getSubmissionResult, listMySubmissions, type MySubmissionSummary } from
 import { formatDateTimeVietnam } from "@/utils/date";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { t, useLanguage } from "@/i18n";
 
 export function StudentResultsPage() {
   const { token } = useAuth();
+  const lang = useLanguage();
   const navigate = useNavigate();
   const [items, setItems] = useState<MySubmissionSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,7 +23,7 @@ export function StudentResultsPage() {
     setError("");
     listMySubmissions(token)
       .then(setItems)
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load results"))
+      .catch((e) => setError(e instanceof Error ? e.message : t("studentResults.failed", lang)))
       .finally(() => setLoading(false));
   }, [token]);
 
@@ -61,8 +63,8 @@ export function StudentResultsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">My Results</h1>
-        <p className="text-sm text-slate-500">Review your exam submissions and scores.</p>
+        <h1 className="text-2xl font-semibold text-slate-900">{t("studentResults.title", lang)}</h1>
+        <p className="text-sm text-slate-500">{t("studentResults.subtitle", lang)}</p>
       </div>
 
       <div className="">
@@ -77,14 +79,14 @@ export function StudentResultsPage() {
             <div className="text-sm font-medium text-rose-700">{error}</div>
             <div className="mt-4">
               <Button size="sm" variant="secondary" type="button" onClick={() => navigate(0)}>
-                Retry
+                {t("studentResults.retry", lang)}
               </Button>
             </div>
           </div>
         ) : !hasAny ? (
-            <div className="text-center py-20 text-muted-foreground text-sm">No submissions yet.
+            <div className="text-center py-20 text-muted-foreground text-sm">{t("studentResults.empty", lang)}
               <div className="text-center text-muted-foreground text-sm mt-2">
-                Your results will appear here after you submit an exam.
+                {t("studentResults.emptyHint", lang)}
               </div>
             </div>
         ) : (
@@ -100,7 +102,7 @@ export function StudentResultsPage() {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="text-sm font-semibold text-slate-900 truncate">{it.exam_title}</div>
-                    <Badge variant="secondary">Score: {it.score ?? 0}</Badge>
+                    <Badge variant="secondary">{t("studentResults.score", lang)}: {it.score ?? 0}</Badge>
                   </div>
                   <div className="text-xs text-slate-500 mt-1 truncate">
                     {it.class_name} · {formatDateTimeVietnam(it.submitted_at)}
@@ -115,18 +117,18 @@ export function StudentResultsPage() {
                       </>
                     ) : detailMap[it.submission_id] ? (
                       <>
-                        <Badge variant="default">Correct: {detailMap[it.submission_id].correct}</Badge>
-                        <Badge variant="destructive">Wrong: {detailMap[it.submission_id].wrong}</Badge>
-                        <Badge variant="secondary">Total: {detailMap[it.submission_id].total}</Badge>
+                        <Badge variant="default">{t("studentResults.correct", lang)}: {detailMap[it.submission_id].correct}</Badge>
+                        <Badge variant="destructive">{t("studentResults.wrong", lang)}: {detailMap[it.submission_id].wrong}</Badge>
+                        <Badge variant="secondary">{t("studentResults.total", lang)}: {detailMap[it.submission_id].total}</Badge>
                       </>
                     ) : (
-                      <Badge variant="outline">Summary: —</Badge>
+                      <Badge variant="outline">{t("studentResults.summary", lang)}: —</Badge>
                     )}
                   </div>
                 </div>
                 <div className="shrink-0 text-right">
-                  <div className="text-xs text-slate-500">Open</div>
-                  <div className="text-sm font-semibold text-slate-900">View →</div>
+                  <div className="text-xs text-slate-500">{t("studentResults.open", lang)}</div>
+                  <div className="text-sm font-semibold text-slate-900">{t("studentResults.view", lang)} →</div>
                 </div>
               </Button>
             ))}

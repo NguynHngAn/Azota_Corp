@@ -17,7 +17,8 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Icons } from "@/components/layouts/icons";
+import { Icons } from "@/components/layouts/Icons";
+import { t, useLanguage } from "@/i18n";
 
 function basePath(pathname: string): string {
   if (pathname.startsWith("/admin")) return "/admin";
@@ -26,6 +27,16 @@ function basePath(pathname: string): string {
 
 export function ClassDetailPage() {
   const { token } = useAuth();
+  const lang = useLanguage();
+  function tr(key: string, values?: Record<string, string | number>) {
+    const base = t(key as never, lang);
+    if (!values) return base;
+    return Object.entries(values).reduce(
+      (message, [name, value]) => message.replaceAll(`{{${name}}}`, String(value)),
+      base,
+    );
+  }
+
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const base = basePath(location.pathname);
@@ -49,7 +60,7 @@ export function ClassDetailPage() {
     if (!token || !id || isNaN(classId)) return;
     getClass(classId, token)
       .then(setCls)
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed"))
+      .catch((e) => setError(e instanceof Error ? e.message : t("classDetail.loadFailed", lang)))
       .finally(() => setLoading(false));
   }, [token, id, classId]);
 
@@ -127,9 +138,9 @@ export function ClassDetailPage() {
       setSelectedTeacherIds([]);
       setTeacherQuery("");
       setAddTeacherOpen(false);
-      setTeacherNotice("Added teacher(s) successfully.");
+      setTeacherNotice(t("classDetail.addTeacherSuccess", lang));
     } catch (e) {
-      setTeacherNotice(e instanceof Error ? e.message : "Failed to add teachers.");
+      setTeacherNotice(e instanceof Error ? e.message : t("classDetail.addTeacherFailed", lang));
     } finally {
       setSavingTeachers(false);
     }
@@ -141,20 +152,20 @@ export function ClassDetailPage() {
     try {
       await removeClassTeacher(cls.id, t.id, token);
       setClassTeachers((prev) => prev.filter((x) => x.id !== t.id));
-      setTeacherNotice("Removed teacher successfully.");
+      setTeacherNotice(t("classDetail.removeTeacherSuccess", lang));
     } catch (e) {
-      setTeacherNotice(e instanceof Error ? e.message : "Failed to remove teacher.");
+      setTeacherNotice(e instanceof Error ? e.message : t("classDetail.removeTeacherFailed", lang));
     }
   }
 
-  if (loading) return <p className="text-muted-foreground">Loading...</p>;
-  if (error || !cls) return <p className="text-destructive">{error || "Not found"}</p>;
+  if (loading) return <p className="text-muted-foreground">{t("common.loading", lang)}</p>;
+  if (error || !cls) return <p className="text-destructive">{error || t("classDetail.notFound", lang)}</p>;
 
   return (
     <div className="space-y-4">
       <div>
         <Link to={`${base}/classes`} className="text-sm text-primary hover:underline">
-          ← Back to classes
+          ← {t("classDetail.backToClasses", lang)}
         </Link>
       </div>
 
@@ -163,11 +174,11 @@ export function ClassDetailPage() {
           <div>
             <h2 className="text-lg font-semibold text-foreground">{cls.name}</h2>
             {cls.description && <p className="mt-1 text-sm text-muted-foreground">{cls.description}</p>}
-            <p className="mt-1 text-xs text-muted-foreground">Members: {cls.member_count}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{tr("classDetail.membersCount", { count: cls.member_count })}</p>
           </div>
           {base === "/admin" && (
             <div className="mt-2 sm:mt-0">
-              <label className="text-xs font-medium text-muted-foreground mr-2">Primary teacher:</label>
+              <label className="text-xs font-medium text-muted-foreground mr-2">{t("classDetail.primaryTeacher", lang)}</label>
               <select
                 value={String(cls.created_by)}
                 onChange={handleChangeTeacher}
@@ -175,9 +186,9 @@ export function ClassDetailPage() {
                 className="inline-block w-56 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {teachers.length === 0 && <option value={String(cls.created_by)}>—</option>}
-                {teachers.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.full_name} ({t.email})
+                {teachers.map((teacher) => (
+                  <option key={teacher.id} value={teacher.id}>
+                    {teacher.full_name} ({teacher.email})
                   </option>
                 ))}
               </select>
@@ -190,13 +201,13 @@ export function ClassDetailPage() {
         <div className="glass-card p-6">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="text-sm font-semibold text-muted-foreground">Class teachers</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground">{t("classDetail.classTeachers", lang)}</h3>
               <p className="text-xs text-muted-foreground">
-                Manage the list of teachers (role=teacher) assigned to this class.
+                {t("classDetail.classTeachersDescription", lang)}
               </p>
             </div>
             <Button type="button" onClick={() => setAddTeacherOpen(true)}>
-              <Icons.Plus className="size-4" /> Add teacher
+              <Icons.Plus className="size-4" /> {t("classDetail.addTeacher", lang)}
             </Button>
           </div>
 
@@ -207,40 +218,40 @@ export function ClassDetailPage() {
           )}
 
           {classTeachers.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No teachers assigned to this class.</p>
+            <p className="text-sm text-muted-foreground">{t("classDetail.noTeachers", lang)}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t("common.name", lang)}</TableHead>
+                  <TableHead>{t("common.email", lang)}</TableHead>
+                  <TableHead className="text-right">{t("common.actions", lang)}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {classTeachers.map((t) => (
-                  <TableRow key={t.id}>
+                {classTeachers.map((teacher) => (
+                  <TableRow key={teacher.id}>
                     <TableCell>
-                      {t.full_name}{" "}
-                      {t.id === cls.created_by && <Badge variant="default">Primary</Badge>}
+                      {teacher.full_name}{" "}
+                      {teacher.id === cls.created_by && <Badge variant="default">{t("classDetail.primary", lang)}</Badge>}
                     </TableCell>
-                    <TableCell>{t.email}</TableCell>
+                    <TableCell>{teacher.email}</TableCell>
                     <TableCell className="text-right">
                       <Button
                         type="button"
                         variant="link"
                         onClick={() => {
                           if (
-                            window.confirm(`Remove ${t.full_name} (${t.email}) from this class?`)
+                            window.confirm(tr("classDetail.removeTeacherConfirm", { name: teacher.full_name, email: teacher.email }))
                           ) {
-                            void handleRemoveTeacherConfirmed(t);
+                            void handleRemoveTeacherConfirmed(teacher);
                           }
                         }}
-                        className={`h-auto p-0 text-xs ${t.id === cls.created_by ? "text-muted-foreground cursor-not-allowed no-underline" : "text-destructive"}`}
-                        disabled={t.id === cls.created_by}
-                        title={t.id === cls.created_by ? "Reassign primary teacher first" : "Remove from class"}
+                        className={`h-auto p-0 text-xs ${teacher.id === cls.created_by ? "text-muted-foreground cursor-not-allowed no-underline" : "text-destructive"}`}
+                        disabled={teacher.id === cls.created_by}
+                        title={teacher.id === cls.created_by ? t("classDetail.reassignPrimaryTeacherFirst", lang) : t("classDetail.removeFromClass", lang)}
                       >
-                        Remove
+                        {t("common.remove", lang)}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -252,7 +263,7 @@ export function ClassDetailPage() {
       )}
 
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm font-medium text-muted-foreground">Invite code:</span>
+        <span className="text-sm font-medium text-muted-foreground">{t("classDetail.inviteCode", lang)}</span>
         <code className="px-2 py-1 bg-muted border rounded text-sm text-foreground">{cls.invite_code}</code>
         <Button
           type="button"
@@ -260,7 +271,7 @@ export function ClassDetailPage() {
           className="text-xs"
           onClick={copyCode}
         >
-          {copied ? "Copied!" : "Copy code"}
+          {copied ? t("classDetail.copied", lang) : t("classDetail.copyCode", lang)}
         </Button>
         <Button
           type="button"
@@ -268,24 +279,24 @@ export function ClassDetailPage() {
           className="text-xs"
           onClick={copyInviteLink}
         >
-          {copied ? "Copied!" : "Copy invite link"}
+          {copied ? t("classDetail.copied", lang) : t("classDetail.copyInviteLink", lang)}
         </Button>
       </div>
 
       <div className="glass-card p-6">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-muted-foreground">Members</h3>
-          <Badge variant="secondary">Total: {members.length}</Badge>
+          <h3 className="text-sm font-semibold text-muted-foreground">{t("classDetail.members", lang)}</h3>
+          <Badge variant="secondary">{tr("classDetail.totalMembers", { count: members.length })}</Badge>
         </div>
         {members.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No members yet.</p>
+          <p className="text-sm text-muted-foreground">{t("classDetail.noMembers", lang)}</p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t("common.name", lang)}</TableHead>
+                <TableHead>{t("common.email", lang)}</TableHead>
+                <TableHead className="text-right">{t("common.actions", lang)}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -298,14 +309,14 @@ export function ClassDetailPage() {
                       type="button"
                       variant="link"
                       onClick={() => {
-                        const label = m.user?.full_name ?? "this user";
-                        if (window.confirm(`Remove ${label} from this class?`)) {
+                        const label = m.user?.full_name ?? t("classDetail.thisUser", lang);
+                        if (window.confirm(tr("classDetail.removeMemberConfirm", { name: label }))) {
                           void handleRemoveConfirmed(m);
                         }
                       }}
                       className="h-auto p-0 text-xs text-destructive"
                     >
-                      Remove
+                      {t("common.remove", lang)}
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -318,14 +329,14 @@ export function ClassDetailPage() {
       {addTeacherOpen && (
         <div className="fixed inset-0 bg-background/40 flex items-center justify-center z-50">
           <div className="bg-card rounded-lg shadow-xl max-w-lg w-full p-6">
-            <h3 className="text-lg font-semibold mb-1 text-foreground">Add teacher to class</h3>
+            <h3 className="text-lg font-semibold mb-1 text-foreground">{t("classDetail.addTeacherDialogTitle", lang)}</h3>
             <p className="text-sm text-muted-fore ground mb-4 text-foreground">
-              Select one or more teachers (role=teacher). The system will automatically skip teachers already in the class.
+              {t("classDetail.addTeacherDialogDescription", lang)}
             </p>
 
             <div className="mb-3">
               <Input
-                placeholder="Search by name or email..."
+                placeholder={t("common.searchByNameOrEmail", lang)}
                 value={teacherQuery}
                 onChange={(e) => setTeacherQuery(e.target.value)}
               />
@@ -341,12 +352,12 @@ export function ClassDetailPage() {
                     t.email.toLowerCase().includes(q)
                   );
                 })
-                .map((t) => {
-                  const already = classTeachers.some((ct) => ct.id === t.id);
-                  const checked = selectedTeacherIds.includes(t.id);
+                .map((teacher) => {
+                  const already = classTeachers.some((ct) => ct.id === teacher.id);
+                  const checked = selectedTeacherIds.includes(teacher.id);
                   return (
                     <label
-                      key={t.id}
+                      key={teacher.id}
                       className={`flex items-center gap-3 px-3 py-2 text-sm border-b last:border-b-0 ${
                         already ? "opacity-50" : "hover:bg-secondary"
                       }`}
@@ -358,16 +369,16 @@ export function ClassDetailPage() {
                         onChange={(e) => {
                           const next = e.target.checked;
                           setSelectedTeacherIds((prev) => {
-                            if (next) return [...prev, t.id];
-                            return prev.filter((id) => id !== t.id);
+                            if (next) return [...prev, teacher.id];
+                            return prev.filter((id) => id !== teacher.id);
                           });
                         }}
                       />
                       <span className="flex-1 min-w-0">
-                        <span className="font-medium text-foreground">{t.full_name}</span>{" "}
-                        <span className="text-muted-foreground">({t.email})</span>
+                        <span className="font-medium text-foreground">{teacher.full_name}</span>{" "}
+                        <span className="text-muted-foreground">({teacher.email})</span>
                       </span>
-                      {already && <Badge variant="outline">Added</Badge>}
+                      {already && <Badge variant="outline">{t("classDetail.alreadyAdded", lang)}</Badge>}
                     </label>
                   );
                 })}
@@ -383,10 +394,10 @@ export function ClassDetailPage() {
                   setTeacherQuery("");
                 }}
               >
-                Cancel
+                {t("common.cancel", lang)}
               </Button>
               <Button type="button" disabled={savingTeachers || selectedTeacherIds.length === 0} onClick={handleAddTeachers}>
-                {savingTeachers ? "Saving..." : "Add"}
+                {savingTeachers ? t("common.saving", lang) : t("common.add", lang)}
               </Button>
             </div>
           </div>

@@ -7,6 +7,7 @@ import { createAssignment, type AssignmentCreatePayload } from "@/services/assig
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { t, useLanguage } from "@/i18n";
 
 function basePath(pathname: string): string {
   if (pathname.startsWith("/admin")) return "/admin";
@@ -20,6 +21,7 @@ function toISOString(datetimeLocal: string): string {
 
 export function CreateAssignmentPage() {
   const { token } = useAuth();
+  const lang = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const base = basePath(location.pathname);
@@ -40,28 +42,28 @@ export function CreateAssignmentPage() {
         setExams(examsList);
         setClasses(classesList);
       })
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load"));
+      .catch((e) => setError(e instanceof Error ? e.message : t("createAssignment.failedLoad", lang)));
   }, [token]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     if (examId === "" || classId === "") {
-      setError("Please select exam and class");
+      setError(t("createAssignment.selectExamClass", lang));
       return;
     }
     const start = toISOString(startDateTime);
     const end = toISOString(endDateTime);
     if (!start || !end) {
-      setError("Please set start and end time");
+      setError(t("createAssignment.setTime", lang));
       return;
     }
     if (new Date(start) >= new Date(end)) {
-      setError("Start time must be before end time");
+      setError(t("createAssignment.invalidRange", lang));
       return;
     }
     if (durationMinutes < 1 || durationMinutes > 600) {
-      setError("Duration must be between 1 and 600 minutes");
+      setError(t("createAssignment.invalidDuration", lang));
       return;
     }
     setSubmitting(true);
@@ -77,7 +79,7 @@ export function CreateAssignmentPage() {
       await createAssignment(body, token);
       navigate(`${base}/assignments`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed");
+      setError(err instanceof Error ? err.message : t("createAssignment.failedLoad", lang));
     } finally {
       setSubmitting(false);
     }
@@ -88,34 +90,34 @@ export function CreateAssignmentPage() {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold mb-4">Assign exam to class</h2>
+      <h2 className="text-lg font-semibold mb-4">{t("createAssignment.title", lang)}</h2>
       <Card className="max-w-md p-6">
         <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Exam</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t("createAssignment.exam", lang)}</label>
           <select
             value={examId}
             onChange={(e) => setExamId(e.target.value === "" ? "" : Number(e.target.value))}
             required
             className={selectClass}
           >
-            <option value="">-- Select exam --</option>
+            <option value="">{t("createAssignment.selectExam", lang)}</option>
             {exams.map((e) => (
               <option key={e.id} value={e.id}>
-                {e.title} {e.is_draft ? "(Draft)" : ""}
+                {e.title} {e.is_draft ? `(${t("common.status.draft", lang)})` : ""}
               </option>
             ))}
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t("createAssignment.class", lang)}</label>
           <select
             value={classId}
             onChange={(e) => setClassId(e.target.value === "" ? "" : Number(e.target.value))}
             required
             className={selectClass}
           >
-            <option value="">-- Select class --</option>
+            <option value="">{t("createAssignment.selectClass", lang)}</option>
             {classes.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -124,7 +126,7 @@ export function CreateAssignmentPage() {
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Start time</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t("createAssignment.startTime", lang)}</label>
           <Input
             type="datetime-local"
             value={startDateTime}
@@ -133,7 +135,7 @@ export function CreateAssignmentPage() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">End time</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t("createAssignment.endTime", lang)}</label>
           <Input
             type="datetime-local"
             value={endDateTime}
@@ -142,7 +144,7 @@ export function CreateAssignmentPage() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t("createAssignment.duration", lang)}</label>
           <Input
             type="number"
             min={1}
@@ -154,10 +156,10 @@ export function CreateAssignmentPage() {
         {error && <p className="text-red-600 text-sm">{error}</p>}
         <div className="flex gap-2">
           <Button type="submit" disabled={submitting}>
-            {submitting ? "Creating..." : "Assign"}
+            {submitting ? t("createClass.creating", lang) : t("createAssignment.assign", lang)}
           </Button>
           <Button type="button" variant="secondary" onClick={() => navigate(`${base}/assignments`)}>
-            Cancel
+            {t("common.cancel", lang)}
           </Button>
         </div>
         </form>

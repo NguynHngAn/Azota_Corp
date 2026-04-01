@@ -9,9 +9,10 @@ import {
   type AssignmentDetail,
 } from "@/services/assignments.service";
 import { StatCard } from "@/components/layouts/StatCard";
-import { Icons } from "@/components/layouts/icons";
+import { Icons } from "@/components/layouts/Icons";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router";
+import { t, useLanguage } from "@/i18n";
 
 // In-memory caches (persist across SPA navigation)
 const classCache = new Map<number, ClassDetail>();
@@ -55,7 +56,17 @@ async function getAssignmentReportCached(id: number, token: string): Promise<Ass
 
 export function TeacherDashboardPage() {
   const { token, user } = useAuth();
+  const lang = useLanguage();
   const navigate = useNavigate();
+  function tr(key: string, values?: Record<string, string | number>) {
+    const base = t(key as never, lang);
+    if (!values) return base;
+    return Object.entries(values).reduce(
+      (message, [name, value]) => message.replaceAll(`{{${name}}}`, String(value)),
+      base,
+    );
+  }
+
   const [classes, setClasses] = useState<ClassResponse[]>([]);
   const [exams, setExams] = useState<ExamResponse[]>([]);
   const [assignments, setAssignments] = useState<AssignmentDetail[]>([]);
@@ -206,9 +217,9 @@ export function TeacherDashboardPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-foreground">{t("teacherDashboard.title", lang)}</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Welcome back, {user?.full_name || "Teacher"}. Here’s your overview.
+          {tr("teacherDashboard.welcome", { name: user?.full_name || t("role.teacher", lang) })}
         </p>
       </div>
 
@@ -216,28 +227,28 @@ export function TeacherDashboardPage() {
         <StatCard
           icon={<Icons.Users className="text-primary" />}
           value={String(stats.myStudents)}
-          title="My Students"
+          title={t("teacherDashboard.myStudents", lang)}
           change="--"
           trend="up"
         />
         <StatCard
           icon={<Icons.BookOpen className="text-violet-700" />}
           value={String(stats.myExams)}
-          title="My Exams"
+          title={t("teacherDashboard.myExams", lang)}
           change="--"
           trend="up"
         />
         <StatCard
           icon={<Icons.CheckCircle className="text-info" />}
           value={String(stats.submissions)}
-          title="Submissions"
+          title={t("teacherDashboard.submissions", lang)}
           change="--"
           trend="up"
         />
         <StatCard
           icon={<Icons.Chart className="text-success" />}
           value={String(stats.avgScore)}
-          title="Avg Score"
+          title={t("teacherDashboard.avgScore", lang)}
           change="--"
           trend="up"
         />
@@ -245,7 +256,8 @@ export function TeacherDashboardPage() {
 
       {statsLoading && (
         <div className="text-xs text-muted-foreground mt-1">
-          Calculating stats… {statsProgress.classesDone}/{statsProgress.classesTotal} classes,{" "}
+          {t("teacherDashboard.calculatingStats", lang)}
+          {statsProgress.classesDone}/{statsProgress.classesTotal} classes,{" "}
           {statsProgress.reportsDone}/{statsProgress.reportsTotal} assignments
         </div>
       )}
@@ -253,11 +265,11 @@ export function TeacherDashboardPage() {
       <div className="glass-card p-6">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-sm font-semibold text-foreground">Recent Exams</h2>
-            <p className="text-xs text-muted-foreground mt-1">Quick access to your latest work.</p>
+            <h2 className="text-sm font-semibold text-foreground">{t("teacherDashboard.recentExams", lang)}</h2>
+            <p className="text-xs text-muted-foreground mt-1">{t("teacherDashboard.recentExamsDescription", lang)}</p>
           </div>
           <Button size="sm" variant="ghost" onClick={() => navigate("/teacher/exams")}>
-            View all →
+            {t("common.viewAll", lang)} →
           </Button>
         </div>
 
@@ -270,7 +282,7 @@ export function TeacherDashboardPage() {
             </div>
           ) : exams.length === 0 ? (
             <div className="py-10 text-center text-sm text-muted-foreground">
-              No exams yet. Create your first exam to get started.
+              {t("teacherDashboard.noExams", lang)}
             </div>
           ) : (
             <div className="space-y-2 mt-4">
@@ -280,10 +292,10 @@ export function TeacherDashboardPage() {
                   type="button"
                   variant="outline"
                   onClick={() => navigate(`/teacher/exams/${e.id}`)}
-                  className="h-auto w-full flex-col items-stretch rounded-xl border-muted bg-white px-4 py-3 text-left font-normal hover:bg-muted"
+                  className="h-auto w-full flex-col items-stretch rounded-xl border-muted bg-background px-4 py-3 text-left font-normal hover:bg-muted"
                 >
                   <div className="text-sm font-medium text-foreground">{e.title}</div>
-                  <div className="text-xs text-muted-foreground">{e.is_draft ? "Draft" : "Published"}</div>
+                  <div className="text-xs text-muted-foreground">{e.is_draft ? t("common.status.draft", lang) : t("common.status.published", lang)}</div>
                 </Button>
               ))}
             </div>
@@ -294,27 +306,27 @@ export function TeacherDashboardPage() {
       <div className="glass-card p-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-foreground">Quick Links</h2>
-            <p className="text-xs text-muted-foreground mt-1">Common teacher actions.</p>
+            <h2 className="text-sm font-semibold text-foreground">{t("teacherDashboard.quickLinks", lang)}</h2>
+            <p className="text-xs text-muted-foreground mt-1">{t("teacherDashboard.quickLinksDescription", lang)}</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" onClick={() => navigate("/teacher/exams/new")}>Create Exam</Button>
-            <Button size="sm" variant="secondary" onClick={() => navigate("/teacher/assignments/new")}>New Assignment</Button>
-            <Button size="sm" variant="secondary" onClick={() => navigate("/teacher/classes/new")}>New Class</Button>
+            <Button size="sm" onClick={() => navigate("/teacher/exams/new")}>{t("common.createExam", lang)}</Button>
+            <Button size="sm" variant="secondary" onClick={() => navigate("/teacher/assignments/new")}>{t("teacherDashboard.newAssignment", lang)}</Button>
+            <Button size="sm" variant="secondary" onClick={() => navigate("/teacher/classes/new")}>{t("teacherDashboard.newClass", lang)}</Button>
           </div>
         </div>
 
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="rounded-xl border border-muted px-4 py-3">
-            <div className="text-xs text-muted-foreground">Classes</div>
+            <div className="text-xs text-muted-foreground">{t("teacherDashboard.classes", lang)}</div>
             <div className="text-lg font-semibold text-foreground">{classes.length}</div>
           </div>
             <div className="rounded-xl border border-muted px-4 py-3">
-            <div className="text-xs text-muted-foreground">Assignments</div>
+            <div className="text-xs text-muted-foreground">{t("teacherDashboard.assignments", lang)}</div>
             <div className="text-lg font-semibold text-foreground">{assignments.length}</div>
           </div>
           <div className="rounded-xl border border-muted px-4 py-3">
-            <div className="text-xs text-muted-foreground">Students</div>
+            <div className="text-xs text-muted-foreground">{t("teacherDashboard.students", lang)}</div>
             <div className="text-lg font-semibold text-foreground">—</div>
           </div>
         </div>

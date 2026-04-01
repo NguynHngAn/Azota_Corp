@@ -1,20 +1,25 @@
+import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router";
 import { useAuth } from "@/context/AuthContext";
+import { t } from "@/i18n";
 import type { Role } from "@/utils/constants";
 
-interface ProtectedRouteProps {
-  children: React.ReactNode;
+export interface ProtectedRouterProps {
+  children: ReactNode;
   allowedRoles?: Role[];
 }
 
-export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+export function ProtectedRouter({ children, allowedRoles }: ProtectedRouterProps) {
   const { user, token, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <p className="text-gray-600">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+        </div>
       </div>
     );
   }
@@ -25,8 +30,8 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
   if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(user.role as Role)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <p className="text-red-600">You do not have permission to view this page.</p>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-destructive">{t("router.permissionDenied")}</p>
       </div>
     );
   }

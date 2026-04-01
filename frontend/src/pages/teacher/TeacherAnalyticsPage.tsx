@@ -9,7 +9,8 @@ import {
 } from "@/services/assignments.service";
 import { useAuth } from "@/context/AuthContext";
 import { StatCard } from "@/components/layouts/StatCard";
-import { Icons } from "@/components/layouts/icons";
+import { Icons } from "@/components/layouts/Icons";
+import { t, useLanguage } from "@/i18n";
 
 // In-memory caches (persist across SPA navigation)
 const classCache = new Map<number, ClassDetail>();
@@ -53,6 +54,7 @@ async function getAssignmentReportCached(id: number, token: string): Promise<Ass
 
 export function TeacherAnalyticsPage() {
   const { token } = useAuth();
+  const lang = useLanguage();
   const [classes, setClasses] = useState<ClassResponse[]>([]);
   const [exams, setExams] = useState<ExamResponse[]>([]);
   const [assignments, setAssignments] = useState<AssignmentDetail[]>([]);
@@ -87,7 +89,7 @@ export function TeacherAnalyticsPage() {
         setAssignments(a);
       })
       .catch((e: unknown) => {
-        setError(e instanceof Error ? e.message : "Failed to load analytics");
+        setError(e instanceof Error ? e.message : t("teacherAnalytics.failed", lang));
       })
       .finally(() => {
         setLoading(false);
@@ -202,36 +204,36 @@ export function TeacherAnalyticsPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Analytics</h1>
-        <p className="text-sm text-muted-foreground">Performance overview and insights.</p>
+        <h1 className="text-2xl font-bold text-foreground">{t("teacherAnalytics.title", lang)}</h1>
+        <p className="text-sm text-muted-foreground">{t("teacherAnalytics.subtitle", lang)}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={<Icons.Users className="text-primary" />}
           value={String(stats.myStudents)}
-          title="My Students"
+          title={t("teacherDashboard.myStudents", lang)}
           change="--"
           trend="up"
         />
         <StatCard
           icon={<Icons.BookOpen className="text-primary" />}
           value={String(stats.myExams)}
-          title="Exams"
+          title={t("nav.exams", lang)}
           change="--"
           trend="up"
         />
         <StatCard
           icon={<Icons.CheckCircle className="text-info" />}
           value={String(stats.submissions)}
-          title="Submissions"
+          title={t("teacherDashboard.submissions", lang)}
           change="--"
           trend="up"
         />
         <StatCard
           icon={<Icons.Chart className="text-success" />}
           value={String(stats.avgScore)}
-          title="Avg Score"
+          title={t("teacherDashboard.avgScore", lang)}
           change="--"
           trend="up"
         />
@@ -249,13 +251,12 @@ export function TeacherAnalyticsPage() {
           <div className="space-y-2">
             {statsLoading && (
               <div className="text-xs text-muted-foreground">
-                Calculating stats… {statsProgress.classesDone}/{statsProgress.classesTotal} classes,{" "}
+                {t("teacherDashboard.calculatingStats", lang)} {statsProgress.classesDone}/{statsProgress.classesTotal} {t("teacherDashboard.classes", lang).toLowerCase()},{" "}
                 {statsProgress.reportsDone}/{statsProgress.reportsTotal} assignments
               </div>
             )}
             <div className="text-sm text-muted-foreground">
-              This tab currently uses existing endpoints (classes + assignments reports). A dedicated analytics backend
-              can be added later for charts, trends, and time-series.
+              {t("teacherAnalytics.info", lang)}
             </div>
           </div>
         )}

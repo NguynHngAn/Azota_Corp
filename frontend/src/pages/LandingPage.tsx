@@ -31,9 +31,11 @@ import { fadeUp, staggerContainer } from "@/pages/landing/landing-motion";
 import { SectionHeader } from "@/pages/landing/landing-primitives";
 import { LandingNav } from "@/pages/landing/landing-nav";
 import { LandingHero } from "@/pages/landing/landing-hero";
+import { t, useLanguage } from "@/i18n";
 
 const LandingPage = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const lang = useLanguage();
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
@@ -43,7 +45,7 @@ const LandingPage = () => {
       {/* ─── Trusted By ─── */}
       <section className="border-y border-border/50 bg-muted/20 py-12 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-xs font-medium text-muted-foreground uppercase tracking-[0.2em] mb-10">Trusted by leading educational institutions</p>
+          <p className="text-center text-xs font-medium text-muted-foreground uppercase tracking-[0.2em] mb-10">{t("landing.trusted.title", lang)}</p>
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -51,10 +53,10 @@ const LandingPage = () => {
             variants={staggerContainer}
             className="flex flex-wrap items-center justify-center gap-x-16 gap-y-6"
           >
-            {trustedLogos.map((name, i) => (
-              <motion.div key={name} variants={fadeUp} custom={i} className="flex items-center gap-2.5 text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors duration-300">
+            {trustedLogos.map((nameKey, i) => (
+              <motion.div key={nameKey} variants={fadeUp} custom={i} className="flex items-center gap-2.5 text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors duration-300">
                 <BookOpen className="w-5 h-5" />
-                <span className="text-sm font-semibold tracking-wide">{name}</span>
+                <span className="text-sm font-semibold tracking-wide">{t(nameKey as never, lang)}</span>
               </motion.div>
             ))}
           </motion.div>
@@ -65,7 +67,7 @@ const LandingPage = () => {
       <section id="features" className="py-24 lg:py-32 relative">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <SectionHeader badge="Features" title="Everything you need to run exams online" subtitle="From exam creation to analytics — all the tools teachers need, in one platform." />
+          <SectionHeader badge={t("landing.features.badge", lang)} title={t("landing.features.title", lang)} subtitle={t("landing.features.subtitle", lang)} />
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -75,7 +77,7 @@ const LandingPage = () => {
           >
             {features.map((f) => (
               <motion.div
-                key={f.title}
+                key={f.titleKey}
                 variants={fadeUp}
                 whileHover={{ y: -4, transition: { duration: 0.2 } }}
                 className="group relative rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm p-7 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 overflow-hidden"
@@ -85,8 +87,8 @@ const LandingPage = () => {
                   <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-5 group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-lg group-hover:shadow-primary/25 transition-all duration-300">
                     {f.icon}
                   </div>
-                  <h3 className="text-base font-semibold text-foreground mb-2">{f.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+                  <h3 className="text-base font-semibold text-foreground mb-2">{t(f.titleKey as never, lang)}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{t(f.descKey as never, lang)}</p>
                 </div>
               </motion.div>
             ))}
@@ -98,7 +100,7 @@ const LandingPage = () => {
       <section id="how-it-works" className="py-24 lg:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-muted/40 via-muted/20 to-background" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <SectionHeader badge="How it works" title="Get started in 4 simple steps" />
+          <SectionHeader badge={t("landing.how.badge", lang)} title={t("landing.how.title", lang)} />
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -112,9 +114,9 @@ const LandingPage = () => {
                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center text-primary mb-4 group-hover:from-primary group-hover:to-primary/80 group-hover:text-primary-foreground group-hover:shadow-lg group-hover:shadow-primary/25 transition-all duration-300">
                     {s.icon}
                   </div>
-                  <span className="text-xs font-bold text-primary/40 uppercase tracking-wider">Step {s.num}</span>
-                  <h3 className="text-base font-semibold text-foreground mt-2 mb-2">{s.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
+                  <span className="text-xs font-bold text-primary/40 uppercase tracking-wider">{t("landing.how.step", lang)} {s.num}</span>
+                  <h3 className="text-base font-semibold text-foreground mt-2 mb-2">{t(s.titleKey as never, lang)}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{t(s.descKey as never, lang)}</p>
                 </div>
                 {i < 3 && (
                   <div className="hidden lg:flex absolute top-1/2 -right-3 -translate-y-1/2 z-10">
@@ -146,9 +148,9 @@ const LandingPage = () => {
                 <div className="px-6 py-4 border-b border-border/50 bg-muted/20 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-accent" />
-                    <span className="text-sm font-semibold text-foreground">Exam Results</span>
+                    <span className="text-sm font-semibold text-foreground">{t("landing.grading.header", lang)}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">Graded in 0.3s</span>
+                  <span className="text-xs text-muted-foreground">{t("landing.grading.gradedIn", lang)}</span>
                 </div>
                 {/* Score hero */}
                 <div className="p-6 text-center border-b border-border/30">
@@ -161,17 +163,17 @@ const LandingPage = () => {
                   >
                     <span className="text-3xl font-extrabold text-accent">92</span>
                   </motion.div>
-                  <p className="text-sm font-medium text-foreground">Excellent Performance!</p>
-                  <p className="text-xs text-muted-foreground mt-1">23 of 25 questions correct</p>
+                  <p className="text-sm font-medium text-foreground">{t("landing.grading.performance", lang)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t("landing.grading.correctCount", lang)}</p>
                 </div>
                 {/* Question breakdown */}
                 <div className="p-5 space-y-3">
                   {[
-                    { q: "Q1. What is photosynthesis?", correct: true },
-                    { q: "Q2. Newton's second law states...", correct: true },
-                    { q: "Q3. The capital of France is...", correct: true },
-                    { q: "Q4. Which element has atomic number 6?", correct: false },
-                    { q: "Q5. Solve: 2x + 5 = 15", correct: true },
+                    { q: t("landing.grading.sample1", lang), correct: true },
+                    { q: t("landing.grading.sample2", lang), correct: true },
+                    { q: t("landing.grading.sample3", lang), correct: true },
+                    { q: t("landing.grading.sample4", lang), correct: false },
+                    { q: t("landing.grading.sample5", lang), correct: true },
                   ].map((item, idx) => (
                     <motion.div
                       key={idx}
@@ -193,20 +195,20 @@ const LandingPage = () => {
 
             {/* Copy right */}
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={staggerContainer} className="order-1 lg:order-2">
-              <motion.p variants={fadeUp} className="text-sm font-semibold text-accent mb-3 uppercase tracking-wide">Grading & Results</motion.p>
+              <motion.p variants={fadeUp} className="text-sm font-semibold text-accent mb-3 uppercase tracking-wide">{t("landing.grading.badge", lang)}</motion.p>
               <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight leading-[1.15]">
-                Auto-grade exams.{" "}
-                <span className="bg-gradient-to-r from-accent to-info bg-clip-text text-transparent">Deliver results instantly.</span>
+                {t("landing.grading.title", lang)}{" "}
+                <span className="bg-gradient-to-r from-accent to-info bg-clip-text text-transparent">{t("landing.grading.titleHighlight", lang)}</span>
               </motion.h2>
               <motion.p variants={fadeUp} className="mt-5 text-muted-foreground text-lg leading-relaxed">
-                No more hours spent grading papers. The platform scores every submission the moment it's turned in — students see their results, correct answers, and performance breakdown immediately.
+                {t("landing.grading.subtitle", lang)}
               </motion.p>
               <motion.div variants={staggerContainer} className="mt-8 space-y-4">
                 {[
-                  { text: "Scores calculated in under a second", icon: <Zap className="w-3.5 h-3.5" /> },
-                  { text: "Students see results immediately after submitting", icon: <Sparkles className="w-3.5 h-3.5" /> },
-                  { text: "Question-by-question breakdown with correct answers", icon: <FileText className="w-3.5 h-3.5" /> },
-                  { text: "Teachers get class-wide score summaries automatically", icon: <BarChart3 className="w-3.5 h-3.5" /> },
+                  { text: t("landing.grading.point1", lang), icon: <Zap className="w-3.5 h-3.5" /> },
+                  { text: t("landing.grading.point2", lang), icon: <Sparkles className="w-3.5 h-3.5" /> },
+                  { text: t("landing.grading.point3", lang), icon: <FileText className="w-3.5 h-3.5" /> },
+                  { text: t("landing.grading.point4", lang), icon: <BarChart3 className="w-3.5 h-3.5" /> },
                 ].map((item) => (
                   <motion.div key={item.text} variants={fadeUp} className="flex items-center gap-3 group">
                     <div className="w-6 h-6 rounded-full bg-accent/15 flex items-center justify-center text-accent group-hover:bg-accent/30 transition-colors">
@@ -219,7 +221,7 @@ const LandingPage = () => {
               <motion.div variants={fadeUp} className="mt-10">
                 <Link to="/signup">
                   <Button className="rounded-full px-6 gap-2 shadow-lg shadow-accent/20 hover:shadow-accent/30 transition-shadow group bg-accent text-accent-foreground hover:bg-accent/90">
-                    Try automatic grading <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                    {t("landing.grading.cta", lang)} <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                   </Button>
                 </Link>
               </motion.div>
@@ -235,33 +237,33 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={staggerContainer}>
-              <motion.p variants={fadeUp} className="text-sm font-semibold text-primary mb-3 uppercase tracking-wide">Analytics & Insights</motion.p>
+              <motion.p variants={fadeUp} className="text-sm font-semibold text-primary mb-3 uppercase tracking-wide">{t("landing.analytics.badge", lang)}</motion.p>
               <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight leading-[1.15]">
-                Data-driven teaching,{" "}
-                <span className="bg-gradient-to-r from-primary to-info bg-clip-text text-transparent">effortless insights</span>
+                {t("landing.analytics.title", lang)}{" "}
+                <span className="bg-gradient-to-r from-primary to-info bg-clip-text text-transparent">{t("landing.analytics.titleHighlight", lang)}</span>
               </motion.h2>
               <motion.p variants={fadeUp} className="mt-5 text-muted-foreground text-lg leading-relaxed">
-                Every exam generates rich analytics automatically. Spot struggling students, identify tricky questions, and track class progress over time — all without spreadsheets.
+                {t("landing.analytics.subtitle", lang)}
               </motion.p>
 
               <motion.div variants={staggerContainer} className="mt-10 space-y-6">
                 {[
                   {
                     icon: <BarChart3 className="w-5 h-5" />,
-                    title: "Score distribution",
-                    desc: "See how scores spread across your class with bell-curve visualizations. Instantly identify outliers and adjust grading curves.",
+                    title: t("landing.analytics.item1.title", lang),
+                    desc: t("landing.analytics.item1.desc", lang),
                     color: "bg-primary/15 text-primary",
                   },
                   {
                     icon: <Users className="w-5 h-5" />,
-                    title: "Class performance",
-                    desc: "Compare performance across classes and subjects. Track improvement over time with trend lines and cohort analysis.",
+                    title: t("landing.analytics.item2.title", lang),
+                    desc: t("landing.analytics.item2.desc", lang),
                     color: "bg-accent/15 text-accent",
                   },
                   {
                     icon: <Eye className="w-5 h-5" />,
-                    title: "Detailed analytics",
-                    desc: "Drill into per-question difficulty, time-spent analysis, and student-level breakdowns. Export everything as PDF or CSV.",
+                    title: t("landing.analytics.item3.title", lang),
+                    desc: t("landing.analytics.item3.desc", lang),
                     color: "bg-info/15 text-info",
                   },
                 ].map((item) => (
@@ -292,10 +294,10 @@ const LandingPage = () => {
                 <div className="px-6 py-4 border-b border-border/50 bg-muted/20 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <BarChart3 className="w-4 h-4 text-primary" />
-                    <span className="text-sm font-semibold text-foreground">Analytics Dashboard</span>
+                    <span className="text-sm font-semibold text-foreground">{t("landing.analytics.header", lang)}</span>
                   </div>
                   <div className="flex gap-1">
-                    {["7D", "30D", "All"].map((period, i) => (
+            {["7D", "30D", t("common.all", lang)].map((period, i) => (
                       <Badge
                         key={period}
                         variant={i === 1 ? "default" : "secondary"}
@@ -311,8 +313,8 @@ const LandingPage = () => {
                   {/* Score distribution chart */}
                   <div className="rounded-xl bg-muted/30 border border-border/20 p-5">
                     <div className="flex items-center justify-between mb-4">
-                      <div className="text-xs text-muted-foreground font-medium">Score Distribution</div>
-                      <div className="text-xs text-muted-foreground">Avg: <span className="text-foreground font-semibold">72.4</span></div>
+                      <div className="text-xs text-muted-foreground font-medium">{t("landing.analytics.item1.title", lang)}</div>
+                      <div className="text-xs text-muted-foreground">{t("landing.analytics.average", lang)}: <span className="text-foreground font-semibold">72.4</span></div>
                     </div>
                     <div className="flex items-end gap-1.5 h-24">
                       {[
@@ -339,7 +341,7 @@ const LandingPage = () => {
 
                   {/* Class performance comparison */}
                   <div className="rounded-xl bg-muted/30 border border-border/20 p-5">
-                    <div className="text-xs text-muted-foreground font-medium mb-4">Class Performance</div>
+                    <div className="text-xs text-muted-foreground font-medium mb-4">{t("landing.analytics.item2.title", lang)}</div>
                     <div className="space-y-3">
                       {[
                         { name: "Class 10A", avg: 82, color: "bg-primary" },
@@ -374,10 +376,10 @@ const LandingPage = () => {
                   {/* Stats row */}
                   <div className="grid grid-cols-4 gap-2">
                     {[
-                      { val: "72.4", label: "Avg Score", color: "text-foreground" },
-                      { val: "94%", label: "Pass Rate", color: "text-accent" },
-                      { val: "1.2k", label: "Students", color: "text-primary" },
-                      { val: "86", label: "Exams", color: "text-info" },
+                      { val: "72.4", label: t("landing.analytics.avgScore", lang), color: "text-foreground" },
+                      { val: "94%", label: t("landing.analytics.passRate", lang), color: "text-accent" },
+                      { val: "1.2k", label: t("landing.analytics.students", lang), color: "text-primary" },
+                      { val: "86", label: t("landing.analytics.exams", lang), color: "text-info" },
                     ].map((stat) => (
                       <div key={stat.label} className="rounded-lg bg-muted/30 border border-border/20 p-3 text-center hover:bg-muted/50 transition-colors">
                         <div className={`text-base font-bold ${stat.color}`}>{stat.val}</div>
@@ -400,33 +402,33 @@ const LandingPage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             {/* Copy */}
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={staggerContainer}>
-              <motion.p variants={fadeUp} className="text-sm font-semibold text-destructive mb-3 uppercase tracking-wide">Exam Integrity</motion.p>
+              <motion.p variants={fadeUp} className="text-sm font-semibold text-destructive mb-3 uppercase tracking-wide">{t("landing.integrity.badge", lang)}</motion.p>
               <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight leading-[1.15]">
-                Keep exams{" "}
-                <span className="bg-gradient-to-r from-destructive to-warning bg-clip-text text-transparent">fair and secure</span>
+                {t("landing.integrity.title", lang)}{" "}
+                <span className="bg-gradient-to-r from-destructive to-warning bg-clip-text text-transparent">{t("landing.integrity.titleHighlight", lang)}</span>
               </motion.h2>
               <motion.p variants={fadeUp} className="mt-5 text-muted-foreground text-lg leading-relaxed">
-                Three layers of protection work together to ensure every exam is taken honestly — without disrupting the student experience.
+                {t("landing.integrity.subtitle", lang)}
               </motion.p>
 
               <motion.div variants={staggerContainer} className="mt-10 space-y-6">
                 {[
                   {
                     icon: <Eye className="w-5 h-5" />,
-                    title: "Tab switching detection",
-                    desc: "Instantly detects when students navigate away from the exam. Every switch is logged with a timestamp and flagged for teacher review.",
+                    title: t("landing.integrity.item1.title", lang),
+                    desc: t("landing.integrity.item1.desc", lang),
                     color: "bg-warning/15 text-warning",
                   },
                   {
                     icon: <Shield className="w-5 h-5" />,
-                    title: "Fullscreen exam mode",
-                    desc: "Locks the browser into fullscreen during the exam. Attempts to exit are recorded and can trigger automatic warnings.",
+                    title: t("landing.integrity.item2.title", lang),
+                    desc: t("landing.integrity.item2.desc", lang),
                     color: "bg-destructive/15 text-destructive",
                   },
                   {
                     icon: <Users className="w-5 h-5" />,
-                    title: "Webcam monitoring",
-                    desc: "Optional webcam proctoring verifies student identity and flags suspicious behavior like looking away or multiple faces detected.",
+                    title: t("landing.integrity.item3.title", lang),
+                    desc: t("landing.integrity.item3.desc", lang),
                     color: "bg-info/15 text-info",
                   },
                 ].map((item) => (
@@ -457,14 +459,14 @@ const LandingPage = () => {
                 <div className="px-6 py-4 border-b border-border/50 bg-muted/20 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Shield className="w-4 h-4 text-destructive" />
-                    <span className="text-sm font-semibold text-foreground">Live Monitoring</span>
+                    <span className="text-sm font-semibold text-foreground">{t("landing.integrity.header", lang)}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="relative flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-accent" />
                     </span>
-                    <span className="text-xs text-muted-foreground">28 students active</span>
+                    <span className="text-xs text-muted-foreground">{t("landing.integrity.studentsActive", lang)}</span>
                   </div>
                 </div>
 
@@ -496,7 +498,7 @@ const LandingPage = () => {
                         </div>
                         <div className="min-w-0">
                           <div className="text-xs font-medium text-foreground truncate">{student.name}</div>
-                          <div className="text-[10px] text-muted-foreground">{student.progress}% complete</div>
+                          <div className="text-[10px] text-muted-foreground">{student.progress}% {t("landing.integrity.complete", lang)}</div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
@@ -528,9 +530,9 @@ const LandingPage = () => {
                 {/* Summary bar */}
                 <div className="px-5 py-3 border-t border-border/30 bg-muted/10 flex items-center justify-between">
                   <div className="flex items-center gap-4 text-[10px]">
-                    <span className="flex items-center gap-1 text-accent"><span className="w-2 h-2 rounded-full bg-accent" /> 24 Clean</span>
-                    <span className="flex items-center gap-1 text-warning"><span className="w-2 h-2 rounded-full bg-warning" /> 3 Warnings</span>
-                    <span className="flex items-center gap-1 text-destructive"><span className="w-2 h-2 rounded-full bg-destructive" /> 1 Flagged</span>
+                    <span className="flex items-center gap-1 text-accent"><span className="w-2 h-2 rounded-full bg-accent" /> 24 {t("landing.integrity.clean", lang)}</span>
+                    <span className="flex items-center gap-1 text-warning"><span className="w-2 h-2 rounded-full bg-warning" /> 3 {t("landing.integrity.warnings", lang)}</span>
+                    <span className="flex items-center gap-1 text-destructive"><span className="w-2 h-2 rounded-full bg-destructive" /> 1 {t("landing.integrity.flagged", lang)}</span>
                   </div>
                 </div>
               </div>
@@ -541,7 +543,7 @@ const LandingPage = () => {
       <section id="pricing" className="py-24 lg:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-muted/40 via-muted/20 to-background" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <SectionHeader badge="Pricing" title="Simple, transparent pricing" subtitle="Start free. Upgrade when you need more." />
+          <SectionHeader badge={t("landing.pricing.badge", lang)} title={t("landing.pricing.title", lang)} subtitle={t("landing.pricing.subtitle", lang)} />
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -551,7 +553,7 @@ const LandingPage = () => {
           >
             {plans.map((plan) => (
               <motion.div
-                key={plan.name}
+                key={plan.nameKey}
                 variants={fadeUp}
                 whileHover={{ y: -6, transition: { duration: 0.2 } }}
                 className={`rounded-2xl border p-7 flex flex-col backdrop-blur-sm transition-all duration-300 ${
@@ -565,22 +567,22 @@ const LandingPage = () => {
                     variant="default"
                     className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 border-0 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/25"
                   >
-                    Most popular
+                    {t("landing.pricing.popular", lang)}
                   </Badge>
                 )}
                 <div className="mb-6">
-                  <h3 className="text-lg font-bold text-foreground">{plan.name}</h3>
-                  <p className="text-sm text-muted-foreground mt-1">{plan.desc}</p>
+                  <h3 className="text-lg font-bold text-foreground">{t(plan.nameKey as never, lang)}</h3>
+                  <p className="text-sm text-muted-foreground mt-1">{t(plan.descKey as never, lang)}</p>
                 </div>
                 <div className="mb-8">
                   <span className="text-5xl font-extrabold text-foreground tracking-tight">{plan.price}</span>
-                  <span className="text-sm text-muted-foreground ml-1">{plan.period}</span>
+                  <span className="text-sm text-muted-foreground ml-1">{t(plan.periodKey as never, lang)}</span>
                 </div>
                 <ul className="space-y-3.5 mb-8 flex-1">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2.5 text-sm text-foreground">
+                  {plan.featureKeys.map((featureKey) => (
+                    <li key={featureKey} className="flex items-center gap-2.5 text-sm text-foreground">
                       <CheckCircle className="w-4 h-4 text-accent shrink-0" />
-                      {f}
+                      {t(featureKey as never, lang)}
                     </li>
                   ))}
                 </ul>
@@ -589,7 +591,7 @@ const LandingPage = () => {
                     className={`w-full rounded-full h-11 transition-all duration-300 ${plan.highlighted ? "shadow-lg shadow-primary/20 hover:shadow-primary/30" : ""}`}
                     variant={plan.highlighted ? "default" : "outline"}
                   >
-                    {plan.cta}
+                    {t(plan.ctaKey as never, lang)}
                   </Button>
                 </Link>
               </motion.div>
@@ -602,7 +604,7 @@ const LandingPage = () => {
       <section className="py-24 lg:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/20 to-background" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <SectionHeader badge="Customization" title="Make it yours — every detail" subtitle="Language switching, theme preferences, and UI settings that let every user feel at home." />
+          <SectionHeader badge={t("landing.customization.badge", lang)} title={t("landing.customization.title", lang)} subtitle={t("landing.customization.subtitle", lang)} />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Mockup */}
@@ -618,13 +620,13 @@ const LandingPage = () => {
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <Palette className="w-4 h-4 text-primary" />
-                    <span className="text-xs font-semibold text-foreground uppercase tracking-wider">Theme</span>
+                    <span className="text-xs font-semibold text-foreground uppercase tracking-wider">{t("landing.customization.theme", lang)}</span>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
                     {[
-                      { label: "Light", icon: <Sun className="w-4 h-4" />, active: false },
-                      { label: "Dark", icon: <Moon className="w-4 h-4" />, active: true },
-                      { label: "System", icon: <Monitor className="w-4 h-4" />, active: false },
+                      { label: t("settings.appearance.theme.light", lang), icon: <Sun className="w-4 h-4" />, active: false },
+                      { label: t("settings.appearance.theme.dark", lang), icon: <Moon className="w-4 h-4" />, active: true },
+                      { label: t("settings.appearance.theme.system", lang), icon: <Monitor className="w-4 h-4" />, active: false },
                     ].map((t, i) => (
                       <motion.div
                         key={t.label}
@@ -649,7 +651,7 @@ const LandingPage = () => {
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <Languages className="w-4 h-4 text-primary" />
-                    <span className="text-xs font-semibold text-foreground uppercase tracking-wider">Language</span>
+                    <span className="text-xs font-semibold text-foreground uppercase tracking-wider">{t("settings.tab.language", lang)}</span>
                   </div>
                   <div className="space-y-1.5">
                     {[
@@ -681,13 +683,13 @@ const LandingPage = () => {
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <SlidersHorizontal className="w-4 h-4 text-primary" />
-                    <span className="text-xs font-semibold text-foreground uppercase tracking-wider">Preferences</span>
+                    <span className="text-xs font-semibold text-foreground uppercase tracking-wider">{t("landing.customization.preferences", lang)}</span>
                   </div>
                   <div className="space-y-2.5">
                     {[
-                      { label: "Compact sidebar", on: true },
-                      { label: "Show exam timer", on: true },
-                      { label: "Sound notifications", on: false },
+                      { label: t("landing.customization.pref1", lang), on: true },
+                      { label: t("landing.customization.pref2", lang), on: true },
+                      { label: t("landing.customization.pref3", lang), on: false },
                     ].map((p, i) => (
                       <motion.div
                         key={p.label}
@@ -716,11 +718,11 @@ const LandingPage = () => {
               variants={staggerContainer}
               className="order-1 lg:order-2 space-y-6"
             >
-              {[
-                { icon: <Languages className="w-5 h-5" />, title: "Language switching", desc: "Seamlessly switch between Vietnamese, English, Japanese, and more. The entire interface adapts instantly — menus, labels, notifications, and exam content." },
-                { icon: <Palette className="w-5 h-5" />, title: "Theme & appearance", desc: "Choose Light, Dark, or System themes. Each theme is carefully crafted for readability and comfort during long grading or exam sessions." },
-                { icon: <SlidersHorizontal className="w-5 h-5" />, title: "User UI preferences", desc: "Customize sidebar layout, notification sounds, timer visibility, and display density. Your preferences sync across all devices automatically." },
-              ].map((item) => (
+            {[
+              { icon: <Languages className="w-5 h-5" />, title: t("landing.customization.item1.title", lang), desc: t("landing.customization.item1.desc", lang) },
+              { icon: <Palette className="w-5 h-5" />, title: t("landing.customization.item2.title", lang), desc: t("landing.customization.item2.desc", lang) },
+              { icon: <SlidersHorizontal className="w-5 h-5" />, title: t("landing.customization.item3.title", lang), desc: t("landing.customization.item3.desc", lang) },
+            ].map((item) => (
                 <motion.div key={item.title} variants={fadeUp} className="flex gap-4">
                   <div className="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br from-primary/15 to-accent/15 flex items-center justify-center text-primary">
                     {item.icon}
@@ -740,7 +742,7 @@ const LandingPage = () => {
       <section className="py-24 lg:py-32 relative">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-primary/5 rounded-full blur-3xl" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <SectionHeader badge="Testimonials" title="Loved by educators everywhere" />
+          <SectionHeader badge={t("landing.testimonials.badge", lang)} title={t("landing.testimonials.title", lang)} />
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -748,9 +750,9 @@ const LandingPage = () => {
             variants={staggerContainer}
             className="grid grid-cols-1 md:grid-cols-3 gap-6"
           >
-            {testimonials.map((t) => (
+            {testimonials.map((testimonial) => (
               <motion.div
-                key={t.name}
+                key={testimonial.name}
                 variants={fadeUp}
                 whileHover={{ y: -4, transition: { duration: 0.2 } }}
                 className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm p-7 hover:border-primary/20 hover:shadow-lg transition-all duration-300"
@@ -760,14 +762,14 @@ const LandingPage = () => {
                     <Star key={i} className="w-4 h-4 fill-warning text-warning" />
                   ))}
                 </div>
-                <p className="text-sm text-foreground leading-relaxed mb-7">"{t.quote}"</p>
+                <p className="text-sm text-foreground leading-relaxed mb-7">"{t(testimonial.quoteKey as never, lang)}"</p>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-sm font-bold text-primary">
-                    {t.avatar}
+                    {testimonial.avatar}
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-foreground">{t.name}</div>
-                    <div className="text-xs text-muted-foreground">{t.role}</div>
+                    <div className="text-sm font-semibold text-foreground">{testimonial.name}</div>
+                    <div className="text-xs text-muted-foreground">{t(testimonial.roleKey as never, lang)}</div>
                   </div>
                 </div>
               </motion.div>
@@ -780,7 +782,7 @@ const LandingPage = () => {
       <section id="faq" className="py-24 lg:py-32 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-muted/30 to-background" />
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <SectionHeader badge="FAQ" title="Frequently asked questions" />
+          <SectionHeader badge={t("landing.faq.badge", lang)} title={t("landing.faq.title", lang)} />
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={staggerContainer} className="space-y-3">
             {faqs.map((faq, i) => (
               <motion.div
@@ -794,7 +796,7 @@ const LandingPage = () => {
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   className="h-auto w-full justify-between gap-4 rounded-none p-5 text-left font-normal group hover:bg-transparent"
                 >
-                  <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{faq.q}</span>
+                  <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{t(faq.qKey as never, lang)}</span>
                   <motion.div animate={{ rotate: openFaq === i ? 180 : 0 }} transition={{ duration: 0.2 }}>
                     <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
                   </motion.div>
@@ -808,7 +810,7 @@ const LandingPage = () => {
                       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                     >
                       <div className="px-5 pb-5">
-                        <p className="text-sm text-muted-foreground leading-relaxed">{faq.a}</p>
+                        <p className="text-sm text-muted-foreground leading-relaxed">{t(faq.aKey as never, lang)}</p>
                       </div>
                     </motion.div>
                   )}
@@ -841,15 +843,15 @@ const LandingPage = () => {
                 <Award className="w-14 h-14 text-primary-foreground/25 mx-auto mb-8" />
               </motion.div>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-primary-foreground tracking-tight">
-                Start creating exams today
+                {t("landing.cta.title", lang)}
               </h2>
               <p className="mt-5 text-primary-foreground/70 max-w-lg mx-auto text-lg leading-relaxed">
-                Join thousands of educators who save hours every week with EduFlow.
+                {t("landing.cta.subtitle", lang)}
               </p>
               <div className="mt-10">
                 <Link to="/signup">
                   <Button size="lg" className="rounded-full px-10 h-13 text-base gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90 shadow-2xl hover:scale-[1.03] transition-all duration-300 group">
-                    Get started free <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                    {t("landing.cta.button", lang)} <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                   </Button>
                 </Link>
               </div>
@@ -867,15 +869,15 @@ const LandingPage = () => {
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/20">
                   <GraduationCap className="w-4 h-4 text-primary-foreground" />
                 </div>
-                <span className="text-base font-bold text-foreground">EduFlow</span>
+                <span className="text-base font-bold text-foreground">{t("app.brand", lang)}</span>
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">Modern online exam and learning management for educators.</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">{t("landing.footer.tagline", lang)}</p>
             </div>
             {[
-              { title: "Product", links: ["Features", "Pricing", "Integrations", "Changelog"] },
-              { title: "Resources", links: ["Documentation", "Blog", "Tutorials", "API"] },
-              { title: "Company", links: ["About", "Careers", "Contact", "Press"] },
-              { title: "Legal", links: ["Terms", "Privacy", "Security", "GDPR"] },
+              { title: t("landing.footer.product", lang), links: [t("landing.footer.link.features", lang), t("landing.footer.link.pricing", lang), t("landing.footer.link.integrations", lang), t("landing.footer.link.changelog", lang)] },
+              { title: t("landing.footer.resources", lang), links: [t("landing.footer.link.documentation", lang), t("landing.footer.link.blog", lang), t("landing.footer.link.tutorials", lang), t("landing.footer.link.api", lang)] },
+              { title: t("landing.footer.company", lang), links: [t("landing.footer.link.about", lang), t("landing.footer.link.careers", lang), t("landing.footer.link.contact", lang), t("landing.footer.link.press", lang)] },
+              { title: t("landing.footer.legal", lang), links: [t("landing.footer.link.terms", lang), t("landing.footer.link.privacy", lang), t("landing.footer.link.security", lang), t("landing.footer.link.gdpr", lang)] },
             ].map((col) => (
               <div key={col.title}>
                 <h4 className="text-xs font-semibold text-foreground uppercase tracking-[0.15em] mb-5">{col.title}</h4>
@@ -890,11 +892,11 @@ const LandingPage = () => {
             ))}
           </div>
           <div className="mt-14 pt-8 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-muted-foreground">© 2026 EduFlow. All rights reserved.</p>
+            <p className="text-xs text-muted-foreground">{t("landing.footer.copyright", lang)}</p>
             <div className="flex items-center gap-6">
-              <a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Terms</a>
-              <a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Privacy</a>
-              <a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Support</a>
+              <a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">{t("landing.footer.link.terms", lang)}</a>
+              <a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">{t("landing.footer.link.privacy", lang)}</a>
+              <a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">{t("landing.footer.link.support", lang)}</a>
             </div>
           </div>
         </div>

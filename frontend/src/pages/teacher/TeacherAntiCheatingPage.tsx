@@ -6,17 +6,18 @@ import {
   type AntiCheatMonitorRow,
 } from "@/services/antiCheat.service";
 import { Badge } from "@/components/ui/badge";
-import { StatCard } from "@/components/layouts/StatCard";
-import { Icons } from "@/components/layouts/icons"; 
+import { Icons } from "@/components/layouts/Icons"; 
 import { FilterChips } from "@/components/features/admin/filter-chips";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDateTimeVietnam } from "@/utils/date";
+import { t, useLanguage } from "@/i18n";
 
 type Filter = "all" | "suspicious";
 
 export function TeacherAntiCheatingPage() {
   const { token } = useAuth();
+  const lang = useLanguage();
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -34,7 +35,7 @@ export function TeacherAntiCheatingPage() {
       });
       setData(res);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load monitor");
+      setError(e instanceof Error ? e.message : t("antiCheat.loadFailed", lang));
       setData(null);
     } finally {
       setLoading(false);
@@ -56,49 +57,77 @@ export function TeacherAntiCheatingPage() {
     });
   }, [data, query]);
 
+  const stats = {
+    total: (data?.rows ?? []).length,
+    active: (data?.rows ?? []).filter((s) => !s.submitted_at).length,
+    suspicious: (data?.rows ?? []).filter((s) => s.suspicious).length,
+    submitted: (data?.rows ?? []).filter((s) => s.submitted_at).length,
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Anti-Cheating Monitor</h1>
-          <p className="text-sm text-muted-foreground">
-            Event-based monitoring powered by anti-cheat logs.
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <Icons.Shield className="size-6 text-primary" />
+            {t("antiCheat.title", lang)}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {t("antiCheat.subtitle", lang)}
           </p>
         </div>
         <Button variant="secondary" disabled={loading} onClick={() => fetchData(filter)}>
-          Refresh
+          <Icons.RefreshCw className="size-4" />
+          {t("common.refresh", lang)}
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          icon={<Icons.Users className="text-primary" />}
-          value={String(data?.summary.total_students ?? (loading ? "—" : 0))}
-          title="Total Students"
-          change="--"
-          trend="up"
-        />
-        <StatCard
-          icon={<Icons.Chart className="text-success" />}
-          value={String(data?.summary.active_now ?? (loading ? "—" : 0))}
-          title="Active Now"
-          change="--"
-          trend="up"
-        />
-        <StatCard
-          icon={<Icons.Settings className="text-warning" />}
-          value={String(data?.summary.suspicious ?? (loading ? "—" : 0))}
-          title="Suspicious"
-          change="--"
-          trend="up"
-        />
-        <StatCard
-          icon={<Icons.CheckCircle className="text-info" />}
-          value={String(data?.summary.submitted ?? (loading ? "—" : 0))}
-          title="Submitted"
-          change="--"
-          trend="up"
-        />
+        {/* Overview stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="stat-card">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Icons.User className="size-5 text-primary" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-foreground">{stats.total}</div>
+                <div className="text-xs text-muted-foreground">{t("antiCheat.totalStudents", lang)}</div>
+              </div>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+                <Icons.Monitor className="size-5 text-success" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-foreground">{stats.active}</div>
+                <div className="text-xs text-muted-foreground">{t("antiCheat.activeNow", lang)}</div>
+              </div>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
+                <Icons.AlertTriangle className="size-5 text-destructive" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-foreground">{stats.suspicious}</div>
+                <div className="text-xs text-muted-foreground">{t("antiCheat.suspicious", lang)}</div>
+              </div>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center">
+                <Icons.CheckCircle className="size-5 text-info" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-foreground">{stats.submitted}</div>
+                <div className="text-xs text-muted-foreground">{t("antiCheat.submitted", lang)}</div>
+              </div>
+            </div>
+        </div>
       </div>
 
       <div className="glass-card p-6">
@@ -108,7 +137,7 @@ export function TeacherAntiCheatingPage() {
             <input
               type="text"
               className="bg-transparent outline-none w-full text-foreground placeholder:text-muted-foreground text-sm"
-              placeholder="Search students..."
+              placeholder={t("antiCheat.searchPlaceholder", lang)}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
@@ -117,8 +146,8 @@ export function TeacherAntiCheatingPage() {
             value={filter}
             onChange={setFilter}
             options={[
-              { value: "all", label: "All Students" },
-              { value: "suspicious", label: "Suspicious Only" },
+              { value: "all", label: t("antiCheat.allStudents", lang) },
+              { value: "suspicious", label: t("antiCheat.suspiciousOnly", lang) },
             ]}
           />
         </div>
@@ -131,17 +160,17 @@ export function TeacherAntiCheatingPage() {
             <div className="h-10 w-full rounded-lg bg-muted animate-pulse" />
           </div>
         ) : rows.length === 0 ? (
-          <div className="py-10 text-center text-sm text-muted-foreground">No students found.</div>
+          <div className="py-10 text-center text-sm text-muted-foreground">{t("antiCheat.noStudents", lang)}</div>
         ) : (
           <div className="mt-4">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Student</TableHead>
-                  <TableHead>Exam / Class</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Events</TableHead>
-                  <TableHead>Last event</TableHead>
+                  <TableHead>{t("antiCheat.student", lang)}</TableHead>
+                  <TableHead>{t("antiCheat.examClass", lang)}</TableHead>
+                  <TableHead>{t("common.status", lang)}</TableHead>
+                  <TableHead>{t("antiCheat.events", lang)}</TableHead>
+                  <TableHead>{t("antiCheat.lastEvent", lang)}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -163,9 +192,9 @@ export function TeacherAntiCheatingPage() {
                       </TableCell>
                       <TableCell>
                         {active ? (
-                          <Badge variant="default">Active</Badge>
+                          <Badge variant="default">{t("common.status.active", lang)}</Badge>
                         ) : (
-                          <Badge variant="secondary">Submitted</Badge>
+                          <Badge variant="secondary">{t("antiCheat.submitted", lang)}</Badge>
                         )}
                       </TableCell>
                       <TableCell>
@@ -177,7 +206,7 @@ export function TeacherAntiCheatingPage() {
                           >
                             {r.events_total}
                           </Badge>
-                          {r.suspicious ? <Badge variant="outline">Suspicious</Badge> : null}
+                          {r.suspicious ? <Badge variant="outline">{t("antiCheat.suspicious", lang)}</Badge> : null}
                         </div>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">

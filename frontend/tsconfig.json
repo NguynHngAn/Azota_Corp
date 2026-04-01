@@ -30,5 +30,6 @@
     }
 
   },
+  "lib": ["WebWorker"],
   "include": ["src"]
 }

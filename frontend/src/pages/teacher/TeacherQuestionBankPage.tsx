@@ -18,10 +18,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { Icons } from "@/components/layouts/icons";
+import { Icons } from "@/components/layouts/Icons";
+import { t, useLanguage } from "@/i18n";
 
 export function TeacherQuestionBankPage() {
   const { token } = useAuth();
+  const lang = useLanguage();
+  function tr(key: string, values?: Record<string, string | number>) {
+    const base = t(key as never, lang);
+    if (!values) return base;
+    return Object.entries(values).reduce(
+      (message, [name, value]) => message.replaceAll(`{{${name}}}`, String(value)),
+      base,
+    );
+  }
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -64,7 +75,7 @@ export function TeacherQuestionBankPage() {
       setItems(res.items);
       setTotal(res.total);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load question bank");
+      setError(e instanceof Error ? e.message : tr("questionBank.loadFailed"));
       setItems([]);
       setTotal(0);
     } finally {
@@ -117,7 +128,7 @@ export function TeacherQuestionBankPage() {
       setTagsText((res.tags ?? []).join(", "));
       setEditorOpen(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load question");
+      setError(e instanceof Error ? e.message : tr("questionBank.loadQuestionFailed"));
     } finally {
       setSaving(false);
     }
@@ -166,13 +177,13 @@ export function TeacherQuestionBankPage() {
   }
 
   function validateDraft(): string | null {
-    const text = draft.text.trim();
-    if (!text) return "Question text is required.";
+    const questionText = draft.text.trim();
+    if (!questionText) return tr("questionBank.requiredQuestionText");
     const opts = draft.options.map((o) => ({ ...o, text: o.text.trim() })).filter((o) => o.text.length > 0);
-    if (opts.length < 2) return "At least 2 answer options are required.";
+    if (opts.length < 2) return tr("questionBank.requiredOptions");
     const correctCount = opts.filter((o) => o.is_correct).length;
-    if (draft.question_type === "single_choice" && correctCount !== 1) return "Single choice must have exactly 1 correct option.";
-    if (draft.question_type === "multiple_choice" && correctCount < 1) return "Multiple choice must have at least 1 correct option.";
+    if (draft.question_type === "single_choice" && correctCount !== 1) return tr("questionBank.singleChoiceValidation");
+    if (draft.question_type === "multiple_choice" && correctCount < 1) return tr("questionBank.multipleChoiceValidation");
     return null;
   }
 
@@ -198,7 +209,7 @@ export function TeacherQuestionBankPage() {
       setEditorOpen(false);
       await refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to save");
+      setError(e instanceof Error ? e.message : tr("questionBank.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -212,32 +223,32 @@ export function TeacherQuestionBankPage() {
       await deleteBankQuestion(id, token);
       await refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to delete");
+      setError(e instanceof Error ? e.message : tr("questionBank.deleteFailed"));
     } finally {
       setSaving(false);
     }
   }
 
   function difficultyLabel(d: QuestionDifficulty) {
-    if (d === "easy") return "Easy";
-    if (d === "hard") return "Hard";
-    return "Medium";
+    if (d === "easy") return tr("questionBank.difficulty.easy");
+    if (d === "hard") return tr("questionBank.difficulty.hard");
+    return tr("questionBank.difficulty.medium");
   }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Question Bank</h1>
-          <p className="text-sm text-muted-foreground mt-1">{loading ? "Loading..." : `${total} questions total`}</p>
+          <h1 className="text-2xl font-bold text-foreground">{t("questionBank.title", lang)}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{loading ? t("common.loading", lang) : tr("questionBank.totalQuestions", { count: total })}</p>
         </div>
         
         <div className="flex items-center gap-2">
           <Button variant="secondary" onClick={() => refresh()} disabled={loading || saving}>
-            Refresh
+            {t("common.refresh", lang)}
           </Button>
           <Button onClick={openCreate} disabled={saving}>
-            <Icons.Plus className="size-4" /> New Question
+            <Icons.Plus className="size-4" /> {t("questionBank.newQuestion", lang)}
           </Button>
         </div>
       </div>
@@ -248,7 +259,7 @@ export function TeacherQuestionBankPage() {
           <input
             type="text"
             className="bg-transparent outline-none w-full text-foreground placeholder:text-muted-foreground text-sm"
-            placeholder="Search questions..."
+            placeholder={t("questionBank.searchPlaceholder", lang)}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
@@ -261,17 +272,17 @@ export function TeacherQuestionBankPage() {
         {loading ? (
           <div className="flex items-center justify-center py-20"><Icons.Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
         ) : items.length === 0 ? (
-          <div className="text-center py-20 text-muted-foreground text-sm">No questions found.</div>
+          <div className="text-center py-20 text-muted-foreground text-sm">{t("questionBank.empty", lang)}</div>
         ) : (
           <div className="mt-4">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Question</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Difficulty</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Tags</TableHead>
+                  <TableHead>{t("questionBank.question", lang)}</TableHead>
+                  <TableHead>{t("common.type", lang)}</TableHead>
+                  <TableHead>{t("questionBank.difficulty", lang)}</TableHead>
+                  <TableHead>{t("common.status", lang)}</TableHead>
+                  <TableHead>{t("questionBank.tags", lang)}</TableHead>
                   <TableHead />
                 </TableRow>
               </TableHeader>
@@ -282,7 +293,7 @@ export function TeacherQuestionBankPage() {
                       <div className="font-medium text-muted-foreground line-clamp-2">{it.text}</div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {it.question_type === "single_choice" ? "Single" : "Multiple"}
+                      {it.question_type === "single_choice" ? t("questionBank.single", lang) : t("questionBank.multiple", lang)}
                     </TableCell>
                     <TableCell>
                       <Badge
@@ -294,7 +305,7 @@ export function TeacherQuestionBankPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={it.is_active ? "default" : "outline"}>{it.is_active ? "Active" : "Inactive"}</Badge>
+                      <Badge variant={it.is_active ? "default" : "outline"}>{it.is_active ? t("common.status.active", lang) : t("common.status.inactive", lang)}</Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
@@ -311,7 +322,7 @@ export function TeacherQuestionBankPage() {
                     <TableCell className="text-right">
                       <div className="inline-flex items-center gap-2">
                         <Button size="sm" variant="secondary" onClick={() => openEdit(it.id)} disabled={saving}>
-                          Edit
+                          {t("common.edit", lang)}
                         </Button>
                         <Button
                           size="sm"
@@ -319,7 +330,7 @@ export function TeacherQuestionBankPage() {
                           onClick={() => {
                             if (
                               window.confirm(
-                                "Delete question?\n\nThis will permanently remove the question from your bank.",
+                                t("questionBank.deleteConfirm", lang),
                               )
                             ) {
                               void doDelete(it.id);
@@ -327,7 +338,7 @@ export function TeacherQuestionBankPage() {
                           }}
                           disabled={saving}
                         >
-                          Delete
+                          {t("common.delete", lang)}
                         </Button>
                       </div>
                     </TableCell>
@@ -344,16 +355,16 @@ export function TeacherQuestionBankPage() {
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="text-sm font-semibold text-foreground">
-                {editingId == null ? "New question" : `Edit question #${editingId}`}
+                {editingId == null ? t("questionBank.editor.newTitle", lang) : tr("questionBank.editor.editTitle", { id: editingId })}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">Changes are saved to your personal question bank.</div>
+              <div className="text-xs text-muted-foreground mt-1">{t("questionBank.editor.description", lang)}</div>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="secondary" onClick={() => setEditorOpen(false)} disabled={saving}>
-                Cancel
+                {t("common.cancel", lang)}
               </Button>
               <Button onClick={save} disabled={saving}>
-                {saving ? "Saving..." : "Save"}
+                {saving ? t("common.saving", lang) : t("common.save", lang)}
               </Button>
             </div>
           </div>
@@ -362,7 +373,7 @@ export function TeacherQuestionBankPage() {
             <div className="lg:col-span-2 space-y-3">
               <div>
                 <label htmlFor={questionTextFieldId} className="block text-xs font-medium text-muted-foreground mb-1">
-                  Question text *
+                  {t("questionBank.editor.questionText", lang)}
                 </label>
                 <Textarea
                   id={questionTextFieldId}
@@ -373,7 +384,7 @@ export function TeacherQuestionBankPage() {
               </div>
               <div>
                 <label htmlFor={explanationFieldId} className="block text-xs font-medium text-muted-foreground mb-1">
-                  Explanation (optional)
+                  {t("questionBank.editor.explanation", lang)}
                 </label>
                 <Textarea
                   id={explanationFieldId}
@@ -385,9 +396,9 @@ export function TeacherQuestionBankPage() {
 
               <div className="rounded-2xl border border-border p-4 bg-card">
                 <div className="flex items-center justify-between">
-                  <div className="text-xs font-semibold text-muted-foreground">Answer options</div>
+                  <div className="text-xs font-semibold text-muted-foreground">{t("questionBank.editor.answerOptions", lang)}</div>
                   <Button size="sm" variant="ghost" onClick={addOption} type="button">
-                    + Add option
+                    + {t("questionBank.editor.addOption", lang)}
                   </Button>
                 </div>
                 <div className="mt-3 space-y-2">
@@ -409,7 +420,7 @@ export function TeacherQuestionBankPage() {
                               options: d.options.map((x, i) => (i === idx ? { ...x, text: e.target.value } : x)),
                             }))
                           }
-                          placeholder={`Option ${idx + 1}`}
+                          placeholder={tr("questionBank.editor.optionPlaceholder", { number: idx + 1 })}
                         />
                       </div>
                       <Button
@@ -419,7 +430,7 @@ export function TeacherQuestionBankPage() {
                         onClick={() => removeOption(idx)}
                         disabled={draft.options.length <= 2}
                       >
-                        Remove
+                        {t("questionBank.editor.removeOption", lang)}
                       </Button>
                     </div>
                   ))}
@@ -429,45 +440,45 @@ export function TeacherQuestionBankPage() {
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">Type</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">{t("questionBank.editor.type", lang)}</label>
                 <select
                   value={draft.question_type}
                   onChange={(e) => setQuestionType(e.target.value as QuestionType)}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 >
-                  <option value="single_choice">Single choice</option>
-                  <option value="multiple_choice">Multiple choice</option>
+                  <option value="single_choice">{t("questionBank.editor.singleChoice", lang)}</option>
+                  <option value="multiple_choice">{t("questionBank.editor.multipleChoice", lang)}</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">Difficulty</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">{t("questionBank.difficulty", lang)}</label>
                 <select
                   value={draft.difficulty}
                   onChange={(e) => setDraft((d) => ({ ...d, difficulty: e.target.value as QuestionDifficulty }))}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 >
-                  <option value="easy">Easy</option>
-                  <option value="medium">Medium</option>
-                  <option value="hard">Hard</option>
+                  <option value="easy">{t("questionBank.difficulty.easy", lang)}</option>
+                  <option value="medium">{t("questionBank.difficulty.medium", lang)}</option>
+                  <option value="hard">{t("questionBank.difficulty.hard", lang)}</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">Status</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">{t("questionBank.editor.status", lang)}</label>
                 <select
                   value={draft.is_active ? "active" : "inactive"}
                   onChange={(e) => setDraft((d) => ({ ...d, is_active: e.target.value === "active" }))}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
+                  <option value="active">{t("common.status.active", lang)}</option>
+                  <option value="inactive">{t("common.status.inactive", lang)}</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">Tags (comma separated)</label>
-                <Input value={tagsText} onChange={(e) => setTagsText(e.target.value)} placeholder="e.g. algebra, grade 9" />
+                <label className="block text-xs font-medium text-muted-foreground mb-1">{t("questionBank.editor.tags", lang)}</label>
+                <Input value={tagsText} onChange={(e) => setTagsText(e.target.value)} placeholder={t("questionBank.editor.tagsPlaceholder", lang)} />
                 {normalizedTags.length > 0 ? (
                   <div className="mt-2 flex flex-wrap gap-1">
                     {normalizedTags.map((t) => (

@@ -5,9 +5,11 @@ import { joinClass } from "@/services/classes.service";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { t, useLanguage } from "@/i18n";
 
 export function JoinClassPage() {
   const { token } = useAuth();
+  const lang = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const codeFromUrl = searchParams.get("code") ?? "";
@@ -28,7 +30,7 @@ export function JoinClassPage() {
       await joinClass(inviteCode, token);
       navigate("/student/classes");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to join");
+      setError(err instanceof Error ? err.message : t("joinClassPage.failed", lang));
     } finally {
       setSubmitting(false);
     }
@@ -38,27 +40,27 @@ export function JoinClassPage() {
     <div className="max-w-lg space-y-4">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Join a class</h1>
+          <h1 className="text-2xl font-semibold text-foreground">{t("joinClassPage.title", lang)}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Enter the invite code from your teacher or use an invite link.
+            {t("joinClassPage.subtitle", lang)}
           </p>
         </div>
       </div>
       <Card>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Invite code</label>
+            <label className="block text-sm font-medium text-foreground mb-1">{t("joinClassPage.inviteCode", lang)}</label>
             <Input
               type="text"
               value={inviteCode}
               onChange={(e) => setInviteCode(e.target.value)}
-              placeholder="e.g. abc12XYZ"
+              placeholder={t("joinClassPage.placeholder", lang)}
               required
             />
           </div>
           {error && <p className="text-red-600 text-sm">{error}</p>}
           <Button type="submit" disabled={submitting}>
-            {submitting ? "Joining..." : "Join class"}
+            {submitting ? t("joinClass.joining", lang) : t("joinClassPage.join", lang)}
           </Button>
         </form>
       </Card>

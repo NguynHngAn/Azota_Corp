@@ -8,9 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { createUser } from "@/services/users.service";
-import { Icons } from "@/components/layouts/icons";
+import { Icons } from "@/components/layouts/Icons";
 import { DataTableLayout } from "@/components/features/admin/data-table-layout";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { t, useLanguage } from "@/i18n";
 
 type Filter = "all" | "admin" | "teacher" | "student";
 
@@ -23,6 +24,7 @@ function roleBadgeVariant(role: string): "default" | "secondary" | "outline" | "
 
 export function AdminDashboardPage() {
   const { token } = useAuth();
+  const lang = useLanguage();
   const [users, setUsers] = useState<UserResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -45,7 +47,7 @@ export function AdminDashboardPage() {
     setError("");
     listUsers(token)
       .then(setUsers)
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load users"))
+      .catch((e) => setError(e instanceof Error ? e.message : t("adminDashboard.failed", lang)))
       .finally(() => setLoading(false));
   }, [token]);
 
@@ -69,7 +71,7 @@ export function AdminDashboardPage() {
     if (!token) return;
     setNotice("");
     if (!fullName.trim() || !email.trim() || password.length < 6) {
-      setNotice("Please enter full name, email and a password (min 6 chars).");
+      setNotice(t("adminDashboard.validation", lang));
       return;
     }
     setCreating(true);
@@ -84,9 +86,9 @@ export function AdminDashboardPage() {
       setEmail("");
       setPassword("");
       setRole("teacher");
-      setNotice("User created successfully.");
+      setNotice(t("adminUsers.createSuccess", lang));
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "Failed to create user.");
+      setNotice(e instanceof Error ? e.message : t("adminDashboard.createFailed", lang));
     } finally {
       setCreating(false);
     }
@@ -96,13 +98,13 @@ export function AdminDashboardPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Admin Dashboard</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Platform overview and user management.</p>
+          <h1 className="text-2xl font-semibold text-foreground">{t("adminDashboard.title", lang)}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t("adminDashboard.subtitle", lang)}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Button className="gap-1.5 rounded-lg" onClick={() => setCreateOpen(true)}>
             <Icons.UserPlus className="size-4" />
-            Create User
+            {t("adminUsers.createUser", lang)}
           </Button>
         </div>
       </div>
@@ -117,44 +119,44 @@ export function AdminDashboardPage() {
         <StatCard
           icon={<Icons.Users className="text-primary" />}
           value={String(stats.total)}
-          title="Total Users"
+          title={t("adminDashboard.totalUsers", lang)}
           change="--"
           trend="up"
         />
         <StatCard
           icon={<Icons.Bell className="text-violet-700" />}
           value={String(stats.teachers)}
-          title="Teachers"
+          title={t("role.teacher", lang)}
           change="--"
           trend="up"
         />
         <StatCard
           icon={<Icons.Users className="text-success" />}
           value={String(stats.students)}
-          title="Students"
+          title={t("role.student", lang)}
           change="--"
           trend="up"
         />
         <StatCard
           icon={<Icons.FileText className="text-info" />}
           value="—"
-          title="Total Exams"
+          title={t("adminDashboard.totalExams", lang)}
           change="--"
           trend="up"
         />
       </div>
 
       <DataTableLayout
-        title="User Management"
+        title={t("adminUsers.managementTitle", lang)}
         loading={loading}
         error={error}
         isEmpty={filtered.length === 0}
-        emptyMessage="No users found."
+        emptyMessage={t("adminUsers.empty", lang)}
         controls={
           <>
             <div className="w-full sm:w-72">
               <Input
-                placeholder="Search by name or email..."
+                placeholder={t("adminUsers.searchPlaceholder", lang)}
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
               />
@@ -163,10 +165,10 @@ export function AdminDashboardPage() {
               value={filter}
               onChange={setFilter}
               options={[
-                { value: "all", label: "All" },
-                { value: "admin", label: "Admin" },
-                { value: "teacher", label: "Teacher" },
-                { value: "student", label: "Student" },
+                { value: "all", label: t("common.all", lang) },
+                { value: "admin", label: t("role.admin", lang) },
+                { value: "teacher", label: t("role.teacher", lang) },
+                { value: "student", label: t("role.student", lang) },
               ]}
             />
           </>
@@ -175,9 +177,9 @@ export function AdminDashboardPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>User</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Joined</TableHead>
+              <TableHead>{t("common.name", lang)}</TableHead>
+              <TableHead>{t("common.roleLabel", lang)}</TableHead>
+              <TableHead>{t("adminDashboard.joined", lang)}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -195,7 +197,7 @@ export function AdminDashboardPage() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={roleBadgeVariant(u.role)}>{u.role}</Badge>
+                  <Badge variant={roleBadgeVariant(u.role)}>{t(`role.${u.role}` as never, lang)}</Badge>
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {new Date(u.created_at).toLocaleDateString()}
@@ -209,37 +211,37 @@ export function AdminDashboardPage() {
       <Dialog open={createOpen} onOpenChange={(open) => !creating && setCreateOpen(open)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create New User</DialogTitle>
+            <DialogTitle>{t("adminUsers.createDialogTitle", lang)}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
           <div>
-              <label className="mb-1 block text-xs font-medium text-foreground">Full Name *</label>
-            <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="e.g. John Doe" />
+              <label className="mb-1 block text-xs font-medium text-foreground">{t("settings.profile.fullName", lang)} *</label>
+            <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder={t("adminUsers.fullNamePlaceholder", lang)} />
           </div>
           <div>
-              <label className="mb-1 block text-xs font-medium text-foreground">Email *</label>
-            <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="user@example.com" />
+              <label className="mb-1 block text-xs font-medium text-foreground">{t("common.email", lang)} *</label>
+            <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t("login.emailPlaceholder", lang)} />
           </div>
           <div>
-              <label className="mb-1 block text-xs font-medium text-foreground">Password *</label>
-            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min 6 characters" />
+              <label className="mb-1 block text-xs font-medium text-foreground">{t("login.password", lang)} *</label>
+            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t("adminUsers.passwordHint", lang)} />
           </div>
           <div>
-              <label className="mb-1 block text-xs font-medium text-foreground">Role *</label>
+              <label className="mb-1 block text-xs font-medium text-foreground">{t("common.roleLabel", lang)} *</label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as "teacher" | "student")}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             >
-              <option value="teacher">Teacher</option>
-              <option value="student">Student</option>
+              <option value="teacher">{t("role.teacher", lang)}</option>
+              <option value="student">{t("role.student", lang)}</option>
             </select>
           </div>
             {notice && <p className="text-sm text-destructive">{notice}</p>}
           </div>
           <DialogFooter className="mt-4">
             <Button className="w-full" disabled={creating} onClick={handleCreate}>
-              {creating ? "Creating..." : "Create Account"}
+              {creating ? t("adminUsers.creating", lang) : t("adminUsers.createAccount", lang)}
             </Button>
           </DialogFooter>
         </DialogContent>

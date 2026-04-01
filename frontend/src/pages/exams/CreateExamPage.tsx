@@ -5,7 +5,8 @@ import { createExam } from "@/services/exams.service";
 import { type ExamFormState, emptyQuestion, validateExamForm } from "@/pages/exams/types";
 import { ExamEditorForm } from "@/pages/exams/ExamEditorForm";
 import { Card } from "@/components/ui/card";
-import { Icons } from "@/components/layouts/icons";
+import { Icons } from "@/components/layouts/Icons";
+import { t, useLanguage } from "@/i18n";
 
 const initialState: ExamFormState = {
   title: "",
@@ -16,6 +17,7 @@ const initialState: ExamFormState = {
 
 export function CreateExamPage() {
   const { token } = useAuth();
+  const lang = useLanguage();
   const navigate = useNavigate();
   const [state, setState] = useState<ExamFormState>(initialState);
   const [error, setError] = useState("");
@@ -24,7 +26,7 @@ export function CreateExamPage() {
   async function createDraftAndGo(openBank: boolean) {
     if (!token) return;
     if (!state.title.trim()) {
-      setError("Exam title is required.");
+      setError(t("examEditor.title", lang));
       return;
     }
     setError("");
@@ -48,7 +50,7 @@ export function CreateExamPage() {
       const created = await createExam(payload, token);
       navigate(`/teacher/exams/${created.id}${openBank ? "?openBank=1" : ""}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save");
+      setError(err instanceof Error ? err.message : t("questionBank.saveFailed", lang));
     } finally {
       setSubmitting(false);
     }
@@ -82,7 +84,7 @@ export function CreateExamPage() {
       const created = await createExam(payload, token);
       navigate(`/teacher/exams/${created.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save");
+      setError(err instanceof Error ? err.message : t("questionBank.saveFailed", lang));
     } finally {
       setSubmitting(false);
     }
@@ -104,8 +106,8 @@ export function CreateExamPage() {
           <Icons.ArrowLeft className="size-4 text-muted-foreground" />
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Create Exam</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Set up a new exam with questions and answer options.</p>
+          <h1 className="text-2xl font-bold text-foreground">{t("common.createExam", lang)}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{t("examEditor.reviewMessage", lang)}</p>
         </div>
       </div>
         
@@ -121,7 +123,7 @@ export function CreateExamPage() {
         onAddFromBank={() => void createDraftAndGo(true)}
         onSave={handleSave}
         saving={submitting}
-        saveLabel="Save"
+        saveLabel={t("common.save", lang)}
       />
     </div>
   );

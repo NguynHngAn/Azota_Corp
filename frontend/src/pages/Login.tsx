@@ -3,21 +3,23 @@ import { Link, useNavigate } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { GraduationCap, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Icons } from "@/components/layouts/Icons";
+import { t, useLanguage } from "@/i18n";
 
-function LoginHeader() {
+function LoginHeader({ lang }: { lang: ReturnType<typeof useLanguage> }) {
   return (
     <div className="text-center">
       <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
-        <GraduationCap className="h-7 w-7 text-primary-foreground" />
+        <Icons.GraduationCap className="h-7 w-7 text-primary-foreground" />
       </div>
-      <h1 className="text-2xl font-bold text-foreground">Welcome back</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Sign in to your Azota account</p>
+      <h1 className="text-2xl font-bold text-foreground">{t("login.welcomeBack", lang)}</h1>
+      <p className="mt-1 text-sm text-muted-foreground">{t("login.subtitle", lang)}</p>
     </div>
   );
 }
 
 export function Login() {
+  const lang = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -37,7 +39,7 @@ export function Login() {
       else if (user.role === "teacher") navigate("/teacher", { replace: true });
       else navigate("/student", { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError(err instanceof Error ? err.message : t("login.failed", lang));
     } finally {
       setSubmitting(false);
     }
@@ -46,15 +48,15 @@ export function Login() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-md space-y-8 animate-in">
-        <LoginHeader />
+        <LoginHeader lang={lang} />
 
         <form onSubmit={handleSubmit} className="glass-card space-y-4 p-6">
           <div>
             <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-foreground">
-              Email
+              {t("common.email", lang)}
             </label>
             <div className="relative">
-              <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Icons.Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="email"
                 type="email"
@@ -63,17 +65,17 @@ export function Login() {
                 autoComplete={rememberMe ? "username" : "off"}
                 required
                 className="rounded-lg py-2.5 pl-10 pr-3 text-sm transition-all focus-visible:border-primary focus-visible:ring-primary/20"
-                placeholder="you@school.edu"
+                placeholder={t("login.emailPlaceholder", lang)}
               />
             </div>
           </div>
 
           <div>
             <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-foreground">
-              Password
+              {t("login.password", lang)}
             </label>
             <div className="relative">
-              <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Icons.Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
@@ -90,9 +92,9 @@ export function Login() {
                 size="icon"
                 onClick={() => setShowPassword((prev) => !prev)}
                 className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-label={showPassword ? t("login.hidePassword", lang) : t("login.showPassword", lang)}
               >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPassword ? <Icons.Eye className="h-4 w-4" /> : <Icons.EyeOff className="h-4 w-4" />}
               </Button>
             </div>
           </div>
@@ -105,24 +107,24 @@ export function Login() {
                 onChange={(e) => setRememberMe(e.target.checked)}
                 className="rounded border-input accent-primary"
               />
-              Remember me
+              {t("login.rememberMe", lang)}
             </label>
             <Link to="/" className="font-medium text-primary hover:underline">
-              Back to home
+              {t("login.backToHome", lang)}
             </Link>
           </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 
           <Button type="submit" disabled={submitting} className="w-full rounded-lg">
-            {submitting ? "Signing in..." : "Sign In"}
+            {submitting ? t("login.signingIn", lang) : t("login.signIn", lang)}
           </Button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
-          Need an account?{" "}
+          {t("login.needAccount", lang)}{" "}
           <Link to="/" className="font-medium text-primary hover:underline">
-            Contact admin
+            {t("login.contactAdmin", lang)}
           </Link>
         </p>
       </div>

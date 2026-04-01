@@ -1,4 +1,5 @@
 import type { ScoreBucket } from "@/services/assignments.service";
+import { t } from "@/i18n";
 
 interface ScoreBarChartProps {
   buckets: ScoreBucket[];
@@ -7,7 +8,7 @@ interface ScoreBarChartProps {
 export function ScoreBarChart({ buckets }: ScoreBarChartProps) {
   const maxCount = buckets.reduce((max, b) => (b.count > max ? b.count : max), 0);
   if (!buckets.length || maxCount === 0) {
-    return <p className="text-sm text-muted-foreground">No score data yet.</p>;
+    return <p className="text-sm text-muted-foreground">{t("scoreChart.empty")}</p>;
   }
 
   return (

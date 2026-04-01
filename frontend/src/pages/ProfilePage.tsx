@@ -1,9 +1,11 @@
 import { useAuth } from "@/context/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { t, useLanguage } from "@/i18n";
 
 export function ProfilePage() {
   const { user } = useAuth();
+  const lang = useLanguage();
 
   const displayName = user?.full_name || user?.email || "";
 
@@ -15,12 +17,12 @@ export function ProfilePage() {
             {displayName.charAt(0).toUpperCase()}
           </div>
           <div>
-            <p className="text-xs font-medium text-indigo-600 uppercase tracking-wide">Hồ sơ tài khoản</p>
+            <p className="text-xs font-medium text-indigo-600 uppercase tracking-wide">{t("profile.account", lang)}</p>
             <h1 className="text-xl md:text-2xl font-semibold text-slate-900">
-              Xin chào, {displayName || "Người dùng"}!
+              {t("profile.hello", lang).replace("{{name}}", displayName || t("common.user", lang))}
             </h1>
             <p className="text-sm text-slate-500">
-              Chào mừng bạn quay lại Azota Basic.
+              {t("profile.welcome", lang)}
             </p>
           </div>
         </div>
@@ -30,26 +32,26 @@ export function ProfilePage() {
       </header>
 
       <Card>
-        <h2 className="text-base font-semibold text-slate-900 mb-1">Thông tin hồ sơ</h2>
+        <h2 className="text-base font-semibold text-slate-900 mb-1">{t("profile.infoTitle", lang)}</h2>
         <p className="text-sm text-slate-500 mb-4">
-          Thông tin được lấy từ tài khoản hiện tại trong hệ thống.
+          {t("profile.infoSubtitle", lang)}
         </p>
 
         <div className="space-y-4">
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-700">Email</label>
+            <label className="block text-sm font-medium text-slate-700">{t("common.email", lang)}</label>
             <Input value={user?.email ?? ""} disabled />
           </div>
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-700">Tên hiển thị</label>
+            <label className="block text-sm font-medium text-slate-700">{t("profile.displayName", lang)}</label>
             <Input value={user?.full_name ?? ""} disabled />
           </div>
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-700">Vai trò</label>
+            <label className="block text-sm font-medium text-slate-700">{t("common.role", lang)}</label>
             <Input value={user?.role ?? ""} disabled />
           </div>
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-700">Ngày tạo tài khoản</label>
+            <label className="block text-sm font-medium text-slate-700">{t("profile.createdAt", lang)}</label>
             <Input value={user?.created_at ?? ""} disabled />
           </div>
         </div>

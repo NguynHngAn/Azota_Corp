@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DataTableLayout } from "@/components/features/admin/data-table-layout";
+import { t, useLanguage } from "@/i18n";
 
 export function AdminClassesPage() {
   const { token } = useAuth();
+  const lang = useLanguage();
   const navigate = useNavigate();
   const [classes, setClasses] = useState<ClassResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +30,7 @@ export function AdminClassesPage() {
     setError("");
     listClasses(token)
       .then(setClasses)
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load classes"))
+      .catch((e) => setError(e instanceof Error ? e.message : t("adminClasses.failed", lang)))
       .finally(() => setLoading(false));
   }, [token]);
 
@@ -42,7 +44,7 @@ export function AdminClassesPage() {
     if (!token) return;
     setNotice("");
     if (!name.trim()) {
-      setNotice("Class name is required.");
+      setNotice(t("adminClasses.requiredName", lang));
       return;
     }
     setCreating(true);
@@ -52,9 +54,9 @@ export function AdminClassesPage() {
       setCreateOpen(false);
       setName("");
       setDescription("");
-      setNotice("Class created successfully.");
+      setNotice(t("adminClasses.created", lang));
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "Failed to create class.");
+      setNotice(e instanceof Error ? e.message : t("adminClasses.createFailed", lang));
     } finally {
       setCreating(false);
     }
@@ -64,13 +66,13 @@ export function AdminClassesPage() {
     <div className="space-y-6">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Classes</h1>
+          <h1 className="text-2xl font-semibold text-foreground">{t("classList.title", lang)}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Manage classes, members, and teacher assignments.
+            {t("classList.teacherSubtitle", lang)}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <Button onClick={() => setCreateOpen(true)}>+ New Class</Button>
+          <Button onClick={() => setCreateOpen(true)}>+ {t("classList.new", lang)}</Button>
         </div>
       </div>
 
@@ -81,23 +83,23 @@ export function AdminClassesPage() {
       )}
 
       <DataTableLayout
-        title="Class Management"
+        title={t("adminClasses.management", lang)}
         loading={loading}
         error={error}
         isEmpty={filtered.length === 0}
-        emptyMessage="No classes yet."
+        emptyMessage={t("adminClasses.empty", lang)}
         controls={
           <div className="w-full sm:w-96">
-            <Input placeholder="Search classes..." value={q} onChange={(e) => setQ(e.target.value)} />
+            <Input placeholder={t("classList.searchPlaceholder", lang)} value={q} onChange={(e) => setQ(e.target.value)} />
           </div>
         }
       >
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Class</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t("classList.title", lang)}</TableHead>
+              <TableHead>{t("examEditor.description", lang)}</TableHead>
+              <TableHead className="text-right">{t("common.actions", lang)}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -112,7 +114,7 @@ export function AdminClassesPage() {
                     variant="ghost"
                     onClick={() => navigate(`/admin/classes/${c.id}`)}
                   >
-                    Open
+                    {t("adminClasses.open", lang)}
                   </Button>
                 </TableCell>
               </TableRow>
@@ -124,22 +126,22 @@ export function AdminClassesPage() {
       <Dialog open={createOpen} onOpenChange={(open) => !creating && setCreateOpen(open)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create New Class</DialogTitle>
+            <DialogTitle>{t("adminClasses.createTitle", lang)}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
           <div>
-              <label className="mb-1 block text-xs font-medium text-foreground">Class Name *</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Class 10A" />
+              <label className="mb-1 block text-xs font-medium text-foreground">{t("adminClasses.className", lang)} *</label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("adminClasses.classNamePlaceholder", lang)} />
           </div>
           <div>
-              <label className="mb-1 block text-xs font-medium text-foreground">Description</label>
-            <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional description..." />
+              <label className="mb-1 block text-xs font-medium text-foreground">{t("examEditor.description", lang)}</label>
+            <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("adminClasses.descriptionPlaceholder", lang)} />
           </div>
             {notice && <p className="text-sm text-destructive">{notice}</p>}
           </div>
           <DialogFooter>
             <Button className="w-full" disabled={creating} onClick={handleCreate}>
-              {creating ? "Creating..." : "Create Class"}
+              {creating ? t("createClass.creating", lang) : t("adminClasses.createClass", lang)}
             </Button>
           </DialogFooter>
         </DialogContent>

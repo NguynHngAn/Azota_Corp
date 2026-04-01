@@ -9,7 +9,8 @@ import { useAuth } from "@/context/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDateTimeVietnam } from "@/utils/date";
-import { Icons } from "@/components/layouts/icons";
+import { Icons } from "@/components/layouts/Icons";
+import { t, useLanguage } from "@/i18n";
 
 // In-memory caches (persist across SPA navigation)
 const membersCache = new Map<number, ClassMemberResponse[]>();
@@ -43,6 +44,16 @@ type StudentRow = {
 
 export function TeacherStudentsPage() {
   const { token } = useAuth();
+  const lang = useLanguage();
+  function tr(key: string, values?: Record<string, string | number>) {
+    const base = t(key as never, lang);
+    if (!values) return base;
+    return Object.entries(values).reduce(
+      (message, [name, value]) => message.replaceAll(`{{${name}}}`, String(value)),
+      base,
+    );
+  }
+
   const [classes, setClasses] = useState<ClassResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingDetails, setLoadingDetails] = useState(true);
@@ -57,7 +68,7 @@ export function TeacherStudentsPage() {
     setError("");
     listMyClasses(token)
       .then((res) => setClasses(res))
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : "Failed to load classes"))
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : t("teacherStudents.failed", lang)))
       .finally(() => setLoading(false));
   }, [token]);
 
@@ -158,11 +169,11 @@ export function TeacherStudentsPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Students</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t("teacherStudents.title", lang)}</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {loading
-              ? "Loading classes..."
-              : `${membershipCount} student memberships across classes · ${students.length} unique students.`}
+              ? t("teacherStudents.loadingClasses", lang)
+              : tr("teacherStudents.summary", { memberships: membershipCount, students: students.length })}
           </p>
         </div>
       </div>
@@ -173,7 +184,7 @@ export function TeacherStudentsPage() {
           <input
             type="text"
             className="bg-transparent outline-none w-full text-foreground placeholder:text-muted-foreground text-sm"
-            placeholder="Search students..."
+            placeholder={t("teacherStudents.searchPlaceholder", lang)}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -186,15 +197,15 @@ export function TeacherStudentsPage() {
             <div className="h-10 w-full rounded-lg bg-muted animate-pulse" />
           </div>
         ) : students.length === 0 ? (
-          <div className="py-12 text-center text-sm text-muted-foreground">No students found.</div>
+          <div className="py-12 text-center text-sm text-muted-foreground">{t("teacherStudents.empty", lang)}</div>
         ) : (
           <div className="mt-4">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Student</TableHead>
-                  <TableHead>Classes</TableHead>
-                  <TableHead>Joined</TableHead>
+                  <TableHead>{t("antiCheat.student", lang)}</TableHead>
+                  <TableHead>{t("classList.title", lang)}</TableHead>
+                  <TableHead>{t("teacherStudents.joined", lang)}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -209,7 +220,7 @@ export function TeacherStudentsPage() {
                     <TableCell>
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge variant="outline">
-                          {s.classNames.length} class{s.classNames.length === 1 ? "" : "es"}
+                          {tr("teacherStudents.classCount", { count: s.classNames.length })}
                         </Badge>
                         <div className="text-xs text-muted-foreground">
                           {s.classNames.slice(0, 2).join(", ")}

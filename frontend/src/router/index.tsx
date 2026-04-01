@@ -1,8 +1,6 @@
 import { Navigate, Route, Routes } from "react-router";
 import { lazy, Suspense } from "react";
-import { Loader2, Sparkles } from "lucide-react";
 import { AuthProvider, useAuth, ExamProvider } from "@/context";
-import { ProtectedRoute } from "@/router/ProtectedRoute";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { Login } from "@/pages/Login";
 const LazyLandingPage = lazy(() => import("@/pages/LandingPage"));
@@ -40,10 +38,11 @@ import { TeacherSettingsPage } from "@/pages/teacher/TeacherSettingsPage";
 import { StudentDashboardPage } from "@/pages/student/StudentDashboardPage";
 import { StudentResultsPage } from "@/pages/student/StudentResultsPage";
 import { StudentSettingsPage } from "@/pages/student/StudentSettingsPage";
-import { ROLES } from "@/utils/constants";
 import { PreferencesBootstrap } from "@/components/settings/preferences-bootstrap";
+import { Icons } from "@/components/layouts/Icons";
+import { t } from "@/i18n";
 
-function FullPageLoading({ label = "Loading..." }: { label?: string }) {
+function FullPageLoading({ label = t("common.loading") }: { label?: string }) {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 text-foreground">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,hsl(var(--primary)/0.12),transparent_45%)]" />
@@ -51,12 +50,12 @@ function FullPageLoading({ label = "Loading..." }: { label?: string }) {
       <div className="relative w-full max-w-md rounded-2xl border border-border/60 bg-card/95 p-7 shadow-xl backdrop-blur-sm">
         <div className="mb-5 flex items-center justify-between">
           <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Sparkles className="h-5 w-5" />
+            <Icons.Sparkles className="h-5 w-5" />
           </div>
-          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          <Icons.Loader2 className="h-5 w-5 animate-spin text-primary" />
         </div>
 
-        <p className="text-base font-semibold tracking-tight">Preparing your workspace</p>
+        <p className="text-base font-semibold tracking-tight">{t("router.preparingWorkspace")}</p>
         <p className="mt-1 text-sm text-muted-foreground">{label}</p>
 
         <div className="mt-6 space-y-3">
@@ -71,7 +70,7 @@ function FullPageLoading({ label = "Loading..." }: { label?: string }) {
       </div>
 
       <div className="pointer-events-none absolute bottom-6 text-xs text-muted-foreground/80">
-        Azota is loading resources...
+        {t("router.loadingResources")}
       </div>
     </div>
   );
@@ -79,10 +78,10 @@ function FullPageLoading({ label = "Loading..." }: { label?: string }) {
 
 function RootRedirect() {
   const { user, token, loading } = useAuth();
-  if (loading) return <FullPageLoading label="Loading session..." />;
+  if (loading) return <FullPageLoading label={t("router.loadingSession")} />;
   if (!token || !user)
     return (
-      <Suspense fallback={<FullPageLoading label="Loading landing page..." />}>
+      <Suspense fallback={<FullPageLoading label={t("router.loadingLandingPage")} />}>
         <LazyLandingPage />
       </Suspense>
     );
@@ -93,7 +92,7 @@ function RootRedirect() {
 
 function LoginRedirect() {
   const { user, token, loading } = useAuth();
-  if (loading) return <FullPageLoading label="Loading session..." />;
+  if (loading) return <FullPageLoading label={t("router.loadingSession")} />;
   if (!token || !user) return <Login />;
   if (user.role === "admin") return <Navigate to="/admin/classes" replace />;
   if (user.role === "teacher") return <Navigate to="/teacher/dashboard" replace />;
@@ -109,14 +108,7 @@ export function AppRouter() {
           <Route path="/" element={<RootRedirect />} />
           <Route path="/login" element={<LoginRedirect />} />
           <Route path="/signup" element={<LoginRedirect />} />
-          <Route
-          path="/admin"
-          element={
-            <ProtectedRoute allowedRoles={[ROLES[0]]}>
-              <DashboardLayout role="admin" />
-            </ProtectedRoute>
-          }
-        >
+          <Route path="/admin" element={<DashboardLayout role="admin" />}>
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboardPage />} />
           <Route path="users" element={<AdminUsersPage />} />
@@ -130,14 +122,7 @@ export function AppRouter() {
           <Route path="reports" element={<Navigate to="/admin/analytics" replace />} />
         </Route>
 
-          <Route
-          path="/teacher"
-          element={
-            <ProtectedRoute allowedRoles={[ROLES[1]]}>
-              <DashboardLayout role="teacher" />
-            </ProtectedRoute>
-          }
-        >
+          <Route path="/teacher" element={<DashboardLayout role="teacher" />}>
           <Route index element={<Navigate to="/teacher/dashboard" replace />} />
           <Route path="dashboard" element={<TeacherDashboardPage />} />
           <Route path="classes" element={<ClassListPage />} />
@@ -157,14 +142,7 @@ export function AppRouter() {
           <Route path="settings" element={<TeacherSettingsPage />} />
         </Route>
 
-        <Route
-          path="/student"
-          element={
-            <ProtectedRoute allowedRoles={[ROLES[2]]}>
-              <DashboardLayout role="student" />
-            </ProtectedRoute>
-          }
-        >
+        <Route path="/student" element={<DashboardLayout role="student" />}>
           <Route index element={<Navigate to="/student/dashboard" replace />} />
           <Route path="dashboard" element={<StudentDashboardPage />} />
           <Route path="classes" element={<MyClassesPage />} />

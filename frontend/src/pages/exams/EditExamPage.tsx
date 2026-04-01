@@ -17,6 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import type { ExamFormState } from "@/pages/exams/types";
 import { validateExamForm } from "@/pages/exams/types";
 import { ExamEditorForm } from "@/pages/exams/ExamEditorForm";
+import { t, useLanguage } from "@/i18n";
 
 function examToFormState(exam: ExamDetail): ExamFormState {
   return {
@@ -42,6 +43,7 @@ export function EditExamPage() {
   const { token } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const lang = useLanguage();
   const examId = id ? parseInt(id, 10) : NaN;
   const [state, setState] = useState<ExamFormState | null>(null);
   const [originalQuestionIds, setOriginalQuestionIds] = useState<number[]>([]);
@@ -63,7 +65,7 @@ export function EditExamPage() {
         setState(examToFormState(exam));
         setOriginalQuestionIds(exam.questions.map((q) => q.id));
       })
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load"))
+      .catch((e) => setError(e instanceof Error ? e.message : t("editExam.failedLoad", lang)))
       .finally(() => setLoading(false));
   }, [token, id, examId]);
 
@@ -87,7 +89,7 @@ export function EditExamPage() {
       const res = await listBankQuestions(token, { q: bankQuery.trim() || undefined, limit: 50, offset: 0, is_active: true });
       setBankItems(res.items);
     } catch (e) {
-      setBankError(e instanceof Error ? e.message : "Failed to load question bank");
+      setBankError(e instanceof Error ? e.message : t("editExam.failedBankLoad", lang));
       setBankItems([]);
     } finally {
       setBankLoading(false);
@@ -107,7 +109,7 @@ export function EditExamPage() {
       setBankOpen(false);
       setSelectedIds([]);
     } catch (e) {
-      setBankError(e instanceof Error ? e.message : "Failed to import questions");
+      setBankError(e instanceof Error ? e.message : t("editExam.failedImport", lang));
     } finally {
       setBankLoading(false);
     }
@@ -173,7 +175,7 @@ export function EditExamPage() {
 
       navigate("/teacher/exams");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save");
+      setError(err instanceof Error ? err.message : t("editExam.failedSave", lang));
     } finally {
       setSubmitting(false);
     }
@@ -200,7 +202,7 @@ export function EditExamPage() {
     });
   }
 
-  if (loading) return <p className="text-gray-600">Loading...</p>;
+  if (loading) return <p className="text-gray-600">{t("editExam.loading", lang)}</p>;
   if (error && !state) return <p className="text-red-600">{error}</p>;
   if (!state) return null;
 
@@ -208,10 +210,10 @@ export function EditExamPage() {
     <div>
       <div className="mb-4">
         <Link to="/teacher/exams" className="text-blue-600 hover:underline">
-          ← Back to exams
+          ← {t("editExam.back", lang)}
         </Link>
       </div>
-      <h2 className="text-lg font-semibold mb-4">Edit exam</h2>
+      <h2 className="text-lg font-semibold mb-4">{t("editExam.title", lang)}</h2>
       {error && <p className="mb-2 text-red-600 text-sm">{error}</p>}
       <ExamEditorForm
         state={state}
@@ -223,7 +225,7 @@ export function EditExamPage() {
         }}
         onSave={handleSave}
         saving={submitting}
-        saveLabel="Save exam"
+        saveLabel={t("editExam.save", lang)}
       />
 
       {bankOpen ? (
@@ -231,15 +233,15 @@ export function EditExamPage() {
           <div className="bg-card text-foreground rounded-2xl shadow-lg w-full max-w-3xl p-5 border border-border">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold">Add from Question Bank</div>
-                <div className="text-xs text-slate-500 mt-1">Select questions to copy into this exam (snapshot).</div>
+                <div className="text-sm font-semibold">{t("editExam.bankTitle", lang)}</div>
+                <div className="text-xs text-slate-500 mt-1">{t("editExam.bankSubtitle", lang)}</div>
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="secondary" onClick={() => setBankOpen(false)} disabled={bankLoading}>
-                  Cancel
+                  {t("common.cancel", lang)}
                 </Button>
                 <Button onClick={importSelected} disabled={bankLoading || selectedIds.length === 0}>
-                  {bankLoading ? "Adding..." : `Add (${selectedIds.length})`}
+                  {bankLoading ? t("editExam.adding", lang) : t("editExam.addCount", lang).replace("{{count}}", String(selectedIds.length))}
                 </Button>
               </div>
             </div>
@@ -247,7 +249,7 @@ export function EditExamPage() {
             <div className="mt-4 flex items-center gap-2">
               <div className="flex-1">
                 <Input
-                  placeholder="Search bank questions..."
+                  placeholder={t("editExam.searchBank", lang)}
                   value={bankQuery}
                   onChange={(e) => setBankQuery(e.target.value)}
                   onKeyDown={(e) => {
@@ -256,7 +258,7 @@ export function EditExamPage() {
                 />
               </div>
               <Button variant="secondary" onClick={loadBank} disabled={bankLoading}>
-                Search
+                {t("common.search", lang)}
               </Button>
             </div>
 
@@ -270,16 +272,16 @@ export function EditExamPage() {
                   <div className="h-10 w-full rounded-xl bg-slate-50 animate-pulse" />
                 </div>
               ) : bankItems.length === 0 ? (
-                <div className="py-10 text-center text-sm text-slate-500">No questions found.</div>
+                <div className="py-10 text-center text-sm text-slate-500">{t("editExam.noQuestions", lang)}</div>
               ) : (
                 <div>
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead />
-                        <TableHead>Question</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Difficulty</TableHead>
+                        <TableHead>{t("questionBank.question", lang)}</TableHead>
+                        <TableHead>{t("questionBank.type", lang)}</TableHead>
+                        <TableHead>{t("questionBank.difficulty", lang)}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -304,7 +306,7 @@ export function EditExamPage() {
                               <div className="font-medium text-slate-900 line-clamp-2">{it.text}</div>
                             </TableCell>
                             <TableCell className="text-slate-700">
-                              {it.question_type === "single_choice" ? "Single" : "Multiple"}
+                              {it.question_type === "single_choice" ? t("questionBank.singleChoice", lang) : t("questionBank.multipleChoice", lang)}
                             </TableCell>
                             <TableCell className="text-slate-700">{it.difficulty}</TableCell>
                           </TableRow>

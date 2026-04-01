@@ -5,10 +5,12 @@ import { listExams, type ExamResponse } from "@/services/exams.service";
 import { Button } from "@/components/ui/button";
 import { FilterChips } from "@/components/features/admin/filter-chips";
 import { Badge } from "@/components/ui/badge";
-import { Icons } from "@/components/layouts/icons";
+import { Icons } from "@/components/layouts/Icons";
+import { t, useLanguage } from "@/i18n";
 
 export function ExamListPage() {
   const { token } = useAuth();
+  const lang = useLanguage();
   const navigate = useNavigate();
   const [exams, setExams] = useState<ExamResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,7 +22,7 @@ export function ExamListPage() {
     if (!token) return;
     listExams(token)
       .then(setExams)
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed"))
+      .catch((e) => setError(e instanceof Error ? e.message : t("examList.failed", lang)))
       .finally(() => setLoading(false));
   }, [token]);
 
@@ -34,17 +36,17 @@ export function ExamListPage() {
     });
   }, [exams, q, filter]);
 
-  if (loading) return <p className="text-muted-foreground">Loading...</p>;
+  if (loading) return <p className="text-muted-foreground">{t("common.loading", lang)}</p>;
   if (error) return <p className="text-destructive">{error}</p>;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Exams</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage and create exams for your classes.</p>
+          <h1 className="text-2xl font-bold text-foreground">{t("examList.title", lang)}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t("examList.subtitle", lang)}</p>
         </div>
-        <Button className="gap-1.5 rounded-lg" onClick={() => navigate("/teacher/exams/new")}>+ Create Exam</Button>
+        <Button className="gap-1.5 rounded-lg" onClick={() => navigate("/teacher/exams/new")}>+ {t("common.createExam", lang)}</Button>
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
@@ -53,7 +55,7 @@ export function ExamListPage() {
           <input
             type="text"
             className="bg-transparent outline-none w-full text-foreground placeholder:text-muted-foreground text-sm"
-            placeholder="Search exams..."
+            placeholder={t("examList.searchPlaceholder", lang)}
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
@@ -62,15 +64,15 @@ export function ExamListPage() {
             value={filter}
             onChange={setFilter}
             options={[
-              { value: "all", label: "All" },
-              { value: "published", label: "Published" },
-              { value: "draft", label: "Draft" },
+              { value: "all", label: t("common.all", lang) },
+              { value: "published", label: t("common.status.published", lang) },
+              { value: "draft", label: t("common.status.draft", lang) },
             ]}
           />
       </div>
       <div className="mt-4">
           {filtered.length === 0 ? (
-            <div className="text-center py-20 text-muted-foreground text-sm">No exams found.</div>
+            <div className="text-center py-20 text-muted-foreground text-sm">{t("examList.empty", lang)}</div>
           ) : (
             <div className="space-y-2">
               {filtered.map((e) => (
@@ -81,7 +83,7 @@ export function ExamListPage() {
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-medium text-foreground">{e.title}</div>
-                    <Badge variant={e.is_draft ? "outline" : "default"}>{e.is_draft ? "Draft" : "Published"}</Badge>
+                    <Badge variant={e.is_draft ? "outline" : "default"}>{e.is_draft ? t("common.status.draft", lang) : t("common.status.published", lang)}</Badge>
                   </div>
                 </Link>
               ))}

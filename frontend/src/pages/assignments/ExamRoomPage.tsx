@@ -14,6 +14,7 @@ import { useTabVisibility } from "@/hooks/useTabVisibility";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { logAntiCheatEvent } from "@/services/antiCheat.service";
+import { t, useLanguage } from "@/i18n";
 
 function formatCountdown(ms: number): string {
   if (ms <= 0) return "0:00";
@@ -28,6 +29,7 @@ export function ExamRoomPage() {
   const navigate = useNavigate();
   const { token } = useAuth();
   const { startExam } = useExam();
+  const lang = useLanguage();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [alreadySubmittedSubmissionId, setAlreadySubmittedSubmissionId] = useState<number | null>(null);
@@ -74,7 +76,7 @@ export function ExamRoomPage() {
       await exitFullScreen();
       navigate(`/student/assignments/result/${room.submission_id}`, { replace: true });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Submit failed");
+      setError(e instanceof Error ? e.message : t("examRoom.submitFailed", lang));
       autoSubmitTriggered.current = false;
     } finally {
       setSubmitting(false);
@@ -85,7 +87,7 @@ export function ExamRoomPage() {
     if (!token || !assignmentId) return;
     const id = parseInt(assignmentId, 10);
     if (Number.isNaN(id)) {
-      setError("Invalid assignment");
+      setError(t("examRoom.invalidAssignment", lang));
       setLoading(false);
       return;
     }
@@ -96,7 +98,7 @@ export function ExamRoomPage() {
         setRemainingMs(Math.max(0, endTime - Date.now()));
       })
       .catch(async (e) => {
-        const msg = e instanceof Error ? e.message : "Failed to start";
+        const msg = e instanceof Error ? e.message : t("examRoom.failedStart", lang);
         setError(msg);
         if (msg.toLowerCase().includes("already submitted")) {
           try {
@@ -155,14 +157,12 @@ export function ExamRoomPage() {
           ).catch(() => {});
         }
       }
-      setViolationMessage(
-        "Bạn vừa thoát toàn màn hình hoặc chuyển tab. Nếu bạn vi phạm 3 lần, hệ thống sẽ tự động nộp bài.",
-      );
+      setViolationMessage(t("examRoom.violationMessage", lang));
       setShowViolationModal(true);
     }
 
     lastOkRef.current = ok;
-  }, [isFullScreen, isVisible, room, examStarted, submitting, token, doSubmit]);
+  }, [isFullScreen, isVisible, room, examStarted, submitting, token, doSubmit, lang]);
 
   const setSingle = (questionId: number, optionId: number) => {
     setAnswers((prev) => ({ ...prev, [questionId]: [optionId] }));
@@ -176,30 +176,30 @@ export function ExamRoomPage() {
     });
   };
 
-  if (loading) return <p className="text-gray-600">Loading exam...</p>;
+  if (loading) return <p className="text-gray-600">{t("examRoom.loading", lang)}</p>;
   if (error && !room) {
     const already = error.toLowerCase().includes("already submitted");
     return (
       <div className="max-w-2xl mx-auto">
         <Card className="border border-slate-100 shadow-sm hover:shadow-sm">
           <div className="text-sm font-semibold text-slate-900">
-            {already ? "Already submitted" : "Unable to start exam"}
+            {already ? t("examRoom.alreadySubmitted", lang) : t("examRoom.unableToStart", lang)}
           </div>
           <div className="mt-2 text-sm text-slate-600">
             {already
-              ? "You have already submitted this exam. You can go back or view your result."
+              ? t("examRoom.alreadySubmittedDesc", lang)
               : error}
           </div>
           <div className="mt-5 flex flex-wrap gap-2">
             <Button type="button" variant="secondary" onClick={() => navigate("/student/assignments")}>
-              Back to assignments
+              {t("examRoom.backToAssignments", lang)}
             </Button>
             {already && alreadySubmittedSubmissionId ? (
               <Button
                 type="button"
                 onClick={() => navigate(`/student/assignments/result/${alreadySubmittedSubmissionId}`)}
               >
-                View result
+                {t("examRoom.viewResult", lang)}
               </Button>
             ) : null}
           </div>
@@ -220,7 +220,7 @@ export function ExamRoomPage() {
         <div>
           <h2 className="text-lg font-semibold text-gray-900">{room.exam_title}</h2>
           <p className="mt-1 text-xs text-gray-500">
-            Please stay in fullscreen and do not switch tabs while taking the exam.
+            {t("examRoom.fullscreenHint", lang)}
           </p>
         </div>
         <div
@@ -237,14 +237,13 @@ export function ExamRoomPage() {
       {showStartOverlay && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded shadow-lg max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold mb-3">Bắt đầu làm bài</h3>
+            <h3 className="text-lg font-semibold mb-3">{t("examRoom.startTitle", lang)}</h3>
             <p className="text-sm text-gray-700 mb-4">
-              Hệ thống sẽ bật chế độ toàn màn hình. Nếu bạn thoát full screen hoặc chuyển tab 3 lần, bài sẽ tự động
-              được nộp.
+              {t("examRoom.startDescription", lang)}
             </p>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="secondary" onClick={() => navigate("/student/assignments")}>
-                Hủy
+                {t("common.cancel", lang)}
               </Button>
               <Button
                 type="button"
@@ -268,7 +267,7 @@ export function ExamRoomPage() {
                   setExamStarted(true);
                 }}
               >
-                Vào full screen và bắt đầu
+                {t("examRoom.enterFullscreen", lang)}
               </Button>
             </div>
           </div>
@@ -296,14 +295,14 @@ export function ExamRoomPage() {
 
         <div className="flex gap-4 pt-4">
           <Button type="submit" disabled={isTimeUp || submitting}>
-            {submitting ? "Submitting..." : "Submit"}
+            {submitting ? t("examRoom.submitting", lang) : t("examRoom.submit", lang)}
           </Button>
           <Button
             type="button"
             variant="secondary"
             onClick={() => navigate("/student/assignments")}
           >
-            Back
+            {t("examRoom.back", lang)}
           </Button>
         </div>
       </form>
@@ -311,7 +310,7 @@ export function ExamRoomPage() {
       {showViolationModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded shadow-lg max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold mb-3">Cảnh báo chống gian lận</h3>
+            <h3 className="text-lg font-semibold mb-3">{t("examRoom.warningTitle", lang)}</h3>
             <p className="text-sm text-gray-800 mb-4">{violationMessage}</p>
             <div className="flex justify-end">
               <Button
@@ -324,7 +323,7 @@ export function ExamRoomPage() {
                   }
                 }}
               >
-                Tôi hiểu
+                {t("examRoom.understand", lang)}
               </Button>
             </div>
           </div>
@@ -355,7 +354,7 @@ function QuestionBlock({
   return (
     <fieldset className="p-4 bg-white rounded shadow" disabled={disabled}>
       <legend className="text-sm font-medium text-gray-700 mb-2">
-        Question {index}: {question.text}
+        {t("examRoom.question", useLanguage()).replace("{{number}}", String(index))}: {question.text}
       </legend>
       <div className="space-y-2">
         {sortedOptions.map((opt) => (

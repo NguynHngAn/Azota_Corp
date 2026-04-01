@@ -3,12 +3,13 @@ import { useAuth } from "@/context/AuthContext";
 import { listMyClasses, type ClassResponse } from "@/services/classes.service";
 import { listMyAssignments, type AssignmentDetail } from "@/services/assignments.service";
 import { StatCard } from "@/components/layouts/StatCard";
-import { Icons } from "@/components/layouts/icons";
+import { Icons } from "@/components/layouts/Icons";
 import { JoinClassPanel } from "@/components/features/student/join-class-panel";
 import { Button } from "@/components/ui/button";
 import { formatDateTimeVietnam } from "@/utils/date";
 import { useNavigate } from "react-router";
 import { Clock, Loader2 } from "lucide-react";
+import { t, useLanguage } from "@/i18n";
 
 function firstName(fullNameOrEmail?: string | null): string {
   const raw = (fullNameOrEmail || "").trim();
@@ -19,7 +20,17 @@ function firstName(fullNameOrEmail?: string | null): string {
 
 export function StudentDashboardPage() {
   const { token, user } = useAuth();
+  const lang = useLanguage();
   const navigate = useNavigate();
+  function tr(key: string, values?: Record<string, string | number>) {
+    const base = t(key as never, lang);
+    if (!values) return base;
+    return Object.entries(values).reduce(
+      (message, [name, value]) => message.replaceAll(`{{${name}}}`, String(value)),
+      base,
+    );
+  }
+
   const [classes, setClasses] = useState<ClassResponse[]>([]);
   const [assignments, setAssignments] = useState<AssignmentDetail[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,31 +77,31 @@ export function StudentDashboardPage() {
     <div className="max-w-5xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">
-          Hello, {firstName(user?.full_name || user?.email)}{" "}
+          {tr("studentDashboard.greeting", { name: firstName(user?.full_name || user?.email) })}{" "}
           <span className="text-foreground">👋</span>
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">Here’s your learning overview.</p>
+        <p className="text-sm text-muted-foreground mt-1">{t("studentDashboard.subtitle", lang)}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
           icon={<Icons.BookOpen className="text-primary" />}
           value={String(stats.classes)}
-          title="My Classes"
+          title={t("nav.myClasses", lang)}
           change="--"
           trend="up"
         />
         <StatCard
           icon={<Icons.CheckCircle className="text-success" />}
           value={String(stats.submissions)}
-          title="Submissions"
+          title={t("teacherDashboard.submissions", lang)}
           change="--"
           trend="up"
         />
         <StatCard
           icon={<Icons.FileText className="text-info" />}
           value={String(stats.upcoming)}
-          title="Upcoming"
+          title={t("studentDashboard.upcoming", lang)}
           change="--"
           trend="up"
         />
@@ -101,7 +112,7 @@ export function StudentDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="glass-card p-5">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="text-sm font-semibold text-foreground mb-4">Upcoming Assignments</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-4">{t("studentDashboard.upcomingAssignments", lang)}</h3>
             <Button
               type="button"
               variant="ghost"
@@ -109,7 +120,7 @@ export function StudentDashboardPage() {
               onClick={() => navigate("/student/assignments")}
               className="text-xs font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50"
             >
-              View all →
+              {t("common.viewAll", lang)} →
             </Button>
           </div>
           <div className="mt-3">
@@ -120,7 +131,7 @@ export function StudentDashboardPage() {
               </div>
             ) : upcomingAssignments.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No upcoming assignments. Check “Assignments” to see all assigned exams.
+                {t("studentDashboard.noUpcomingAssignments", lang)}
               </p>
             ) : (
               <div className="space-y-3">
@@ -162,22 +173,22 @@ export function StudentDashboardPage() {
         </div>
 
         <div className="glass-card p-5">
-            <h3 className="text-sm font-semibold text-foreground mb-4">Recent Results</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-4">{t("studentDashboard.recentResults", lang)}</h3>
             {assignments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No submissions yet.</p>
+              <p className="text-sm text-muted-foreground">{t("studentDashboard.noSubmissions", lang)}</p>
             ) : (
               <div className="space-y-3">
                 {assignments.map((a) => (
                   <div key={a.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/30 transition-colors">
                     <div>
                       <div className="text-sm font-medium text-foreground">{a.exam_title}</div>
-                      <div className="text-xs text-muted-foreground">{a.start_time ? formatDateTimeVietnam(a.start_time) : "In progress"}</div>
+                      <div className="text-xs text-muted-foreground">{a.start_time ? formatDateTimeVietnam(a.start_time) : t("studentDashboard.inProgress", lang)}</div>
                     </div>
                     <div className="text-right">
                       {/* {a.score != null ? (
                         <span className="text-lg font-bold text-primary">100%</span>
                       ) : (
-                        <span className="text-xs text-muted-foreground">Pending</span>
+                        <span className="text-xs text-muted-foreground">{t("myAssignments.upcoming", lang)}</span>
                       )}  */}
                     </div>
                   </div>

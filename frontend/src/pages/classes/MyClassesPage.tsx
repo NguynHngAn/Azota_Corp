@@ -4,9 +4,11 @@ import { useAuth } from "@/context/AuthContext";
 import { listMyClasses, type ClassResponse } from "@/services/classes.service";
 import { Card } from "@/components/ui/card";
 import { JoinClassPanel } from "@/components/features/student/join-class-panel";
+import { t, useLanguage } from "@/i18n";
 
 export function MyClassesPage() {
   const { token } = useAuth();
+  const lang = useLanguage();
   const [classes, setClasses] = useState<ClassResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -15,18 +17,18 @@ export function MyClassesPage() {
     if (!token) return;
     listMyClasses(token)
       .then(setClasses)
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed"))
+      .catch((e) => setError(e instanceof Error ? e.message : t("myClasses.failed", lang)))
       .finally(() => setLoading(false));
   }, [token]);
 
-  if (loading) return <p className="text-muted-foreground">Loading...</p>;
+  if (loading) return <p className="text-muted-foreground">{t("common.loading", lang)}</p>;
   if (error) return <p className="text-destructive">{error}</p>;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">My Classes</h1>
-        <p className="text-sm text-muted-foreground">View your enrolled classes or join a new one.</p>
+        <h1 className="text-2xl font-bold text-foreground">{t("myClasses.title", lang)}</h1>
+        <p className="text-sm text-muted-foreground">{t("myClasses.subtitle", lang)}</p>
       </div>
 
       <JoinClassPanel />
@@ -34,9 +36,9 @@ export function MyClassesPage() {
       {classes.length === 0 ? (
         <Card className="border border-slate-100 shadow-sm hover:shadow-sm">
           <div className="py-14 text-center">
-            <div className="text-sm font-medium text-foreground">You haven’t joined any classes yet.</div>
+            <div className="text-sm font-medium text-foreground">{t("myClasses.empty", lang)}</div>
             <div className="text-sm text-muted-foreground mt-1">
-              Use an invite code above to join one.
+              {t("myClasses.emptyHint", lang)}
             </div>
           </div>
         </Card>
@@ -49,7 +51,7 @@ export function MyClassesPage() {
                 {c.description ? (
                   <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{c.description}</p>
                 ) : (
-                  <p className="mt-1 text-sm text-muted-foreground">No description</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{t("myClasses.noDescription", lang)}</p>
                 )}
               </Link>
             </Card>
