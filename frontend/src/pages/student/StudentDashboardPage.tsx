@@ -125,8 +125,8 @@ export function StudentDashboardPage() {
           <div className="mt-3">
             {loading ? (
               <div className="py-8">
-                <div className="h-10 bg-slate-50 rounded-xl animate-pulse mb-3" />
-                <div className="h-10 bg-slate-50 rounded-xl animate-pulse" />
+                <div className="h-10 bg-muted rounded-xl animate-pulse mb-3" />
+                <div className="h-10 bg-muted rounded-xl animate-pulse" />
               </div>
             ) : upcomingAssignments.length === 0 ? (
               <p className="text-sm text-muted-foreground">
@@ -154,10 +154,10 @@ export function StudentDashboardPage() {
                         type="button"
                         variant="outline"
                         onClick={() => navigate("/student/assignments")}
-                        className="h-auto w-full flex-col items-stretch rounded-xl border-slate-100 bg-white px-4 py-3 text-left font-normal hover:bg-slate-50"
+                        className="h-auto w-full flex-col items-stretch rounded-xl border-muted bg-background px-4 py-3 text-left font-normal hover:bg-muted"
                         >
-                          <div className="text-sm font-medium text-slate-900">{a.exam_title}</div>
-                          <div className="text-xs text-slate-500 mt-1">
+                          <div className="text-sm font-medium text-foreground">{a.exam_title}</div>
+                          <div className="text-xs text-muted-foreground mt-1">
                             {a.class_name} · {formatDateTimeVietnam(a.start_time)}
                           </div>
                         </Button>

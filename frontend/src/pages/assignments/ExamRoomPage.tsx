@@ -218,27 +218,27 @@ export function ExamRoomPage() {
     <div className="max-w-2xl mx-auto relative">
       <Card className="mb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">{room.exam_title}</h2>
-          <p className="mt-1 text-xs text-gray-500">
+          <h2 className="text-lg font-semibold text-foreground">{room.exam_title}</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
             {t("examRoom.fullscreenHint", lang)}
           </p>
         </div>
         <div
           className={`font-mono text-lg px-3 py-1 rounded-md ${
-            remainingMs !== null && remainingMs <= 60 * 1000 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
+            remainingMs !== null && remainingMs <= 60 * 1000 ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"
           }`}
         >
           {remainingMs !== null ? formatCountdown(remainingMs) : "—"}
         </div>
       </Card>
 
-      {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
+      {error && <p className="text-destructive text-sm mb-4">{error}</p>}
 
       {showStartOverlay && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded shadow-lg max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-background/40 flex items-center justify-center z-50">
+          <div className="bg-card rounded shadow-lg max-w-md w-full p-6">
             <h3 className="text-lg font-semibold mb-3">{t("examRoom.startTitle", lang)}</h3>
-            <p className="text-sm text-gray-700 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               {t("examRoom.startDescription", lang)}
             </p>
             <div className="flex justify-end gap-2">
@@ -308,10 +308,10 @@ export function ExamRoomPage() {
       </form>
 
       {showViolationModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded shadow-lg max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-background/40 flex items-center justify-center z-50">
+          <div className="bg-card rounded shadow-lg max-w-md w-full p-6">
             <h3 className="text-lg font-semibold mb-3">{t("examRoom.warningTitle", lang)}</h3>
-            <p className="text-sm text-gray-800 mb-4">{violationMessage}</p>
+            <p className="text-sm text-muted-foreground mb-4">{violationMessage}</p>
             <div className="flex justify-end">
               <Button
                 type="button"
@@ -352,8 +352,8 @@ function QuestionBlock({
   const sortedOptions = [...question.options].sort((a, b) => a.order_index - b.order_index);
 
   return (
-    <fieldset className="p-4 bg-white rounded shadow" disabled={disabled}>
-      <legend className="text-sm font-medium text-gray-700 mb-2">
+    <fieldset className="p-4 bg-card rounded shadow" disabled={disabled}>
+      <legend className="text-sm font-medium text-muted-foreground mb-2">
         {t("examRoom.question", useLanguage()).replace("{{number}}", String(index))}: {question.text}
       </legend>
       <div className="space-y-2">
@@ -375,7 +375,7 @@ function QuestionBlock({
                 className="mt-1"
               />
             )}
-            <span className="text-gray-800">{opt.text}</span>
+            <span className="text-muted-foreground">{opt.text}</span>
           </label>
         ))}
       </div>
