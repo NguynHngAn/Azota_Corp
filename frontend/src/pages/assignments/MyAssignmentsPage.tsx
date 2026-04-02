@@ -3,7 +3,6 @@ import { Link } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { listMyAssignments, type AssignmentDetail } from "@/services/assignments.service";
 import { formatDateTimeVietnam } from "@/utils/date";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { t, useLanguage } from "@/i18n";
@@ -32,8 +31,8 @@ export function MyAssignmentsPage() {
       .finally(() => setLoading(false));
   }, [token]);
 
-  if (loading) return <p className="text-gray-600">{t("common.loading", lang)}</p>;
-  if (error) return <p className="text-red-600">{error}</p>;
+  if (loading) return <p className="text-muted-foreground">{t("common.loading", lang)}</p>;
+  if (error) return <p className="text-destructive">{error}</p>;
 
   return (
     <div className="space-y-4">
@@ -52,10 +51,10 @@ export function MyAssignmentsPage() {
           {assignments.map((a) => {
             const status = getStatus(a);
             return (
-              <Card key={a.id} className="flex items-center justify-between gap-4">
+              <div key={a.id} className="rounded-lg border bg-card text-card-foreground shadow-sm hover:shadow-sm p-4 flex items-center justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex justify-between items-start gap-2">
-                    <span className="font-medium text-gray-900">{a.exam_title}</span>
+                    <span className="font-medium text-foreground">{a.exam_title}</span>
                     <Badge variant={status.variant}>
                       {status.label === "upcoming"
                         ? t("myAssignments.upcoming", lang)
@@ -64,20 +63,20 @@ export function MyAssignmentsPage() {
                           : t("myAssignments.closed", lang)}
                     </Badge>
                   </div>
-                  <span className="text-gray-500 text-sm">· {a.class_name}</span>
-                  <div className="text-sm text-gray-600 mt-1">
+                  <span className="text-muted-foreground text-sm">· {a.class_name}</span>
+                  <div className="text-sm text-muted-foreground mt-1">
                     {formatDateTimeVietnam(a.start_time)} – {formatDateTimeVietnam(a.end_time)} ·{" "}
                     {a.duration_minutes} min
                   </div>
                 </div>
                 {status.label === "open" && (
-                  <Button>
-                    <Link to={`/student/assignments/${a.id}/exam`} className="text-white">
+                  <Button asChild>
+                    <Link to={`/student/assignments/${a.id}/exam`}>
                       {t("myAssignments.enterExam", lang)}
                     </Link>
                   </Button>
                 )}
-              </Card>
+              </div>
             );
           })}
         </div>

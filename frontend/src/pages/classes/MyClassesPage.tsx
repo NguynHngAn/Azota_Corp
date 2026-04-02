@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { listMyClasses, type ClassResponse } from "@/services/classes.service";
-import { Card } from "@/components/ui/card";
 import { JoinClassPanel } from "@/components/features/student/join-class-panel";
 import { t, useLanguage } from "@/i18n";
+import { Icons } from "@/components/layouts/Icons";
 
 export function MyClassesPage() {
   const { token } = useAuth();
@@ -34,27 +34,29 @@ export function MyClassesPage() {
       <JoinClassPanel />
 
       {classes.length === 0 ? (
-        <Card className="border border-slate-100 shadow-sm hover:shadow-sm">
+        <div className="rounded-lg border bg-card text-card-foreground shadow-sm hover:shadow-sm">
           <div className="py-14 text-center">
             <div className="text-sm font-medium text-foreground">{t("myClasses.empty", lang)}</div>
             <div className="text-sm text-muted-foreground mt-1">
               {t("myClasses.emptyHint", lang)}
             </div>
           </div>
-        </Card>
+        </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {classes.map((c) => (
-            <Card key={c.id} className="hover:shadow-md transition-shadow">
-              <Link to={`/student/classes/${c.id}`} className="block">
-                <h3 className="text-sm font-semibold text-foreground">{c.name}</h3>
+            <div key={c.id} className="rounded-lg border bg-card text-card-foreground shadow-sm hover:shadow-sm p-4">
+              <Link to={`/student/classes/${c.id}`} className="block text-foreground hover:text-primary">
+                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                  <Icons.Backpack className="size-4" /> {c.name}
+                </h3>
                 {c.description ? (
-                  <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{c.description}</p>
+                  <p className="mt-1 text-base text-muted-foreground line-clamp-2 flex items-center gap-2"><Icons.BookOpen className="size-3" /> {c.description}</p>
                 ) : (
-                  <p className="mt-1 text-sm text-muted-foreground">{t("myClasses.noDescription", lang)}</p>
+                  <p className="mt-1 text-base text-muted-foreground flex items-center gap-2"><Icons.BookOpen className="size-3" /> {t("myClasses.noDescription", lang)}</p>
                 )}
               </Link>
-            </Card>
+            </div>
           ))}
         </div>
       )}

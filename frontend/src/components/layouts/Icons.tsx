@@ -42,8 +42,12 @@ import {
    Minimize2,
    RefreshCw,
    AlertTriangle,
+   Calendar,
+   Backpack,
   } from "lucide-react";
 export const Icons = {
+  Backpack: Backpack,
+  Calendar: Calendar,
   AlertTriangle: AlertTriangle,
   RefreshCw: RefreshCw,
   Maximize2: Maximize2,

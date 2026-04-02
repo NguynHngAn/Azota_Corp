@@ -86,8 +86,8 @@ export function JoinClassPanel({
         <div
           className={`mt-3 text-sm rounded-xl px-3 py-2.5 border max-w-xs ${
             notice.kind === "error"
-              ? "text-rose-700 bg-rose-50 border-rose-100"
-              : "text-emerald-800 bg-emerald-50 border-emerald-100"
+              ? "text-destructive bg-destructive/10 border-destructive/20"
+              : "text-success bg-success/10 border-success/20"
           }`}
         >
           {notice.message}

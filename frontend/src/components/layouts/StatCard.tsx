@@ -7,14 +7,13 @@ interface StatCardProps {
   change: string;
   trend: "up" | "down";
   icon: ReactNode;
-  className?: string;
 }
 
-export function StatCard({ title, value, change, trend, icon, className }: StatCardProps) {
+export function StatCard({ title, value, change, trend, icon }: StatCardProps) {
   return (
     <div className="stat-card animate-in">
-      <div className={`flex items-start justify-between mb-4 ${className}`}>
-        <div className={`size-10 rounded-lg bg-primary/10 flex items-center justify-center ${className}`}>
+      <div className="flex items-start justify-between mb-4">
+        <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
           {icon}
         </div>
         <div
@@ -23,9 +22,9 @@ export function StatCard({ title, value, change, trend, icon, className }: StatC
           }`}
         >
           {trend === "up" ? (
-            <Icons.TrendingUp className="w-3 h-3" />
+            <Icons.TrendingUp className="size-3" />
           ) : (
-            <Icons.TrendingDown className="w-3 h-3" />
+            <Icons.TrendingDown className="size-3" />
           )}
           {change}
         </div>

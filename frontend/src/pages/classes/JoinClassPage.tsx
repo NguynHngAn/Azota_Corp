@@ -58,7 +58,7 @@ export function JoinClassPage() {
               required
             />
           </div>
-          {error && <p className="text-red-600 text-sm">{error}</p>}
+          {error && <p className="text-destructive text-sm">{error}</p>}
           <Button type="submit" disabled={submitting}>
             {submitting ? t("joinClass.joining", lang) : t("joinClassPage.join", lang)}
           </Button>

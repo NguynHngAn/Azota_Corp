@@ -164,15 +164,15 @@ export function ClassDetailPage() {
   return (
     <div className="space-y-4">
       <div>
-        <Link to={`${base}/classes`} className="text-sm text-primary hover:underline">
-          ← {t("classDetail.backToClasses", lang)}
+        <Link to={`${base}/classes`} className="text-sm text-primary hover:underline flex items-center gap-2">
+          <Icons.ArrowLeft className="size-4" /> {t("classDetail.backToClasses", lang)}
         </Link>
       </div>
 
       <div className="glass-card p-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-foreground">{cls.name}</h2>
+            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2"><Icons.Backpack className="size-4" /> {cls.name}</h2>
             {cls.description && <p className="mt-1 text-sm text-muted-foreground">{cls.description}</p>}
             <p className="mt-1 text-xs text-muted-foreground">{tr("classDetail.membersCount", { count: cls.member_count })}</p>
           </div>

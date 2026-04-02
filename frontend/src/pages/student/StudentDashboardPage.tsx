@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { listMyClasses, type ClassResponse } from "@/services/classes.service";
 import { listMyAssignments, type AssignmentDetail } from "@/services/assignments.service";
-import { StatCard } from "@/components/layouts/StatCard";
 import { Icons } from "@/components/layouts/Icons";
 import { JoinClassPanel } from "@/components/features/student/join-class-panel";
 import { Button } from "@/components/ui/button";
@@ -84,27 +83,27 @@ export function StudentDashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard
-          icon={<Icons.BookOpen className="text-primary" />}
-          value={String(stats.classes)}
-          title={t("nav.myClasses", lang)}
-          change="--"
-          trend="up"
-        />
-        <StatCard
-          icon={<Icons.CheckCircle className="text-success" />}
-          value={String(stats.submissions)}
-          title={t("teacherDashboard.submissions", lang)}
-          change="--"
-          trend="up"
-        />
-        <StatCard
-          icon={<Icons.FileText className="text-info" />}
-          value={String(stats.upcoming)}
-          title={t("studentDashboard.upcoming", lang)}
-          change="--"
-          trend="up"
-        />
+        <div className="rounded-lg border bg-card text-card-foreground shadow-sm hover:shadow-sm p-5 flex items-center gap-4">
+          <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center"><Icons.BookOpen className="size-5 text-primary" /></div>
+          <div>
+            <div className="text-2xl font-bold text-foreground">{stats.classes}</div>
+            <div className="text-sm text-muted-foreground">{t("nav.myClasses", lang)}</div>
+          </div>
+        </div>
+        <div className="rounded-lg border bg-card text-card-foreground shadow-sm hover:shadow-sm p-5 flex items-center gap-4">
+          <div className="size-10 rounded-lg bg-success/10 flex items-center justify-center"><Icons.CheckCircle className="size-5 text-success" /></div>
+          <div>
+            <div className="text-2xl font-bold text-foreground">{stats.submissions}</div>
+            <div className="text-sm text-muted-foreground">{t("teacherDashboard.submissions", lang)}</div>
+          </div>
+        </div>
+        <div className="rounded-lg border bg-card text-card-foreground shadow-sm hover:shadow-sm p-5 flex items-center gap-4">
+          <div className="size-10 rounded-lg bg-info/10 flex items-center justify-center"><Icons.FileText className="size-5 text-info" /></div>
+          <div>
+            <div className="text-2xl font-bold text-foreground">{stats.upcoming}</div>
+            <div className="text-sm text-muted-foreground">{t("studentDashboard.upcoming", lang)}</div>
+          </div>
+        </div>
       </div>
 
       <JoinClassPanel compact />
@@ -118,7 +117,7 @@ export function StudentDashboardPage() {
               variant="ghost"
               size="sm"
               onClick={() => navigate("/student/assignments")}
-              className="text-xs font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+              className="text-xs font-medium text-muted-foreground hover:text-primary hover:bg-secondary"
             >
               {t("common.viewAll", lang)} →
             </Button>

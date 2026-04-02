@@ -117,28 +117,28 @@ export function AdminDashboardPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          icon={<Icons.Users className="text-primary" />}
+          icon={<Icons.Users className="size-5" />}
           value={String(stats.total)}
           title={t("adminDashboard.totalUsers", lang)}
           change="--"
           trend="up"
         />
-        <StatCard
-          icon={<Icons.Bell className="text-violet-700" />}
+        <StatCard 
+          icon={<Icons.GraduationCap className="size-5" />}
           value={String(stats.teachers)}
           title={t("role.teacher", lang)}
           change="--"
           trend="up"
         />
         <StatCard
-          icon={<Icons.Users className="text-success" />}
+          icon={<Icons.Users className="size-5" />}
           value={String(stats.students)}
           title={t("role.student", lang)}
           change="--"
           trend="up"
         />
         <StatCard
-          icon={<Icons.FileText className="text-info" />}
+          icon={<Icons.FileText className="size-5" />}
           value="—"
           title={t("adminDashboard.totalExams", lang)}
           change="--"

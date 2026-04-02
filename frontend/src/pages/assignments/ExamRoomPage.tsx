@@ -176,16 +176,16 @@ export function ExamRoomPage() {
     });
   };
 
-  if (loading) return <p className="text-gray-600">{t("examRoom.loading", lang)}</p>;
+  if (loading) return <p className="text-muted-foreground">{t("examRoom.loading", lang)}</p>;
   if (error && !room) {
     const already = error.toLowerCase().includes("already submitted");
     return (
-      <div className="max-w-2xl mx-auto">
-        <Card className="border border-slate-100 shadow-sm hover:shadow-sm">
-          <div className="text-sm font-semibold text-slate-900">
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div className="rounded-lg border bg-card text-card-foreground shadow-sm hover:shadow-sm p-4">
+          <div className="text-lg font-semibold text-foreground">
             {already ? t("examRoom.alreadySubmitted", lang) : t("examRoom.unableToStart", lang)}
           </div>
-          <div className="mt-2 text-sm text-slate-600">
+          <div className="mt-2 text-base text-muted-foreground">
             {already
               ? t("examRoom.alreadySubmittedDesc", lang)
               : error}
@@ -203,7 +203,7 @@ export function ExamRoomPage() {
               </Button>
             ) : null}
           </div>
-        </Card>
+        </div>
       </div>
     );
   }

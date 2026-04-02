@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { getClass, type ClassDetail } from "@/services/classes.service";
 import { t, useLanguage } from "@/i18n";
+import { Icons } from "@/components/layouts/Icons";
 
 export function StudentClassDetailPage() {
   const { token } = useAuth();
@@ -28,11 +29,11 @@ export function StudentClassDetailPage() {
   return (
     <div>
       <div className="mb-4">
-        <Link to="/student/classes" className="text-primary hover:underline">
-          ← {t("studentClass.back", lang)}
+        <Link to="/student/classes" className="text-primary hover:underline flex items-center gap-2">
+          <Icons.ArrowLeft className="size-4" /> {t("studentClass.back", lang)}
         </Link>
       </div>
-      <h2 className="text-lg font-semibold text-foreground">{cls.name}</h2>
+      <h2 className="text-lg font-semibold text-foreground flex items-center gap-2"><Icons.Backpack className="size-4" /> {cls.name}</h2>
       {cls.description && <p className="text-muted-foreground mt-1">{cls.description}</p>}
       <p className="text-sm text-muted-foreground mt-2">{t("studentClass.teacher", lang)}: {cls.creator?.full_name ?? "—"}</p>
     </div>
