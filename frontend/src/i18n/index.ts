@@ -48,6 +48,7 @@ export type I18nKey =
   | "common.actions"
   | "common.type"
   | "common.status"
+  | "common.search"
   | "common.searchByNameOrEmail"
   | "common.avatarAlt"
   | "common.notifications"
@@ -746,6 +747,7 @@ const dict: Record<LanguageCode, Record<I18nKey, string>> = {
     "common.actions": "Actions",
     "common.type": "Type",
     "common.status": "Status",
+    "common.search": "Search",
     "common.searchByNameOrEmail": "Search by name or email...",
     "common.avatarAlt": "Avatar",
     "common.notifications": "Notifications",
@@ -1444,6 +1446,7 @@ const dict: Record<LanguageCode, Record<I18nKey, string>> = {
     "common.actions": "Thao tác",
     "common.type": "Loại",
     "common.status": "Trạng thái",
+    "common.search": "Tìm kiếm",
     "common.searchByNameOrEmail": "Tìm theo tên hoặc email...",
     "common.avatarAlt": "Ảnh đại diện",
     "common.notifications": "Thông báo",

@@ -146,12 +146,12 @@ export function ClassDetailPage() {
     }
   }
 
-  async function handleRemoveTeacherConfirmed(t: UserResponse) {
+  async function handleRemoveTeacherConfirmed(teacher: UserResponse) {
     if (!token || !cls) return;
     setTeacherNotice("");
     try {
-      await removeClassTeacher(cls.id, t.id, token);
-      setClassTeachers((prev) => prev.filter((x) => x.id !== t.id));
+      await removeClassTeacher(cls.id, teacher.id, token);
+      setClassTeachers((prev) => prev.filter((x) => x.id !== teacher.id));
       setTeacherNotice(t("classDetail.removeTeacherSuccess", lang));
     } catch (e) {
       setTeacherNotice(e instanceof Error ? e.message : t("classDetail.removeTeacherFailed", lang));
