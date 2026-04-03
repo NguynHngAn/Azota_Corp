@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -110,6 +110,12 @@ def submit_submission(
     if submission.submitted_at:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Already submitted")
     assignment = submission.assignment
+    now = datetime.now(timezone.utc)
+    if now > assignment.end_time:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Assignment window ended")
+    submit_deadline = submission.started_at + timedelta(minutes=assignment.duration_minutes)
+    if now > submit_deadline:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Time limit exceeded")
     exam_question_ids = {q.id for q in assignment.exam.questions}
     for item in body.answers:
         if item.question_id not in exam_question_ids:
@@ -407,6 +413,11 @@ def start_assignment(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found")
     if not is_in_class(db, assignment.class_id, current_user.id):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not in this class")
+    now = datetime.now(timezone.utc)
+    if now < assignment.start_time:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Assignment not started yet")
+    if now > assignment.end_time:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Assignment window ended")
     submission = db.query(Submission).filter(
         Submission.assignment_id == assignment_id,
         Submission.user_id == current_user.id,
