@@ -13,45 +13,45 @@ export function ProfilePage() {
     <div className="space-y-6">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
-          <div className="h-14 w-14 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-xl font-semibold">
+          <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xl font-semibold">
             {displayName.charAt(0).toUpperCase()}
           </div>
           <div>
-            <p className="text-xs font-medium text-indigo-600 uppercase tracking-wide">{t("profile.account", lang)}</p>
-            <h1 className="text-xl md:text-2xl font-semibold text-slate-900">
+            <p className="text-xs font-medium text-primary uppercase tracking-wide">{t("profile.account", lang)}</p>
+            <h1 className="text-xl md:text-2xl font-semibold text-foreground">
               {t("profile.hello", lang).replace("{{name}}", displayName || t("common.user", lang))}
             </h1>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               {t("profile.welcome", lang)}
             </p>
           </div>
         </div>
-        <div className="text-sm text-slate-500">
-          <span className="font-medium text-slate-700">{user?.email}</span>
+        <div className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">{user?.email}</span>
         </div>
       </header>
 
       <Card>
-        <h2 className="text-base font-semibold text-slate-900 mb-1">{t("profile.infoTitle", lang)}</h2>
-        <p className="text-sm text-slate-500 mb-4">
+        <h2 className="text-base font-semibold text-foreground mb-1">{t("profile.infoTitle", lang)}</h2>
+        <p className="text-sm text-muted-foreground mb-4">
           {t("profile.infoSubtitle", lang)}
         </p>
 
         <div className="space-y-4">
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-700">{t("common.email", lang)}</label>
+            <label className="block text-sm font-medium text-foreground">{t("common.email", lang)}</label>
             <Input value={user?.email ?? ""} disabled />
           </div>
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-700">{t("profile.displayName", lang)}</label>
+            <label className="block text-sm font-medium text-foreground">{t("profile.displayName", lang)}</label>
             <Input value={user?.full_name ?? ""} disabled />
           </div>
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-700">{t("common.role", lang)}</label>
+            <label className="block text-sm font-medium text-foreground">{t("common.role", lang)}</label>
             <Input value={user?.role ?? ""} disabled />
           </div>
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-700">{t("profile.createdAt", lang)}</label>
+            <label className="block text-sm font-medium text-foreground">{t("profile.createdAt", lang)}</label>
             <Input value={user?.created_at ?? ""} disabled />
           </div>
         </div>

@@ -28,6 +28,11 @@ class AssignmentDetail(AssignmentResponse):
     class_name: str = ""
 
 
+class SubmissionAnswerPayload(BaseModel):
+    question_id: int = Field(..., gt=0)
+    chosen_option_ids: list[int] = Field(..., min_length=0)
+
+
 class SubmissionStartResponse(BaseModel):
     submission_id: int
     assignment_id: int
@@ -35,15 +40,15 @@ class SubmissionStartResponse(BaseModel):
     duration_minutes: int
     exam_title: str
     questions: list[dict]
-
-
-class SubmissionAnswerPayload(BaseModel):
-    question_id: int = Field(..., gt=0)
-    chosen_option_ids: list[int] = Field(..., min_length=0)
+    saved_answers: list[SubmissionAnswerPayload] = Field(default_factory=list)
 
 
 class SubmitPayload(BaseModel):
     answers: list[SubmissionAnswerPayload]
+
+
+class AutosaveAnswersResponse(BaseModel):
+    saved: bool = True
 
 
 class SubmissionResponse(BaseModel):

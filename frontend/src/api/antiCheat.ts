@@ -2,10 +2,16 @@ import { get, post } from "@/api/client";
 
 export type AntiCheatEventType =
   | "EXAM_START"
+  | "EXAM_SUBMIT"
   | "FULLSCREEN_EXIT"
   | "TAB_HIDDEN"
   | "WINDOW_BLUR"
-  | "EXAM_SUBMIT";
+  | "COPY_ATTEMPT"
+  | "CUT_ATTEMPT"
+  | "PASTE_ATTEMPT"
+  | "CONTEXT_MENU"
+  | "TEXT_SELECTION"
+  | "DEVTOOLS_DETECTED";
 
 export interface AntiCheatEventCreate {
   assignment_id: number;

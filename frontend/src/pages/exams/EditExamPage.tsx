@@ -202,19 +202,19 @@ export function EditExamPage() {
     });
   }
 
-  if (loading) return <p className="text-gray-600">{t("editExam.loading", lang)}</p>;
-  if (error && !state) return <p className="text-red-600">{error}</p>;
+  if (loading) return <p className="text-muted-foreground">{t("editExam.loading", lang)}</p>;
+  if (error && !state) return <p className="text-destructive">{error}</p>;
   if (!state) return null;
 
   return (
     <div>
       <div className="mb-4">
-        <Link to="/teacher/exams" className="text-blue-600 hover:underline">
+        <Link to="/teacher/exams" className="text-primary hover:underline">
           ← {t("editExam.back", lang)}
         </Link>
       </div>
       <h2 className="text-lg font-semibold mb-4">{t("editExam.title", lang)}</h2>
-      {error && <p className="mb-2 text-red-600 text-sm">{error}</p>}
+      {error && <p className="mb-2 text-destructive text-sm">{error}</p>}
       <ExamEditorForm
         state={state}
         setState={setState as React.Dispatch<React.SetStateAction<ExamFormState>>}
@@ -229,12 +229,12 @@ export function EditExamPage() {
       />
 
       {bankOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-glass">
           <div className="bg-card text-foreground rounded-2xl shadow-lg w-full max-w-3xl p-5 border border-border">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold">{t("editExam.bankTitle", lang)}</div>
-                <div className="text-xs text-slate-500 mt-1">{t("editExam.bankSubtitle", lang)}</div>
+                <div className="text-xs text-muted-foreground mt-1">{t("editExam.bankSubtitle", lang)}</div>
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="secondary" onClick={() => setBankOpen(false)} disabled={bankLoading}>
@@ -262,17 +262,17 @@ export function EditExamPage() {
               </Button>
             </div>
 
-            {bankError ? <div className="mt-3 text-sm text-rose-700">{bankError}</div> : null}
+            {bankError ? <div className="mt-3 text-sm text-destructive">{bankError}</div> : null}
 
             <Card className="mt-4 border border-border shadow-sm hover:shadow-sm">
               {bankLoading ? (
                 <div className="space-y-3">
-                  <div className="h-10 w-full rounded-xl bg-slate-50 animate-pulse" />
-                  <div className="h-10 w-full rounded-xl bg-slate-50 animate-pulse" />
-                  <div className="h-10 w-full rounded-xl bg-slate-50 animate-pulse" />
+                  <div className="h-10 w-full rounded-xl bg-muted animate-pulse" />
+                  <div className="h-10 w-full rounded-xl bg-muted animate-pulse" />
+                  <div className="h-10 w-full rounded-xl bg-muted   animate-pulse" />
                 </div>
               ) : bankItems.length === 0 ? (
-                <div className="py-10 text-center text-sm text-slate-500">{t("editExam.noQuestions", lang)}</div>
+                <div className="py-10 text-center text-sm text-muted-foreground">{t("editExam.noQuestions", lang)}</div>
               ) : (
                 <div>
                   <Table>
@@ -303,12 +303,12 @@ export function EditExamPage() {
                               />
                             </TableCell>
                             <TableCell className="max-w-[520px]">
-                              <div className="font-medium text-slate-900 line-clamp-2">{it.text}</div>
+                              <div className="font-medium text-foreground line-clamp-2">{it.text}</div>
                             </TableCell>
-                            <TableCell className="text-slate-700">
+                            <TableCell className="text-muted-foreground">
                               {it.question_type === "single_choice" ? t("questionBank.singleChoice", lang) : t("questionBank.multipleChoice", lang)}
                             </TableCell>
-                            <TableCell className="text-slate-700">{it.difficulty}</TableCell>
+                            <TableCell className="text-muted-foreground">{it.difficulty}</TableCell>
                           </TableRow>
                         );
                       })}

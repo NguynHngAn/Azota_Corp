@@ -281,9 +281,9 @@ export function ExamEditorForm({
                             </div>
                           ))}
                         </div>
-                        <div className="mt-3">
+                        <div className="mt-3 text-right">
                           <Button size="sm" variant="ghost" type="button" onClick={() => addOption(qIndex)}>
-                            + {t("examEditor.addOption", lang)}
+                            <Icons.Plus className="size-4" /> {t("examEditor.addOption", lang)}
                           </Button>
                         </div>
                       </div>
@@ -343,7 +343,7 @@ export function ExamEditorForm({
                 onClick={() => setStep((s) => (s === 3 ? 3 : ((s + 1) as Step)))}
                 disabled={step === 1 && !canNextFromBasic}
               >
-                {t("examEditor.next", lang)} →
+                {t("examEditor.next", lang)} <Icons.ArrowRight className="size-4" />
               </Button>
             ) : (
               <Button type="button" onClick={onSave} disabled={saving}>

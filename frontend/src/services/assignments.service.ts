@@ -5,6 +5,7 @@ export const listAssignments = assignmentsApi.listAssignments;
 export const listMyAssignments = assignmentsApi.listMyAssignments;
 export const startAssignment = assignmentsApi.startAssignment;
 export const submitSubmission = assignmentsApi.submitSubmission;
+export const saveSubmissionAnswers = assignmentsApi.saveSubmissionAnswers;
 export const getSubmissionResult = assignmentsApi.getSubmissionResult;
 export const listMySubmissions = assignmentsApi.listMySubmissions;
 export const getMySubmissionForAssignment = assignmentsApi.getMySubmissionForAssignment;

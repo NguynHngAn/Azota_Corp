@@ -5,6 +5,7 @@ import { useExam } from "@/context";
 import {
   startAssignment,
   submitSubmission,
+  saveSubmissionAnswers,
   getMySubmissionForAssignment,
   type ExamRoomQuestion,
   type SubmissionStartResponse,
@@ -15,6 +16,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { logAntiCheatEvent } from "@/services/antiCheat.service";
 import { t, useLanguage } from "@/i18n";
+
+const AUTOSAVE_DEBOUNCE_MS = 750;
+const AUTOSAVE_INTERVAL_MS = 12000;
 
 function formatCountdown(ms: number): string {
   if (ms <= 0) return "0:00";
@@ -47,9 +51,37 @@ export function ExamRoomPage() {
   const [showViolationModal, setShowViolationModal] = useState(false);
   const lastOkRef = useRef<boolean>(true);
   const lastViolationAtRef = useRef<number>(0);
+  const lastTextSelectionLogAt = useRef(0);
+  const lastDevtoolsLogAt = useRef(0);
+  const autosaveDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const answersRef = useRef(answers);
   answersRef.current = answers;
+
+  const flushAutosave = useCallback(async () => {
+    if (!room || !token || !examStarted || submitting || autoSubmitTriggered.current) return;
+    const currentAnswers = answersRef.current;
+    const payload = {
+      answers: room.questions.map((q: ExamRoomQuestion) => ({
+        question_id: q.id,
+        chosen_option_ids: currentAnswers[q.id] ?? [],
+      })),
+    };
+    try {
+      await saveSubmissionAnswers(room.submission_id, payload, token);
+    } catch {
+      // best-effort; avoid blocking the exam UI
+    }
+  }, [room, token, examStarted, submitting]);
+
+  const scheduleAutosave = useCallback(() => {
+    if (!room || !examStarted || submitting || autoSubmitTriggered.current) return;
+    if (autosaveDebounceRef.current) clearTimeout(autosaveDebounceRef.current);
+    autosaveDebounceRef.current = setTimeout(() => {
+      autosaveDebounceRef.current = null;
+      void flushAutosave();
+    }, AUTOSAVE_DEBOUNCE_MS);
+  }, [room, examStarted, submitting, flushAutosave]);
 
   const doSubmit = useCallback(async () => {
     if (!room || !token || autoSubmitTriggered.current) return;
@@ -57,7 +89,7 @@ export function ExamRoomPage() {
     setSubmitting(true);
     const currentAnswers = answersRef.current;
     const payload = {
-      answers: room.questions.map((q) => ({
+      answers: room.questions.map((q: ExamRoomQuestion) => ({
         question_id: q.id,
         chosen_option_ids: currentAnswers[q.id] ?? [],
       })),
@@ -94,6 +126,12 @@ export function ExamRoomPage() {
     startAssignment(id, token)
       .then((data) => {
         setRoom(data);
+        const initial: Record<number, number[]> = {};
+        for (const row of data.saved_answers ?? []) {
+          initial[row.question_id] = [...row.chosen_option_ids];
+        }
+        setAnswers(initial);
+        answersRef.current = initial;
         const endTime = new Date(data.started_at).getTime() + data.duration_minutes * 60 * 1000;
         setRemainingMs(Math.max(0, endTime - Date.now()));
       })
@@ -126,6 +164,116 @@ export function ExamRoomPage() {
     }, 1000);
     return () => clearInterval(t);
   }, [remainingMs, room, doSubmit]);
+
+  useEffect(() => {
+    return () => {
+      if (autosaveDebounceRef.current) clearTimeout(autosaveDebounceRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!room || !token || !examStarted || submitting) return;
+    const intervalId = window.setInterval(() => {
+      void flushAutosave();
+    }, AUTOSAVE_INTERVAL_MS);
+    return () => clearInterval(intervalId);
+  }, [room, token, examStarted, submitting, flushAutosave]);
+
+  useEffect(() => {
+    if (!room || !token || !examStarted || submitting) return;
+    const base = { assignment_id: room.assignment_id, submission_id: room.submission_id };
+    const log = (event_type: string, meta?: Record<string, unknown>) => {
+      void logAntiCheatEvent({ ...base, event_type, meta }, token).catch(() => {});
+    };
+    const block = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    const onCopy = (e: ClipboardEvent) => {
+      block(e);
+      log("COPY_ATTEMPT");
+    };
+    const onCut = (e: ClipboardEvent) => {
+      block(e);
+      log("CUT_ATTEMPT");
+    };
+    const onPaste = (e: ClipboardEvent) => {
+      block(e);
+      log("PASTE_ATTEMPT");
+    };
+    const onContextMenu = (e: MouseEvent) => {
+      block(e);
+      log("CONTEXT_MENU", { clientX: e.clientX, clientY: e.clientY });
+    };
+    document.addEventListener("copy", onCopy, true);
+    document.addEventListener("cut", onCut, true);
+    document.addEventListener("paste", onPaste, true);
+    document.addEventListener("contextmenu", onContextMenu, true);
+    return () => {
+      document.removeEventListener("copy", onCopy, true);
+      document.removeEventListener("cut", onCut, true);
+      document.removeEventListener("paste", onPaste, true);
+      document.removeEventListener("contextmenu", onContextMenu, true);
+    };
+  }, [room, token, examStarted, submitting]);
+
+  useEffect(() => {
+    if (!room || !token || !examStarted || submitting) return;
+    const base = { assignment_id: room.assignment_id, submission_id: room.submission_id };
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const TEXT_SELECTION_DEBOUNCE_MS = 650;
+    const TEXT_SELECTION_LOG_COOLDOWN_MS = 4000;
+    const MIN_SELECTION_LEN = 3;
+
+    const flush = () => {
+      timer = null;
+      const text = window.getSelection()?.toString().trim() ?? "";
+      if (text.length < MIN_SELECTION_LEN) return;
+      const now = Date.now();
+      if (now - lastTextSelectionLogAt.current < TEXT_SELECTION_LOG_COOLDOWN_MS) return;
+      lastTextSelectionLogAt.current = now;
+      void logAntiCheatEvent(
+        { ...base, event_type: "TEXT_SELECTION", meta: { length: text.length } },
+        token,
+      ).catch(() => {});
+    };
+    const schedule = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(flush, TEXT_SELECTION_DEBOUNCE_MS);
+    };
+    document.addEventListener("mouseup", schedule);
+    document.addEventListener("keyup", schedule);
+    return () => {
+      if (timer) clearTimeout(timer);
+      document.removeEventListener("mouseup", schedule);
+      document.removeEventListener("keyup", schedule);
+    };
+  }, [room, token, examStarted, submitting]);
+
+  useEffect(() => {
+    if (!room || !token || !examStarted || submitting) return;
+    const THRESH_PX = 120;
+    const COOLDOWN_MS = 25000;
+    const iv = window.setInterval(() => {
+      if (autoSubmitTriggered.current) return;
+      const w = window.outerWidth - window.innerWidth;
+      const h = window.outerHeight - window.innerHeight;
+      if (w < THRESH_PX && h < THRESH_PX) return;
+      const now = Date.now();
+      if (now - lastDevtoolsLogAt.current < COOLDOWN_MS) return;
+      lastDevtoolsLogAt.current = now;
+      void logAntiCheatEvent(
+        {
+          assignment_id: room.assignment_id,
+          submission_id: room.submission_id,
+          event_type: "DEVTOOLS_DETECTED",
+          meta: { diffOuterInnerW: w, diffOuterInnerH: h },
+        },
+        token,
+      ).catch(() => {});
+    }, 2000);
+    return () => clearInterval(iv);
+  }, [room, token, examStarted, submitting]);
 
   // Track fullscreen/tab visibility violations after exam started
   useEffect(() => {
@@ -165,15 +313,24 @@ export function ExamRoomPage() {
   }, [isFullScreen, isVisible, room, examStarted, submitting, token, doSubmit, lang]);
 
   const setSingle = (questionId: number, optionId: number) => {
-    setAnswers((prev) => ({ ...prev, [questionId]: [optionId] }));
+    setAnswers((prev) => {
+      const next = { ...prev, [questionId]: [optionId] };
+      answersRef.current = next;
+      return next;
+    });
+    scheduleAutosave();
   };
 
   const setMultiple = (questionId: number, optionId: number, checked: boolean) => {
     setAnswers((prev) => {
       const current = prev[questionId] ?? [];
-      if (checked) return { ...prev, [questionId]: [...current, optionId] };
-      return { ...prev, [questionId]: current.filter((id) => id !== optionId) };
+      const next = checked
+        ? { ...prev, [questionId]: [...current, optionId] }
+        : { ...prev, [questionId]: current.filter((id) => id !== optionId) };
+      answersRef.current = next;
+      return next;
     });
+    scheduleAutosave();
   };
 
   if (loading) return <p className="text-muted-foreground">{t("examRoom.loading", lang)}</p>;

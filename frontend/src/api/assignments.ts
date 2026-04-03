@@ -37,6 +37,11 @@ export interface ExamRoomQuestion {
   options: ExamRoomOption[];
 }
 
+export interface SubmitAnswerPayload {
+  question_id: number;
+  chosen_option_ids: number[];
+}
+
 export interface SubmissionStartResponse {
   submission_id: number;
   assignment_id: number;
@@ -44,11 +49,7 @@ export interface SubmissionStartResponse {
   duration_minutes: number;
   exam_title: string;
   questions: ExamRoomQuestion[];
-}
-
-export interface SubmitAnswerPayload {
-  question_id: number;
-  chosen_option_ids: number[];
+  saved_answers?: SubmitAnswerPayload[];
 }
 
 export function createAssignment(body: AssignmentCreatePayload, token: string): Promise<AssignmentResponse> {
@@ -73,6 +74,14 @@ export function submitSubmission(
   token: string
 ): Promise<{ id: number; assignment_id: number; user_id: number; started_at: string; submitted_at: string | null; score: number | null }> {
   return post(`/api/v1/assignments/submissions/${submissionId}/submit`, body, token);
+}
+
+export function saveSubmissionAnswers(
+  submissionId: number,
+  body: { answers: SubmitAnswerPayload[] },
+  token: string
+): Promise<{ saved: boolean }> {
+  return post<{ saved: boolean }>(`/api/v1/assignments/submissions/${submissionId}/answers`, body, token);
 }
 
 export interface OptionResultItem {

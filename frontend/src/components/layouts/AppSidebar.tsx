@@ -11,15 +11,38 @@ import { Icons } from "./Icons";
 import { useAuth } from "@/context/AuthContext";
 import { resolveStaticUrl } from "@/utils/url";
 
+function pathMatchesNav(pathname: string, toPath: string): boolean {
+  return pathname === toPath || pathname.startsWith(`${toPath}/`);
+}
+
+/** Supports `to` with query (e.g. /teacher/analytics?tab=anti-cheat) for tab deep-links. */
+function isNavItemActive(pathname: string, search: string, to: string): boolean {
+  const q = to.indexOf("?");
+  const toPath = q === -1 ? to : to.slice(0, q);
+  const toQuery = q === -1 ? undefined : to.slice(q + 1);
+  if (!pathMatchesNav(pathname, toPath)) return false;
+  const cur = new URLSearchParams(search);
+  if (toQuery === undefined) {
+    if (toPath === "/teacher/analytics") return cur.get("tab") !== "anti-cheat";
+    return true;
+  }
+  const want = new URLSearchParams(toQuery);
+  for (const [k, v] of want) {
+    if (cur.get(k) !== v) return false;
+  }
+  return true;
+}
+
 export type AppSidebarProps = {
   role: DashboardRole;
   items: NavItem[];
   pathname: string;
+  search: string;
 };
 
 
 
-export function AppSidebar({ role, items, pathname }: AppSidebarProps) {
+export function AppSidebar({ role, items, pathname, search }: AppSidebarProps) {
   const {user} = useAuth();
   const { sidebarMode } = useTheme();
   const isMobile = useMobile();
@@ -75,7 +98,7 @@ export function AppSidebar({ role, items, pathname }: AppSidebarProps) {
       {/* Navigation */}  
       <nav className="flex-1 py-2 px-3 space-y-1 overflow-y-auto">
         {items.map((item) => {
-          const active = pathname.startsWith(item.to);
+          const active = isNavItemActive(pathname, search, item.to);
           return (
             <Link
               key={item.key}

@@ -35,6 +35,12 @@ class Settings(BaseSettings):
     # AI explanations
     ai_explanation_enabled: bool = False
 
+    # Anti-cheat: server-side enforcement (auto-submit when weighted score exceeds threshold)
+    anti_cheat_max_violations: float = 10.0
+    anti_cheat_enforce: bool = False
+    anti_cheat_event_rate_window_seconds: int = 60
+    anti_cheat_event_rate_max: int = 120
+
     def get_database_url(self) -> str:
         if self.database_url:
             return self.database_url

@@ -8,7 +8,6 @@ import {
   type AssignmentReportResponse,
   type AssignmentDetail,
 } from "@/services/assignments.service";
-import { StatCard } from "@/components/layouts/StatCard";
 import { Icons } from "@/components/layouts/Icons";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router";
@@ -224,34 +223,42 @@ export function TeacherDashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          icon={<Icons.Users className="text-primary" />}
-          value={String(stats.myStudents)}
-          title={t("teacherDashboard.myStudents", lang)}
-          change="--"
-          trend="up"
-        />
-        <StatCard
-          icon={<Icons.BookOpen className="text-violet-700" />}
-          value={String(stats.myExams)}
-          title={t("teacherDashboard.myExams", lang)}
-          change="--"
-          trend="up"
-        />
-        <StatCard
-          icon={<Icons.CheckCircle className="text-info" />}
-          value={String(stats.submissions)}
-          title={t("teacherDashboard.submissions", lang)}
-          change="--"
-          trend="up"
-        />
-        <StatCard
-          icon={<Icons.Chart className="text-success" />}
-          value={String(stats.avgScore)}
-          title={t("teacherDashboard.avgScore", lang)}
-          change="--"
-          trend="up"
-        />
+        <div className=" stat-card animate-in">
+          <div className="flex items-start justify-between mb-4">
+            <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+              <Icons.Users className="size-5 text-primary" />
+            </div>
+          </div>
+          <div className="text-2xl font-bold text-foreground">{stats.myStudents}</div>
+          <div className="text-sm text-muted-foreground mt-1">{t("teacherDashboard.myStudents", lang)}</div>
+        </div>
+        <div className=" stat-card animate-in">
+          <div className="flex items-start justify-between mb-4">
+            <div className="size-10 rounded-lg bg-violet-700/10 flex items-center justify-center text-violet-700">
+              <Icons.BookOpen className="size-5 text-violet-700" />
+            </div>
+          </div>
+          <div className="text-2xl font-bold text-foreground">{stats.myExams}</div>
+          <div className="text-sm text-muted-foreground mt-1">{t("teacherDashboard.myExams", lang)}</div>
+        </div>
+        <div className=" stat-card animate-in">
+          <div className="flex items-start justify-between mb-4">
+            <div className="size-10 rounded-lg bg-info/10 flex items-center justify-center text-info">
+              <Icons.CheckCircle className="size-5 text-info" />
+            </div>
+          </div>
+          <div className="text-2xl font-bold text-foreground">{stats.submissions}</div>
+          <div className="text-sm text-muted-foreground mt-1">{t("teacherDashboard.avgScore", lang)}</div>
+        </div>
+        <div className=" stat-card animate-in">
+          <div className="flex items-start justify-between mb-4">
+            <div className="size-10 rounded-lg bg-success/10 flex items-center justify-center text-success">
+              <Icons.Chart className="size-5 text-success" />
+            </div>
+          </div>
+          <div className="text-2xl font-bold text-foreground">{stats.avgScore}</div>
+          <div className="text-sm text-muted-foreground mt-1">{t("teacherDashboard.avgScore", lang)}</div>
+        </div>
       </div>
 
       {statsLoading && (

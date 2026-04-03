@@ -55,7 +55,7 @@ export function DashboardLayout({ role }: { role: DashboardRole }) {
     <ProtectedRouter allowedRoles={[role]}>
       <div className="min-h-screen bg-background text-foreground">
         <div className="flex">
-          <AppSidebar role={role} items={effectiveNav} pathname={location.pathname} />
+          <AppSidebar role={role} items={effectiveNav} pathname={location.pathname} search={location.search} />
           <div className="flex-1 min-w-0">
             <TopNavBar role={role} searchPlaceholder={searchPlaceholder} />
             <main className="max-w-6xl mx-auto px-6 py-6">

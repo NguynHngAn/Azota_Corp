@@ -18,6 +18,9 @@ class AntiCheatEventResponse(BaseModel):
     event_type: str
     meta: dict
     created_at: datetime
+    violation_weighted_score: float = 0.0
+    violation_count: int = 0
+    auto_submitted: bool = False
 
     model_config = {"from_attributes": True}
 

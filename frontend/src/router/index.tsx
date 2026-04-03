@@ -12,7 +12,7 @@ import {
   JoinClassPage,
   StudentClassDetailPage,
 } from "@/pages/classes";
-import { ExamListPage, CreateExamPage, EditExamPage } from "@/pages/exams";
+import { ExamListPage, CreateExamPage, EditExamPage, ExamDetalPage } from "@/pages/exams";
 import {
   AssignmentListPage,
   CreateAssignmentPage,
@@ -131,6 +131,7 @@ export function AppRouter() {
           <Route path="exams" element={<ExamListPage />} />
           <Route path="exams/new" element={<CreateExamPage />} />
           <Route path="exams/:id" element={<EditExamPage />} />
+          <Route path="exams/:id/detail" element={<ExamDetalPage />} />
           <Route path="question-bank" element={<TeacherQuestionBankPage />} />
           <Route path="assignments" element={<AssignmentListPage />} />
           <Route path="assignments/new" element={<CreateAssignmentPage />} />
@@ -138,6 +139,7 @@ export function AppRouter() {
           <Route path="assignments/:id/report" element={<AssignmentReportPage />} />
           <Route path="students" element={<TeacherStudentsPage />} />
           <Route path="anti-cheating" element={<TeacherAntiCheatingPage />} />
+          <Route path="anti-cheat-analytics" element={<Navigate to="/teacher/analytics?tab=anti-cheat" replace />} />
           <Route path="analytics" element={<TeacherAnalyticsPage />} />
           <Route path="settings" element={<TeacherSettingsPage />} />
         </Route>

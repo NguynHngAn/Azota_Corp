@@ -6,6 +6,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_role
+from app.config import settings
 from app.database import get_db
 from app.models.user import Role, User
 from app.models.assignment import Assignment, Submission
@@ -19,8 +20,8 @@ from app.schemas.anti_cheat_schema import (
     AntiCheatMonitorRow,
     AntiCheatMonitorSummary,
 )
-from app.services.assignment_service import is_in_class
-from app.services.assignment_service import can_manage_assignment
+from app.services.assignment_service import can_manage_assignment, is_in_class, try_auto_submit_submission_on_violation_threshold
+from app.services.anti_cheat_service import count_recent_events_for_rate_limit, submission_violation_metrics
 
 router = APIRouter(prefix="/anti-cheat", tags=["anti-cheat"])
 
@@ -43,6 +44,19 @@ def create_event(
         if not submission or submission.assignment_id != assignment.id or submission.user_id != current_user.id:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid submission_id")
 
+    recent_n = count_recent_events_for_rate_limit(
+        db,
+        assignment_id=assignment.id,
+        user_id=current_user.id,
+        submission_id=submission_id,
+        window_seconds=settings.anti_cheat_event_rate_window_seconds,
+    )
+    if recent_n >= settings.anti_cheat_event_rate_max:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Anti-cheat event rate limit exceeded",
+        )
+
     ev = AntiCheatEvent(
         assignment_id=assignment.id,
         submission_id=submission_id,
@@ -51,9 +65,34 @@ def create_event(
         meta=body.meta or {},
     )
     db.add(ev)
+    db.flush()
+    if submission_id is not None:
+        violation_weighted_score, violation_count = submission_violation_metrics(db, submission_id)
+    else:
+        violation_weighted_score, violation_count = 0.0, 0
+    auto_submitted = False
+    if (
+        submission_id is not None
+        and settings.anti_cheat_enforce
+        and violation_weighted_score >= settings.anti_cheat_max_violations
+    ):
+        auto_submitted = try_auto_submit_submission_on_violation_threshold(
+            db, user_id=current_user.id, submission_id=submission_id
+        )
     db.commit()
     db.refresh(ev)
-    return ev
+    return AntiCheatEventResponse(
+        id=ev.id,
+        assignment_id=ev.assignment_id,
+        submission_id=ev.submission_id,
+        user_id=ev.user_id,
+        event_type=ev.event_type,
+        meta=ev.meta,
+        created_at=ev.created_at,
+        violation_weighted_score=violation_weighted_score,
+        violation_count=violation_count,
+        auto_submitted=auto_submitted,
+    )
 
 
 @router.get("/monitor", response_model=AntiCheatMonitorResponse)

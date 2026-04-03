@@ -15,6 +15,8 @@ from app.schemas.assignment_schema import (
     AssignmentCreate,
     AssignmentResponse,
     AssignmentDetail,
+    AutosaveAnswersResponse,
+    SubmissionAnswerPayload,
     SubmissionStartResponse,
     SubmitPayload,
     SubmissionResponse,
@@ -29,9 +31,17 @@ from app.schemas.assignment_schema import (
     ScoreBucket,
 )
 from app.api.deps import get_current_user, require_role
-from app.services.assignment_service import can_manage_assignment, is_in_class, exam_questions_for_student
-from app.services.grading_service import grade_submission
+from app.services.assignment_service import (
+    apply_submission_answers_and_grade,
+    can_manage_assignment,
+    exam_questions_for_student,
+    is_in_class,
+    options_display_order_for_question,
+    questions_display_order_for_submission,
+    upsert_submission_answers_only,
+)
 from app.services.ai_explanation_service import generate_explanations_for_submission
+from app.services.grading_service import grade_submission
 
 router = APIRouter(prefix="/assignments", tags=["assignments"])
 
@@ -102,13 +112,21 @@ def submit_submission(
     current_user: Annotated[User, Depends(require_role(Role.student))],
     db: Session = Depends(get_db),
 ):
-    submission = db.query(Submission).filter(Submission.id == submission_id).first()
+    submission = (
+        db.query(Submission)
+        .filter(
+            Submission.id == submission_id,
+            Submission.user_id == current_user.id,
+        )
+        .with_for_update()
+        .first()
+    )
     if not submission:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
-    if submission.user_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not your submission")
     if submission.submitted_at:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Already submitted")
+    if submission.started_at is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Submission not started")
     assignment = submission.assignment
     now = datetime.now(timezone.utc)
     if now > assignment.end_time:
@@ -120,32 +138,48 @@ def submit_submission(
     for item in body.answers:
         if item.question_id not in exam_question_ids:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid question_id {item.question_id}")
-    for item in body.answers:
-        existing = db.query(SubmissionAnswer).filter(
-            SubmissionAnswer.submission_id == submission_id,
-            SubmissionAnswer.question_id == item.question_id,
-        ).first()
-        if existing:
-            existing.chosen_option_ids = item.chosen_option_ids
-        else:
-            db.add(
-                SubmissionAnswer(
-                    submission_id=submission_id,
-                    question_id=item.question_id,
-                    chosen_option_ids=item.chosen_option_ids,
-                )
-            )
-    submission.submitted_at = datetime.now(timezone.utc)
-    db.flush()
-    db.refresh(submission)
-    exam = assignment.exam
-    for q in exam.questions:
-        _ = q.options
-    score, _ = grade_submission(submission, exam)
-    submission.score = score
+    apply_submission_answers_and_grade(db, submission, assignment, body)
     db.commit()
     db.refresh(submission)
     return submission
+
+
+@router.post("/submissions/{submission_id}/answers", response_model=AutosaveAnswersResponse)
+def autosave_submission_answers(
+    submission_id: int,
+    body: SubmitPayload,
+    current_user: Annotated[User, Depends(require_role(Role.student))],
+    db: Session = Depends(get_db),
+):
+    submission = (
+        db.query(Submission)
+        .filter(
+            Submission.id == submission_id,
+            Submission.user_id == current_user.id,
+        )
+        .with_for_update()
+        .first()
+    )
+    if not submission:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
+    if submission.submitted_at:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Already submitted")
+    if submission.started_at is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Submission not started")
+    assignment = submission.assignment
+    now = datetime.now(timezone.utc)
+    if now > assignment.end_time:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Assignment window ended")
+    submit_deadline = submission.started_at + timedelta(minutes=assignment.duration_minutes)
+    if now > submit_deadline:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Time limit exceeded")
+    exam_question_ids = {q.id for q in assignment.exam.questions}
+    for item in body.answers:
+        if item.question_id not in exam_question_ids:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid question_id {item.question_id}")
+    upsert_submission_answers_only(db, submission.id, body)
+    db.commit()
+    return AutosaveAnswersResponse()
 
 
 @router.get("/submissions/{submission_id}/result", response_model=SubmissionResultResponse)
@@ -172,15 +206,16 @@ def get_submission_result(
     results_by_q = {qid: correct for qid, correct in question_results}
     answers_by_q = {a.question_id: (a.chosen_option_ids or []) for a in submission.answers}
     question_details = []
-    for q in sorted(exam.questions, key=lambda x: x.order_index):
+    for q in questions_display_order_for_submission(exam, submission.id):
         chosen = answers_by_q.get(q.id, [])
+        opts_ordered = options_display_order_for_question(q, submission.id)
         question_details.append(
             QuestionResultDetail(
                 question_id=q.id,
                 question_text=q.text,
                 correct=results_by_q.get(q.id, False),
                 chosen_option_ids=chosen,
-                options=[OptionResultItem(id=o.id, text=o.text, is_correct=o.is_correct) for o in q.options],
+                options=[OptionResultItem(id=o.id, text=o.text, is_correct=o.is_correct) for o in opts_ordered],
                 ai_explanation=explanations.get(q.id),
             )
         )
@@ -439,7 +474,12 @@ def start_assignment(
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create submission")
     if submission.submitted_at:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Already submitted")
-    questions = exam_questions_for_student(assignment.exam)
+    questions = exam_questions_for_student(assignment.exam, submission.id)
+    saved_rows = db.query(SubmissionAnswer).filter(SubmissionAnswer.submission_id == submission.id).all()
+    saved_answers = [
+        SubmissionAnswerPayload(question_id=r.question_id, chosen_option_ids=list(r.chosen_option_ids or []))
+        for r in saved_rows
+    ]
     return SubmissionStartResponse(
         submission_id=submission.id,
         assignment_id=assignment_id,
@@ -447,6 +487,7 @@ def start_assignment(
         duration_minutes=assignment.duration_minutes,
         exam_title=assignment.exam.title,
         questions=questions,
+        saved_answers=saved_answers,
     )
 
 

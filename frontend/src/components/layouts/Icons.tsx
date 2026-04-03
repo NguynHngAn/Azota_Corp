@@ -44,8 +44,14 @@ import {
    AlertTriangle,
    Calendar,
    Backpack,
+   Edit,
+   Trash,
+   XCircle,
   } from "lucide-react";
 export const Icons = {
+  XCircle: XCircle,
+  Trash: Trash,
+  Edit: Edit,
   Backpack: Backpack,
   Calendar: Calendar,
   AlertTriangle: AlertTriangle,

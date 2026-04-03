@@ -256,6 +256,31 @@ export type I18nKey =
   | "antiCheat.examClass"
   | "antiCheat.events"
   | "antiCheat.lastEvent"
+  | "antiCheatAnalytics.loadFailed"
+  | "antiCheatAnalytics.title"
+  | "antiCheatAnalytics.subtitle"
+  | "antiCheatAnalytics.filterAssignment"
+  | "antiCheatAnalytics.allAssignments"
+  | "antiCheatAnalytics.submissionsTracked"
+  | "antiCheatAnalytics.suspiciousLabel"
+  | "antiCheatAnalytics.maxScore"
+  | "antiCheatAnalytics.threshold"
+  | "antiCheatAnalytics.scoreDistribution"
+  | "antiCheatAnalytics.students"
+  | "antiCheatAnalytics.eventBreakdown"
+  | "antiCheatAnalytics.events"
+  | "antiCheatAnalytics.leaderboard"
+  | "antiCheatAnalytics.leaderboardHint"
+  | "antiCheatAnalytics.student"
+  | "antiCheatAnalytics.exam"
+  | "antiCheatAnalytics.weightedScore"
+  | "antiCheatAnalytics.status"
+  | "antiCheatAnalytics.flagged"
+  | "antiCheatAnalytics.ok"
+  | "antiCheatAnalytics.timeline"
+  | "antiCheatAnalytics.timelineTitle"
+  | "antiCheatAnalytics.noEvents"
+  | "nav.antiCheatAnalytics"
   | "assignmentList.failed"
   | "assignmentList.title"
   | "assignmentList.subtitle"
@@ -304,6 +329,8 @@ export type I18nKey =
   | "teacherAnalytics.title"
   | "teacherAnalytics.subtitle"
   | "teacherAnalytics.info"
+  | "teacherAnalytics.tabOverview"
+  | "teacherAnalytics.tabAntiCheat"
   | "studentDashboard.greeting"
   | "studentDashboard.subtitle"
   | "studentDashboard.upcoming"
@@ -699,7 +726,10 @@ export type I18nKey =
   | "settings.weeklyReports"
   | "settings.weeklyReportsDesc"
   | "settings.systemUpdates"
-  | "settings.systemUpdatesDesc";
+  | "settings.systemUpdatesDesc"
+  | "examDetail.backToExams"
+  | "examDetail.noQuestions"
+  | "examDetail.noAnswerOptionsDefined";
 const dict: Record<LanguageCode, Record<I18nKey, string>> = {
   en: {
     "app.brand": "EduFlow",
@@ -993,6 +1023,31 @@ const dict: Record<LanguageCode, Record<I18nKey, string>> = {
     "antiCheat.examClass": "Exam / Class",
     "antiCheat.events": "Events",
     "antiCheat.lastEvent": "Last event",
+    "antiCheatAnalytics.loadFailed": "Failed to load analytics",
+    "antiCheatAnalytics.title": "Anti-cheat analytics",
+    "antiCheatAnalytics.subtitle": "Weighted scores, distributions, and per-submission timelines.",
+    "antiCheatAnalytics.filterAssignment": "Assignment",
+    "antiCheatAnalytics.allAssignments": "All assignments",
+    "antiCheatAnalytics.submissionsTracked": "Submissions tracked",
+    "antiCheatAnalytics.suspiciousLabel": "Suspicious (≥ threshold)",
+    "antiCheatAnalytics.maxScore": "Max weighted score",
+    "antiCheatAnalytics.threshold": "Suspicious threshold",
+    "antiCheatAnalytics.scoreDistribution": "Score distribution",
+    "antiCheatAnalytics.students": "Submissions",
+    "antiCheatAnalytics.eventBreakdown": "Event breakdown",
+    "antiCheatAnalytics.events": "Events",
+    "antiCheatAnalytics.leaderboard": "Leaderboard",
+    "antiCheatAnalytics.leaderboardHint": "Sorted by weighted violation score (highest first).",
+    "antiCheatAnalytics.student": "Student",
+    "antiCheatAnalytics.exam": "Exam",
+    "antiCheatAnalytics.weightedScore": "Weighted score",
+    "antiCheatAnalytics.status": "Status",
+    "antiCheatAnalytics.flagged": "Flagged",
+    "antiCheatAnalytics.ok": "OK",
+    "antiCheatAnalytics.timeline": "Timeline",
+    "antiCheatAnalytics.timelineTitle": "Event timeline",
+    "antiCheatAnalytics.noEvents": "No events recorded for this submission.",
+    "nav.antiCheatAnalytics": "AC Analytics",
     "assignmentList.failed": "Failed",
     "assignmentList.title": "Assignments",
     "assignmentList.subtitle": "Schedule exams to classes with time windows.",
@@ -1041,6 +1096,8 @@ const dict: Record<LanguageCode, Record<I18nKey, string>> = {
     "teacherAnalytics.title": "Analytics",
     "teacherAnalytics.subtitle": "Performance overview and insights.",
     "teacherAnalytics.info": "This tab currently uses existing endpoints (classes + assignments reports). A dedicated analytics backend can be added later for charts, trends, and time-series.",
+    "teacherAnalytics.tabOverview": "Overview",
+    "teacherAnalytics.tabAntiCheat": "Anti-cheat",
     "studentDashboard.greeting": "Hello, {{name}}",
     "studentDashboard.subtitle": "Here's your learning overview.",
     "studentDashboard.upcoming": "Upcoming",
@@ -1399,6 +1456,9 @@ const dict: Record<LanguageCode, Record<I18nKey, string>> = {
     "settings.appearance.theme.light": "Light",
     "settings.appearance.theme.dark": "Dark",
     "settings.appearance.theme.system": "System",
+    "examDetail.backToExams": "Back to exams",
+    "examDetail.noQuestions": "No questions in this exam yet.",
+    "examDetail.noAnswerOptionsDefined": "No answer options defined.",
   },
   vi: {
     "app.brand": "EduFlow",
@@ -1692,6 +1752,31 @@ const dict: Record<LanguageCode, Record<I18nKey, string>> = {
     "antiCheat.examClass": "Đề thi / Lớp",
     "antiCheat.events": "Sự kiện",
     "antiCheat.lastEvent": "Sự kiện gần nhất",
+    "antiCheatAnalytics.loadFailed": "Không thể tải phân tích",
+    "antiCheatAnalytics.title": "Phân tích chống gian lận",
+    "antiCheatAnalytics.subtitle": "Điểm có trọng số, phân bố và dòng thời gian theo bài nộp.",
+    "antiCheatAnalytics.filterAssignment": "Bài tập",
+    "antiCheatAnalytics.allAssignments": "Tất cả bài tập",
+    "antiCheatAnalytics.submissionsTracked": "Bài nộp được theo dõi",
+    "antiCheatAnalytics.suspiciousLabel": "Nghi ngờ (≥ ngưỡng)",
+    "antiCheatAnalytics.maxScore": "Điểm có trọng số cao nhất",
+    "antiCheatAnalytics.threshold": "Ngưỡng nghi ngờ",
+    "antiCheatAnalytics.scoreDistribution": "Phân bố điểm",
+    "antiCheatAnalytics.students": "Bài nộp",
+    "antiCheatAnalytics.eventBreakdown": "Phân tích theo loại sự kiện",
+    "antiCheatAnalytics.events": "Sự kiện",
+    "antiCheatAnalytics.leaderboard": "Bảng xếp hạng",
+    "antiCheatAnalytics.leaderboardHint": "Sắp xếp theo điểm vi phạm có trọng số (cao nhất trước).",
+    "antiCheatAnalytics.student": "Học sinh",
+    "antiCheatAnalytics.exam": "Đề thi",
+    "antiCheatAnalytics.weightedScore": "Điểm trọng số",
+    "antiCheatAnalytics.status": "Trạng thái",
+    "antiCheatAnalytics.flagged": "Đánh dấu",
+    "antiCheatAnalytics.ok": "Ổn",
+    "antiCheatAnalytics.timeline": "Dòng thời gian",
+    "antiCheatAnalytics.timelineTitle": "Dòng thời gian sự kiện",
+    "antiCheatAnalytics.noEvents": "Không có sự kiện cho bài nộp này.",
+    "nav.antiCheatAnalytics": "Phân tích AC",
     "assignmentList.failed": "Tải dữ liệu thất bại",
     "assignmentList.title": "Bài tập",
     "assignmentList.subtitle": "Lập lịch đề thi cho lớp với các khung thời gian.",
@@ -1740,6 +1825,8 @@ const dict: Record<LanguageCode, Record<I18nKey, string>> = {
     "teacherAnalytics.title": "Phân tích",
     "teacherAnalytics.subtitle": "Tổng quan hiệu suất và các chỉ số.",
     "teacherAnalytics.info": "Tab này hiện đang dùng các endpoint sẵn có (lớp học + báo cáo bài tập). Có thể bổ sung backend analytics riêng sau cho biểu đồ, xu hướng và chuỗi thời gian.",
+    "teacherAnalytics.tabOverview": "Tổng quan",
+    "teacherAnalytics.tabAntiCheat": "Chống gian lận",
     "studentDashboard.greeting": "Xin chào, {{name}}",
     "studentDashboard.subtitle": "Đây là tổng quan học tập của bạn.",
     "studentDashboard.upcoming": "Sắp tới",
@@ -2098,6 +2185,9 @@ const dict: Record<LanguageCode, Record<I18nKey, string>> = {
     "settings.appearance.theme.light": "Sáng",
     "settings.appearance.theme.dark": "Tối",
     "settings.appearance.theme.system": "Theo hệ thống",
+    "examDetail.backToExams": "Quay lại đề thi",
+    "examDetail.noQuestions": "Chưa có câu hỏi nào trong đề thi này.",
+    "examDetail.noAnswerOptionsDefined": "Chưa có đáp án nào được định nghĩa.",
   },
 };
 
