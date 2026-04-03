@@ -1,0 +1,314 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { listMyClasses, getClass, type ClassDetail, type ClassResponse } from "@/services/classes.service";
+import { listExams, type ExamResponse } from "@/services/exams.service";
+import {
+  getAssignmentReport,
+  listAssignments,
+  type AssignmentDetail,
+  type AssignmentReportResponse,
+} from "@/services/assignments.service";
+import { useAuth } from "@/context/AuthContext";
+import { StatCard } from "@/components/layouts/StatCard";
+import { Icons } from "@/components/layouts/Icons";
+import { t, useLanguage } from "@/i18n";
+
+// In-memory caches (persist across SPA navigation)
+const classCache = new Map<number, ClassDetail>();
+const classInflight = new Map<number, Promise<ClassDetail>>();
+const reportCache = new Map<number, AssignmentReportResponse>();
+const reportInflight = new Map<number, Promise<AssignmentReportResponse>>();
+
+async function getClassCached(id: number, token: string): Promise<ClassDetail> {
+  const hit = classCache.get(id);
+  if (hit) return hit;
+  const inflight = classInflight.get(id);
+  if (inflight) return inflight;
+  const p = getClass(id, token)
+    .then((res) => {
+      classCache.set(id, res);
+      return res;
+    })
+    .finally(() => {
+      classInflight.delete(id);
+    });
+  classInflight.set(id, p);
+  return p;
+}
+
+async function getAssignmentReportCached(id: number, token: string): Promise<AssignmentReportResponse> {
+  const hit = reportCache.get(id);
+  if (hit) return hit;
+  const inflight = reportInflight.get(id);
+  if (inflight) return inflight;
+  const p = getAssignmentReport(id, token)
+    .then((res) => {
+      reportCache.set(id, res);
+      return res;
+    })
+    .finally(() => {
+      reportInflight.delete(id);
+    });
+  reportInflight.set(id, p);
+  return p;
+}
+
+export function TeacherAnalyticsPage() {
+  const { token } = useAuth();
+  const lang = useLanguage();
+  const [classes, setClasses] = useState<ClassResponse[]>([]);
+  const [exams, setExams] = useState<ExamResponse[]>([]);
+  const [assignments, setAssignments] = useState<AssignmentDetail[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [baseLoaded, setBaseLoaded] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [studentsCount, setStudentsCount] = useState<number | null>(null);
+  const [submissionsCount, setSubmissionsCount] = useState<number | null>(null);
+  const [avgScore, setAvgScore] = useState<number | null>(null);
+  const [statsProgress, setStatsProgress] = useState<{
+    classesDone: number;
+    classesTotal: number;
+    reportsDone: number;
+    reportsTotal: number;
+  }>({ classesDone: 0, classesTotal: 0, reportsDone: 0, reportsTotal: 0 });
+  const [error, setError] = useState("");
+  const runIdRef = useRef(0);
+
+  useEffect(() => {
+    if (!token) return;
+    setLoading(true);
+    setError("");
+    setBaseLoaded(false);
+    Promise.all([
+      listMyClasses(token).catch(() => [] as ClassResponse[]),
+      listExams(token).catch(() => [] as ExamResponse[]),
+      listAssignments(token).catch(() => [] as AssignmentDetail[]),
+    ])
+      .then(([c, e, a]) => {
+        setClasses(c);
+        setExams(e);
+        setAssignments(a);
+      })
+      .catch((e: unknown) => {
+        setError(e instanceof Error ? e.message : t("teacherAnalytics.failed", lang));
+      })
+      .finally(() => {
+        setLoading(false);
+        setBaseLoaded(true);
+      });
+  }, [token]);
+
+  // Reuse existing endpoints to compute "analytics" numbers.
+  useEffect(() => {
+    if (!token) return;
+    if (!baseLoaded) return;
+
+    const runId = ++runIdRef.current;
+    const anyWindow = window as unknown as {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+    };
+    const idle = () =>
+      new Promise<void>((resolve) => {
+        if (anyWindow.requestIdleCallback) anyWindow.requestIdleCallback(() => resolve(), { timeout: 400 });
+        else window.setTimeout(() => resolve(), 120);
+      });
+
+    setStatsLoading(true);
+    setStudentsCount(0);
+    setSubmissionsCount(0);
+    setAvgScore(null);
+    setStatsProgress({
+      classesDone: 0,
+      classesTotal: classes.length,
+      reportsDone: 0,
+      reportsTotal: assignments.length,
+    });
+
+    const batchSizeClasses = 4;
+    const batchSizeReports = 3;
+    const classIds = classes.map((c) => c.id);
+    const assignmentIds = assignments.map((a) => a.id);
+    const maxBatches = Math.max(
+      Math.ceil(classIds.length / batchSizeClasses),
+      Math.ceil(assignmentIds.length / batchSizeReports),
+    );
+
+    (async () => {
+      for (let i = 0; i < maxBatches; i++) {
+        if (runIdRef.current !== runId) return;
+
+        const classBatch = classIds.slice(i * batchSizeClasses, i * batchSizeClasses + batchSizeClasses);
+        const reportBatch = assignmentIds.slice(i * batchSizeReports, i * batchSizeReports + batchSizeReports);
+
+        if (classBatch.length > 0) {
+          const results = await Promise.all(classBatch.map((id) => getClassCached(id, token).catch(() => null)));
+          if (runIdRef.current !== runId) return;
+          const addStudents = results
+            .filter((c): c is ClassDetail => !!c)
+            .reduce((sum, c) => sum + (c.member_count ?? 0), 0);
+          setStudentsCount((prev) => (prev ?? 0) + addStudents);
+          setStatsProgress((p) => ({
+            ...p,
+            classesDone: Math.min(p.classesDone + classBatch.length, p.classesTotal),
+          }));
+        }
+
+        if (reportBatch.length > 0) {
+          const reports = await Promise.all(reportBatch.map((id) => getAssignmentReportCached(id, token).catch(() => null)));
+          if (runIdRef.current !== runId) return;
+          const submittedTotal = reports
+            .filter((r): r is AssignmentReportResponse => !!r)
+            .reduce((sum, r) => sum + (r.submitted_count ?? 0), 0);
+          setSubmissionsCount((prev) => (prev ?? 0) + submittedTotal);
+
+          const fetched = Array.from(reportCache.values());
+          const allValid = fetched
+            .filter((r) => typeof r.average_score === "number")
+            .map((r) => ({ avg: r.average_score as number, weight: r.submitted_count ?? 0 }));
+          if (allValid.length > 0) {
+            const weightSum = allValid.reduce((s, x) => s + x.weight, 0);
+            if (weightSum > 0) {
+              const weighted = allValid.reduce((s, x) => s + x.avg * x.weight, 0) / weightSum;
+              setAvgScore(Math.round(weighted * 100) / 100);
+            } else {
+              const simple = allValid.reduce((s, x) => s + x.avg, 0) / allValid.length;
+              setAvgScore(Math.round(simple * 100) / 100);
+            }
+          }
+
+          setStatsProgress((p) => ({
+            ...p,
+            reportsDone: Math.min(p.reportsDone + reportBatch.length, p.reportsTotal),
+          }));
+        }
+
+        await idle();
+      }
+
+      if (runIdRef.current === runId) setStatsLoading(false);
+    })();
+
+    return () => {
+      runIdRef.current++;
+    };
+  }, [assignments, baseLoaded, classes, token]);
+
+  const stats = useMemo(() => {
+    return {
+      myStudents: statsLoading ? studentsCount ?? "—" : studentsCount ?? 0,
+      myExams: exams.length,
+      submissions: statsLoading ? submissionsCount ?? "—" : submissionsCount ?? 0,
+      avgScore: statsLoading ? avgScore ?? "—" : avgScore ?? "—",
+    };
+  }, [avgScore, exams.length, statsLoading, studentsCount, submissionsCount]);
+
+  const topMissedQuestions = useMemo(() => {
+    const map = new Map<number, { question_text: string; incorrect_count: number; total_answers: number }>();
+    for (const report of reportCache.values()) {
+      for (const item of report.top_missed_questions ?? []) {
+        const existing = map.get(item.question_id);
+        if (existing) {
+          existing.incorrect_count += item.incorrect_count;
+          existing.total_answers += item.total_answers;
+        } else {
+          map.set(item.question_id, {
+            question_text: item.question_text,
+            incorrect_count: item.incorrect_count,
+            total_answers: item.total_answers,
+          });
+        }
+      }
+    }
+    return Array.from(map.entries())
+      .map(([question_id, item]) => ({
+        question_id,
+        ...item,
+        incorrect_rate: item.total_answers > 0 ? (item.incorrect_count / item.total_answers) * 100 : 0,
+      }))
+      .sort((a, b) => b.incorrect_rate - a.incorrect_rate)
+      .slice(0, 5);
+  }, [statsLoading, statsProgress.reportsDone]);
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">{t("teacherAnalytics.title", lang)}</h1>
+        <p className="text-sm text-muted-foreground">{t("teacherAnalytics.subtitle", lang)}</p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          icon={<Icons.Users className="text-primary" />}
+          value={String(stats.myStudents)}
+          title={t("teacherDashboard.myStudents", lang)}
+          change="--"
+          trend="up"
+        />
+        <StatCard
+          icon={<Icons.BookOpen className="text-primary" />}
+          value={String(stats.myExams)}
+          title={t("nav.exams", lang)}
+          change="--"
+          trend="up"
+        />
+        <StatCard
+          icon={<Icons.CheckCircle className="text-info" />}
+          value={String(stats.submissions)}
+          title={t("teacherDashboard.submissions", lang)}
+          change="--"
+          trend="up"
+        />
+        <StatCard
+          icon={<Icons.Chart className="text-success" />}
+          value={String(stats.avgScore)}
+          title={t("teacherDashboard.avgScore", lang)}
+          change="--"
+          trend="up"
+        />
+      </div>
+
+      <div className="glass-card p-6">
+        {error ? (
+          <div className="text-sm text-destructive">{error}</div>
+        ) : loading ? (
+          <div className="space-y-3">
+            <div className="h-4 w-2/3 rounded-lg bg-muted animate-pulse" />
+            <div className="h-4 w-1/2 rounded-lg bg-muted animate-pulse" />
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {statsLoading && (
+              <div className="text-xs text-muted-foreground">
+                {t("teacherDashboard.calculatingStats", lang)} {statsProgress.classesDone}/{statsProgress.classesTotal} {t("teacherDashboard.classes", lang).toLowerCase()},{" "}
+                {statsProgress.reportsDone}/{statsProgress.reportsTotal} assignments
+              </div>
+            )}
+            <div className="text-sm text-muted-foreground">
+              {t("teacherAnalytics.info", lang)}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="glass-card p-6">
+        <div className="text-sm font-semibold text-foreground">Most missed questions</div>
+        <div className="mt-3 space-y-2">
+          {topMissedQuestions.length === 0 ? (
+            <div className="text-sm text-muted-foreground">No report data available yet.</div>
+          ) : (
+            topMissedQuestions.map((item, index) => (
+              <div key={item.question_id} className="rounded-xl border border-border px-3 py-3">
+                <div className="text-sm font-medium text-foreground">
+                  {index + 1}. {item.question_text}
+                </div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  Incorrect {item.incorrect_count}/{item.total_answers} ({item.incorrect_rate.toFixed(2)}%)
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+

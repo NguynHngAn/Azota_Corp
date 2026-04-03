@@ -1,0 +1,90 @@
+# ------------------------------
+# Logs
+# ------------------------------
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ------------------------------
+# Environment / secrets
+# ------------------------------
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# ------------------------------
+# Node / Frontend
+# ------------------------------
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+build/
+**/build/
+.next/
+**/.next/
+coverage/
+**/coverage/
+*.tsbuildinfo
+.vite/
+**/.vite/
+
+# ------------------------------
+# Python / Backend
+# ------------------------------
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.python-version
+.venv/
+venv/
+**/.venv/
+**/venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Keep Alembic migrations in git by default.
+# Uncomment ONLY if you intentionally do not version local migrations:
+# alembic/versions/*.py
+
+# ------------------------------
+# OS junk
+# ------------------------------
+.DS_Store
+Thumbs.db
+*.tmp
+
+# ------------------------------
+# IDE / Editor
+# ------------------------------
+.idea/
+.vscode/*
+!.vscode/extensions.json
+# Uncomment if you want shared workspace settings:
+# !.vscode/settings.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ------------------------------
+# Other
+# ------------------------------
+frontend-tree-full.txt
+backend-tree-full.txt
+frontend-tree-minimal.txt
+backend-tree-minimal.txt
+frontend-tree-minimal.txt

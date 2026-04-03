@@ -1,0 +1,10 @@
+{
+  "tailwindStylesheet": "./src/index.css",
+  "tailwindAttributes": ["myClassList", "/data-.*/"],
+  "tailwindFunctions": ["clsx", "cn", "twMerge"],
+  "tailwindConfig": "./tailwind.config.ts",
+  "plugins": [
+    "prettier-plugin-organize-imports",
+    "prettier-plugin-tailwindcss"
+  ]
+}
