@@ -16,11 +16,12 @@ export function useFullScreen() {
   const requestFullScreen = useCallback(async () => {
     const el = document.documentElement;
     const fn = el.requestFullscreen;
-    if (!fn) return;
+    if (!fn) return false;
     try {
       await fn.call(el);
+      return true;
     } catch {
-      // Ignore errors (user may block fullscreen)
+      return false;
     }
   }, []);
 

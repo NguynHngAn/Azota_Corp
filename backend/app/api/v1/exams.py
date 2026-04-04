@@ -54,6 +54,8 @@ def create_exam(
         description=body.description,
         created_by=current_user.id,
         is_draft=body.is_draft,
+        shuffle_questions=body.shuffle_questions,
+        shuffle_options=body.shuffle_options,
     )
     db.add(exam)
     db.flush()
@@ -89,6 +91,8 @@ def create_exam(
         description=exam.description,
         created_by=exam.created_by,
         is_draft=exam.is_draft,
+        shuffle_questions=exam.shuffle_questions,
+        shuffle_options=exam.shuffle_options,
         created_at=exam.created_at,
         updated_at=exam.updated_at,
         questions=[_question_response(q) for q in exam.questions],
@@ -101,7 +105,7 @@ def list_exams(
     db: Session = Depends(get_db),
 ):
     q = db.query(Exam).filter(Exam.created_by == current_user.id)
-    return q.order_by(Exam.id).all()
+    return q.order_by(Exam.created_at.desc()).all()
 
 
 @router.get("/{exam_id}", response_model=ExamDetail)
@@ -120,6 +124,8 @@ def get_exam(
         description=exam.description,
         created_by=exam.created_by,
         is_draft=exam.is_draft,
+        shuffle_questions=exam.shuffle_questions,
+        shuffle_options=exam.shuffle_options,
         created_at=exam.created_at,
         updated_at=exam.updated_at,
         questions=[_question_response(q) for q in exam.questions],
@@ -128,10 +134,10 @@ def get_exam(
 
 @router.put("/{exam_id}", response_model=ExamResponse)
 def update_exam(
-  exam_id: int,
-  body: ExamUpdate,
-  current_user: Annotated[User, Depends(require_role(Role.teacher))],
-  db: Session = Depends(get_db),
+    exam_id: int,
+    body: ExamUpdate,
+    current_user: Annotated[User, Depends(require_role(Role.teacher))],
+    db: Session = Depends(get_db),
 ):
     exam = db.query(Exam).filter(Exam.id == exam_id).first()
     if not exam:
@@ -144,6 +150,10 @@ def update_exam(
         exam.description = body.description
     if body.is_draft is not None:
         exam.is_draft = body.is_draft
+    if body.shuffle_questions is not None:
+        exam.shuffle_questions = body.shuffle_questions
+    if body.shuffle_options is not None:
+        exam.shuffle_options = body.shuffle_options
     db.commit()
     db.refresh(exam)
     return exam

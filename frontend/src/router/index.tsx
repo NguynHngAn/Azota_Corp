@@ -109,54 +109,54 @@ export function AppRouter() {
           <Route path="/login" element={<LoginRedirect />} />
           <Route path="/signup" element={<LoginRedirect />} />
           <Route path="/admin" element={<DashboardLayout role="admin" />}>
-          <Route index element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="dashboard" element={<AdminDashboardPage />} />
-          <Route path="users" element={<AdminUsersPage />} />
-          <Route path="exams" element={<AdminExamsPage />} />
-          <Route path="classes" element={<AdminClassesPage />} />
-          <Route path="classes/new" element={<CreateClassPage />} />
-          <Route path="classes/:id" element={<ClassDetailPage />} />
-          <Route path="assignments" element={<AdminAssignmentsPage />} />
-          <Route path="analytics" element={<AdminAnalyticsPage />} />
-          <Route path="settings" element={<AdminSettingsPage />} />
-          <Route path="reports" element={<Navigate to="/admin/analytics" replace />} />
-        </Route>
+            <Route index element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="dashboard" element={<AdminDashboardPage />} />
+            <Route path="users" element={<AdminUsersPage />} />
+            <Route path="exams" element={<AdminExamsPage />} />
+            <Route path="classes" element={<AdminClassesPage />} />
+            <Route path="classes/new" element={<CreateClassPage />} />
+            <Route path="classes/:id" element={<ClassDetailPage />} />
+            <Route path="assignments" element={<AdminAssignmentsPage />} />
+            <Route path="analytics" element={<AdminAnalyticsPage />} />
+            <Route path="settings" element={<AdminSettingsPage />} />
+            <Route path="reports" element={<Navigate to="/admin/analytics" replace />} />
+          </Route>
 
           <Route path="/teacher" element={<DashboardLayout role="teacher" />}>
-          <Route index element={<Navigate to="/teacher/dashboard" replace />} />
-          <Route path="dashboard" element={<TeacherDashboardPage />} />
-          <Route path="classes" element={<ClassListPage />} />
-          <Route path="classes/new" element={<CreateClassPage />} />
-          <Route path="classes/:id" element={<ClassDetailPage />} />
-          <Route path="exams" element={<ExamListPage />} />
-          <Route path="exams/new" element={<CreateExamPage />} />
-          <Route path="exams/:id" element={<EditExamPage />} />
-          <Route path="exams/:id/detail" element={<ExamDetalPage />} />
-          <Route path="question-bank" element={<TeacherQuestionBankPage />} />
-          <Route path="assignments" element={<AssignmentListPage />} />
-          <Route path="assignments/new" element={<CreateAssignmentPage />} />
-          <Route path="assignments/result/:submissionId" element={<SubmissionResultPage />} />
-          <Route path="assignments/:id/report" element={<AssignmentReportPage />} />
-          <Route path="students" element={<TeacherStudentsPage />} />
-          <Route path="anti-cheating" element={<TeacherAntiCheatingPage />} />
-          <Route path="anti-cheat-analytics" element={<Navigate to="/teacher/analytics?tab=anti-cheat" replace />} />
-          <Route path="analytics" element={<TeacherAnalyticsPage />} />
-          <Route path="settings" element={<TeacherSettingsPage />} />
-        </Route>
+            <Route index element={<Navigate to="/teacher/dashboard" replace />} />
+            <Route path="dashboard" element={<TeacherDashboardPage />} />
+            <Route path="classes" element={<ClassListPage />} />
+            <Route path="classes/new" element={<CreateClassPage />} />
+            <Route path="classes/:id" element={<ClassDetailPage />} />
+            <Route path="exams" element={<ExamListPage />} />
+            <Route path="exams/new" element={<CreateExamPage />} />
+            <Route path="exams/:id" element={<EditExamPage />} />
+            <Route path="exams/:id/detail" element={<ExamDetalPage />} />
+            <Route path="question-bank" element={<TeacherQuestionBankPage />} />
+            <Route path="assignments" element={<AssignmentListPage />} />
+            <Route path="assignments/new" element={<CreateAssignmentPage />} />
+            <Route path="assignments/result/:submissionId" element={<SubmissionResultPage />} />
+            <Route path="assignments/:id/report" element={<AssignmentReportPage />} />
+            <Route path="students" element={<TeacherStudentsPage />} />
+            <Route path="anti-cheating" element={<TeacherAntiCheatingPage />} />
+            <Route path="anti-cheat-analytics" element={<Navigate to="/teacher/analytics?tab=anti-cheat" replace />} />
+            <Route path="analytics" element={<TeacherAnalyticsPage />} />
+            <Route path="settings" element={<TeacherSettingsPage />} />
+          </Route>
 
-        <Route path="/student" element={<DashboardLayout role="student" />}>
-          <Route index element={<Navigate to="/student/dashboard" replace />} />
-          <Route path="dashboard" element={<StudentDashboardPage />} />
-          <Route path="classes" element={<MyClassesPage />} />
-          <Route path="classes/:id" element={<StudentClassDetailPage />} />
-          <Route path="assignments" element={<MyAssignmentsPage />} />
-          <Route path="assignments/:assignmentId/exam" element={<ExamRoomPage />} />
-          <Route path="assignments/result/:submissionId" element={<SubmissionResultPage />} />
-          <Route path="results" element={<StudentResultsPage />} />
-          <Route path="settings" element={<StudentSettingsPage />} />
-          <Route path="profile" element={<ProfilePage />} />
-          <Route path="join" element={<JoinClassPage />} />
-        </Route>
+          <Route path="/student" element={<DashboardLayout role="student" />}>
+            <Route index element={<Navigate to="/student/dashboard" replace />} />
+            <Route path="dashboard" element={<StudentDashboardPage />} />
+            <Route path="classes" element={<MyClassesPage />} />
+            <Route path="classes/:id" element={<StudentClassDetailPage />} />
+            <Route path="assignments" element={<MyAssignmentsPage />} />
+            <Route path="assignments/:assignmentId/exam" element={<ExamRoomPage />} />
+            <Route path="assignments/result/:submissionId" element={<SubmissionResultPage />} />
+            <Route path="results" element={<StudentResultsPage />} />
+            <Route path="settings" element={<StudentSettingsPage />} />
+            <Route path="profile" element={<ProfilePage />} />
+            <Route path="join" element={<JoinClassPage />} />
+          </Route>
         </Routes>
       </ExamProvider>
     </AuthProvider>

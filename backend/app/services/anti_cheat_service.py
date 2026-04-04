@@ -4,8 +4,10 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models.anti_cheat import AntiCheatEvent
+from app.models.assignment import Submission
+from app.services.grading_service import grade_submission
 
-# Server-side weights for enforcement scoring. Types not listed contribute 0. Lifecycle events (e.g. EXAM_START) stay out.
+# Server-side weights for enforcement scoring. Types not listed contribute 0.
 EVENT_WEIGHTS: dict[str, float] = {
     "TAB_HIDDEN": 1.0,
     "FULLSCREEN_EXIT": 1.5,
@@ -51,3 +53,24 @@ def count_recent_events_for_rate_limit(
     if submission_id is not None:
         q = q.filter(AntiCheatEvent.submission_id == submission_id)
     return q.scalar() or 0
+
+
+def submit_submission_now(
+    db: Session,
+    submission: Submission,
+    *,
+    submit_reason: str,
+    auto_submitted: bool,
+) -> Submission:
+    if submission.submitted_at:
+        return submission
+    submission.submitted_at = datetime.now(timezone.utc)
+    submission.auto_submitted = auto_submitted
+    submission.submit_reason = submit_reason
+    exam = submission.assignment.exam
+    for question in exam.questions:
+        _ = question.options
+    score, _ = grade_submission(submission, exam)
+    submission.score = score
+    db.flush()
+    return submission

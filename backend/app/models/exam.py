@@ -20,6 +20,8 @@ class Exam(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_by: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     is_draft: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    shuffle_questions: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    shuffle_options: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

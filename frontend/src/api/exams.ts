@@ -21,6 +21,8 @@ export interface ExamResponse {
   description: string | null;
   created_by: number;
   is_draft: boolean;
+  shuffle_questions: boolean;
+  shuffle_options: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -54,16 +56,23 @@ export function getExam(examId: number, token: string): Promise<ExamDetail> {
 }
 
 export function createExam(
-  body: { title: string; description?: string | null; is_draft?: boolean; questions?: QuestionPayload[] },
-  token: string
+  body: {
+    title: string;
+    description?: string | null;
+    is_draft?: boolean;
+    shuffle_questions?: boolean;
+    shuffle_options?: boolean;
+    questions?: QuestionPayload[];
+  },
+  token: string,
 ): Promise<ExamDetail> {
   return post<ExamDetail>("/api/v1/exams", body, token);
 }
 
 export function updateExam(
   examId: number,
-  body: { title?: string; description?: string | null; is_draft?: boolean },
-  token: string
+  body: { title?: string; description?: string | null; is_draft?: boolean; shuffle_questions?: boolean; shuffle_options?: boolean },
+  token: string,
 ): Promise<ExamResponse> {
   return put<ExamResponse>(`/api/v1/exams/${examId}`, body, token);
 }
@@ -80,7 +89,7 @@ export function updateQuestion(
   examId: number,
   questionId: number,
   body: { order_index?: number; question_type?: QuestionType; text?: string; options?: AnswerOptionPayload[] },
-  token: string
+  token: string,
 ): Promise<QuestionResponse> {
   return put<QuestionResponse>(`/api/v1/exams/${examId}/questions/${questionId}`, body, token);
 }

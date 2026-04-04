@@ -2,11 +2,12 @@ import { API_BASE_URL } from "@/utils/constants";
 
 async function request<T>(
   path: string,
-  options: RequestInit & { token?: string } = {}
+  options: RequestInit & { token?: string } = {},
 ): Promise<T> {
   const { token, ...init } = options;
+  const isFormData = typeof FormData !== "undefined" && init.body instanceof FormData;
   const headers: HeadersInit = {
-    "Content-Type": "application/json",
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...(init.headers as Record<string, string>),
   };
   if (token) {
@@ -27,11 +28,11 @@ export async function get<T>(path: string, token?: string): Promise<T> {
 }
 
 export async function post<T>(path: string, body: unknown, token?: string): Promise<T> {
-  return request<T>(path, { method: "POST", body: JSON.stringify(body), token });
+  return request<T>(path, { method: "POST", body: body instanceof FormData ? body : JSON.stringify(body), token });
 }
 
 export async function put<T>(path: string, body: unknown, token?: string): Promise<T> {
-  return request<T>(path, { method: "PUT", body: JSON.stringify(body), token });
+  return request<T>(path, { method: "PUT", body: body instanceof FormData ? body : JSON.stringify(body), token });
 }
 
 export async function del<T>(path: string, token?: string): Promise<T> {

@@ -11,13 +11,30 @@ export type AntiCheatEventType =
   | "PASTE_ATTEMPT"
   | "CONTEXT_MENU"
   | "TEXT_SELECTION"
-  | "DEVTOOLS_DETECTED";
+  | "DEVTOOLS_DETECTED"
+  | "COPY_BLOCKED"
+  | "PASTE_BLOCKED"
+  | "CUT_BLOCKED"
+  | "CONTEXT_MENU_BLOCKED";
 
 export interface AntiCheatEventCreate {
   assignment_id: number;
   submission_id?: number | null;
   event_type: AntiCheatEventType | string;
   meta?: Record<string, unknown>;
+}
+
+export interface AntiCheatEventLogResponse {
+  id: number;
+  assignment_id: number;
+  submission_id: number | null;
+  user_id: number;
+  event_type: string;
+  meta: Record<string, unknown>;
+  created_at: string;
+  violation_weighted_score?: number;
+  violation_count: number;
+  auto_submitted: boolean;
 }
 
 export interface AntiCheatMonitorSummary {
@@ -42,6 +59,9 @@ export interface AntiCheatMonitorRow {
   last_event_type: string | null;
   last_event_at: string | null;
   suspicious: boolean;
+  violation_count: number;
+  auto_submitted: boolean;
+  submit_reason: string | null;
 }
 
 export interface AntiCheatMonitorResponse {
@@ -49,8 +69,8 @@ export interface AntiCheatMonitorResponse {
   rows: AntiCheatMonitorRow[];
 }
 
-export async function logAntiCheatEvent(body: AntiCheatEventCreate, token: string): Promise<void> {
-  await post("/api/v1/anti-cheat/events", body, token);
+export async function logAntiCheatEvent(body: AntiCheatEventCreate, token: string): Promise<AntiCheatEventLogResponse> {
+  return post<AntiCheatEventLogResponse>("/api/v1/anti-cheat/events", body, token);
 }
 
 export async function getTeacherAntiCheatMonitor(
@@ -64,4 +84,3 @@ export async function getTeacherAntiCheatMonitor(
   const qs = params.toString();
   return get<AntiCheatMonitorResponse>(`/api/v1/anti-cheat/monitor${qs ? `?${qs}` : ""}`, token);
 }
-

@@ -32,8 +32,10 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
 
-    # AI explanations
+    # AI explanations / Teacher AI (Gemini)
     ai_explanation_enabled: bool = False
+    gemini_api_key: str | None = None
+    gemini_model: str = "gemini-2.5-flash"
 
     # Anti-cheat: server-side enforcement (auto-submit when weighted score exceeds threshold)
     anti_cheat_max_violations: float = 10.0

@@ -12,6 +12,8 @@ const initialState: ExamFormState = {
   title: "",
   description: "",
   is_draft: true,
+  shuffle_questions: false,
+  shuffle_options: false,
   questions: [],
 };
 
@@ -36,6 +38,8 @@ export function CreateExamPage() {
         title: state.title.trim(),
         description: state.description.trim() || null,
         is_draft: true,
+        shuffle_questions: state.shuffle_questions,
+        shuffle_options: state.shuffle_options,
         questions: state.questions.map((q, i) => ({
           order_index: i,
           question_type: q.question_type,
@@ -70,6 +74,8 @@ export function CreateExamPage() {
         title: state.title.trim(),
         description: state.description.trim() || null,
         is_draft: state.is_draft,
+        shuffle_questions: state.shuffle_questions,
+        shuffle_options: state.shuffle_options,
         questions: state.questions.map((q, i) => ({
           order_index: i,
           question_type: q.question_type,

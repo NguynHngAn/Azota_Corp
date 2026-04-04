@@ -105,3 +105,16 @@ class AddFromBankResponse(BaseModel):
     added: int
     question_ids: list[int]
 
+
+class QuestionImportPreviewItem(BaseModel):
+    question_type: QuestionType
+    text: str
+    difficulty: QuestionDifficulty
+    options_count: int
+    tags: list[str] = []
+
+
+class QuestionImportResponse(BaseModel):
+    total: int
+    imported: int
+    preview: list[QuestionImportPreviewItem]

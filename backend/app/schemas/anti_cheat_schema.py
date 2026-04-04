@@ -40,6 +40,9 @@ class AntiCheatMonitorRow(BaseModel):
     last_event_type: str | None
     last_event_at: datetime | None
     suspicious: bool
+    violation_count: int = 0
+    auto_submitted: bool = False
+    submit_reason: str | None = None
 
 
 class AntiCheatMonitorSummary(BaseModel):
@@ -52,4 +55,3 @@ class AntiCheatMonitorSummary(BaseModel):
 class AntiCheatMonitorResponse(BaseModel):
     summary: AntiCheatMonitorSummary
     rows: list[AntiCheatMonitorRow]
-

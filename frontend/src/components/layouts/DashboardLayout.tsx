@@ -5,6 +5,7 @@ import { useExam } from "@/context";
 import { AppSidebar } from "@/components/layouts/AppSidebar";
 import { ProtectedRouter } from "@/router/ProtectedRoute";
 import { TopNavBar } from "@/components/layouts/TopNavBar";
+import { TeacherAiAssistantCard } from "@/components/teacher/TeacherAiAssistantCard";
 import {
   getBaseNavItems,
   getEffectiveNavItems,
@@ -31,7 +32,7 @@ export function DashboardLayout({ role }: { role: DashboardRole }) {
         inProgress: exam.inProgress,
         assignmentId: exam.assignmentId,
       }),
-    [baseNav, exam.assignmentId, exam.inProgress, role, user?.role]
+    [baseNav, exam.assignmentId, exam.inProgress, role, user?.role],
   );
 
   useEffect(() => {
@@ -65,6 +66,7 @@ export function DashboardLayout({ role }: { role: DashboardRole }) {
             </main>
           </div>
         </div>
+        {role === "teacher" ? <TeacherAiAssistantCard /> : null}
       </div>
     </ProtectedRouter>
   );

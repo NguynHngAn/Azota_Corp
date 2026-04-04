@@ -24,6 +24,8 @@ function examToFormState(exam: ExamDetail): ExamFormState {
     title: exam.title,
     description: exam.description ?? "",
     is_draft: exam.is_draft,
+    shuffle_questions: exam.shuffle_questions,
+    shuffle_options: exam.shuffle_options,
     questions: exam.questions.map((q) => ({
       id: q.id,
       order_index: q.order_index,
@@ -73,13 +75,14 @@ export function EditExamPage() {
     if (!token) return;
     if (loading) return;
     if (bankAutoOpened) return;
+    if (!state?.is_draft) return;
     const params = new URLSearchParams(location.search);
     if (params.get("openBank") !== "1") return;
     setBankAutoOpened(true);
     setBankOpen(true);
     void loadBank();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bankAutoOpened, loading, location.search, token]);
+  }, [bankAutoOpened, loading, location.search, token, state?.is_draft]);
 
   async function loadBank() {
     if (!token) return;
@@ -130,7 +133,9 @@ export function EditExamPage() {
         {
           title: state.title.trim(),
           description: state.description.trim() || null,
-          is_draft: state.is_draft,
+          is_draft: true,
+          shuffle_questions: state.shuffle_questions,
+          shuffle_options: state.shuffle_options,
         },
         token
       );
@@ -171,6 +176,23 @@ export function EditExamPage() {
             questions: s.questions.map((q, i) => ({ ...q, id: newIds[i] ?? q.id })),
           };
         });
+      }
+
+      // Publish as the final step (after question updates).
+      if (!state.is_draft) {
+        await updateExam(
+          examId,
+          {
+            title: state.title.trim(),
+            description: state.description.trim() || null,
+            is_draft: false,
+            shuffle_questions: state.shuffle_questions,
+            shuffle_options: state.shuffle_options,
+          },
+          token
+        );
+      } else {
+        // If user wants draft, we're already editing as draft, nothing else to do.
       }
 
       navigate("/teacher/exams");

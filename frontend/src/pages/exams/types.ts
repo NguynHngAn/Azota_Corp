@@ -18,6 +18,8 @@ export interface ExamFormState {
   title: string;
   description: string;
   is_draft: boolean;
+  shuffle_questions: boolean;
+  shuffle_options: boolean;
   questions: QuestionRow[];
 }
 

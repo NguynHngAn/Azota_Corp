@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -18,8 +18,11 @@ from app.schemas.question_bank_schema import (
     BankQuestionResponse,
     BankQuestionUpdate,
     BankAnswerOptionResponse,
+    QuestionImportPreviewItem,
+    QuestionImportResponse,
 )
 from app.services.exam_service import can_access_exam, can_edit_exam
+from app.services.question_import_service import parse_question_import
 
 router = APIRouter(prefix="/question-bank", tags=["question-bank"])
 
@@ -51,6 +54,19 @@ def _bank_question_to_response(q: BankQuestion) -> BankQuestionResponse:
         options=[BankAnswerOptionResponse.model_validate(o) for o in q.options],
         tags=[t.name for t in q.tags],
     )
+
+
+def _preview_import_questions(items: list[BankQuestionCreate]) -> list[QuestionImportPreviewItem]:
+    return [
+        QuestionImportPreviewItem(
+            question_type=item.question_type,
+            text=item.text,
+            difficulty=item.difficulty,
+            options_count=len(item.options),
+            tags=item.tags,
+        )
+        for item in items[:20]
+    ]
 
 
 @router.get("", response_model=BankQuestionListResponse)
@@ -254,7 +270,6 @@ def add_from_bank_to_exam(
     if not bank_questions:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No questions found")
 
-    # Append after last order index.
     last_order = (
         db.query(func.max(Question.order_index))
         .filter(Question.exam_id == exam_id)
@@ -287,3 +302,64 @@ def add_from_bank_to_exam(
     db.commit()
     return AddFromBankResponse(added=len(new_ids), question_ids=new_ids)
 
+
+@router.post("/import", response_model=QuestionImportResponse, status_code=status.HTTP_201_CREATED)
+async def import_bank_questions(
+    current_user: Annotated[User, Depends(require_role(Role.teacher))],
+    db: Session = Depends(get_db),
+    file: UploadFile = File(...),
+    preview_only: bool = Query(default=False),
+):
+    if not file.filename:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing file name")
+    content = await file.read()
+    try:
+        parsed = parse_question_import(file.filename, content)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    if not parsed:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No questions found in file")
+
+    if preview_only:
+        return QuestionImportResponse(total=len(parsed), imported=0, preview=_preview_import_questions(parsed))
+
+    created = 0
+    for item in parsed:
+        bq = BankQuestion(
+            owner_id=current_user.id,
+            question_type=item.question_type,
+            text=item.text,
+            explanation=item.explanation,
+            difficulty=item.difficulty,
+            is_active=item.is_active,
+        )
+        db.add(bq)
+        db.flush()
+        for opt in item.options:
+            db.add(
+                BankAnswerOption(
+                    question_id=bq.id,
+                    order_index=opt.order_index,
+                    text=opt.text,
+                    is_correct=opt.is_correct,
+                )
+            )
+        tags = _normalize_tags(item.tags)
+        if tags:
+            existing = (
+                db.query(BankTag)
+                .filter(BankTag.owner_id == current_user.id, BankTag.name.in_(tags))
+                .all()
+            )
+            by_name = {tag.name: tag for tag in existing}
+            for name in tags:
+                tag = by_name.get(name)
+                if not tag:
+                    tag = BankTag(owner_id=current_user.id, name=name)
+                    db.add(tag)
+                    db.flush()
+                    by_name[name] = tag
+                bq.tags.append(tag)
+        created += 1
+    db.commit()
+    return QuestionImportResponse(total=len(parsed), imported=created, preview=_preview_import_questions(parsed))

@@ -6,6 +6,7 @@ export const getBankQuestion = questionBankApi.getBankQuestion;
 export const updateBankQuestion = questionBankApi.updateBankQuestion;
 export const deleteBankQuestion = questionBankApi.deleteBankQuestion;
 export const addFromBankToExam = questionBankApi.addFromBankToExam;
+export const importQuestions = questionBankApi.importQuestions;
 
 export type {
   QuestionType,
@@ -17,4 +18,6 @@ export type {
   BankQuestionListResponse,
   BankAnswerOptionResponse,
   BankQuestionResponse,
+  QuestionImportPreviewItem,
+  QuestionImportResponse,
 } from "@/api/questionBank";

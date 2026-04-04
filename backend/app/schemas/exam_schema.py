@@ -73,6 +73,8 @@ class ExamBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
     description: str | None = Field(None, max_length=2000)
     is_draft: bool = True
+    shuffle_questions: bool = False
+    shuffle_options: bool = False
 
 
 class ExamCreate(ExamBase):
@@ -83,6 +85,8 @@ class ExamUpdate(BaseModel):
     title: str | None = Field(None, min_length=1, max_length=255)
     description: str | None = Field(None, max_length=2000)
     is_draft: bool | None = None
+    shuffle_questions: bool | None = None
+    shuffle_options: bool | None = None
 
 
 class ExamResponse(ExamBase):

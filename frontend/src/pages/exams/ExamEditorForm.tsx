@@ -77,6 +77,7 @@ export function ExamEditorForm({
   const lang = useLanguage();
   const [step, setStep] = useState<Step>(1);
   const formFieldId = useId();
+  const isEditable = state.is_draft;
 
   function text(key: string, values?: Record<string, string | number>) {
     const base = t(key as never, lang);
@@ -167,6 +168,7 @@ export function ExamEditorForm({
                     value={state.title}
                     onChange={(e) => setMeta("title", e.target.value)}
                     placeholder={t("examEditor.titlePlaceholder", lang)}
+                    disabled={!isEditable}
                   />
                 </div>
                 <div>
@@ -181,6 +183,7 @@ export function ExamEditorForm({
                     onChange={(e) => setMeta("description", e.target.value)}
                     rows={4}
                     placeholder={t("examEditor.descriptionPlaceholder", lang)}
+                    disabled={!isEditable}
                   />
                 </div>
               </div>
@@ -223,6 +226,7 @@ export function ExamEditorForm({
                                 rows={2}
                                 placeholder={t("examEditor.questionTextPlaceholder", lang)}
                                 aria-label={text("examEditor.questionAria", { number: qIndex + 1 })}
+                                disabled={!isEditable}
                               />
                             </div>
                             <div >
@@ -230,6 +234,7 @@ export function ExamEditorForm({
                               <select
                                 value={q.question_type}
                                 onChange={(e) => setQuestionType(qIndex, e.target.value as QuestionType)}
+                                disabled={!isEditable}
                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                               >
                                 <option value="single_choice">{t("questionBank.editor.singleChoice", lang)}</option>
@@ -256,6 +261,7 @@ export function ExamEditorForm({
                                 name={q.question_type === "single_choice" ? `q-${qIndex}-correct` : undefined}
                                 checked={opt.is_correct}
                                 onChange={() => setOptionCorrect(qIndex, oIndex, !opt.is_correct)}
+                                disabled={!isEditable}
                               />
                               <div className="flex-1">
                                 <Input

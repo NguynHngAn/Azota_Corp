@@ -3,12 +3,14 @@ import {
   createBankQuestion,
   deleteBankQuestion,
   getBankQuestion,
+  importQuestions,
   listBankQuestions,
   updateBankQuestion,
   type BankAnswerOptionCreate,
   type BankQuestionCreate,
   type BankQuestionListItem,
   type BankQuestionResponse,
+  type QuestionImportResponse,
   type QuestionDifficulty,
   type QuestionType,
 } from "@/services/questionBank.service";
@@ -20,6 +22,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Icons } from "@/components/layouts/Icons";
 import { t, useLanguage } from "@/i18n";
+import { Card } from "@/components/ui/card";
 
 export function TeacherQuestionBankPage() {
   const { token } = useAuth();
@@ -57,6 +60,13 @@ export function TeacherQuestionBankPage() {
   const [tagsText, setTagsText] = useState("");
   const questionTextFieldId = useId();
   const explanationFieldId = useId();
+
+  // Import
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [importPreview, setImportPreview] = useState<QuestionImportResponse | null>(null);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importError, setImportError] = useState("");
+  const importInputId = useId();
 
   const normalizedTags = useMemo(() => {
     return tagsText
@@ -235,6 +245,43 @@ export function TeacherQuestionBankPage() {
     return tr("questionBank.difficulty.medium");
   }
 
+  function downloadTemplate(path: string) {
+    window.open(path, "_blank", "noopener,noreferrer");
+  }
+
+  async function previewImport(file: File) {
+    if (!token) return;
+    setImportLoading(true);
+    setImportError("");
+    try {
+      const res = await importQuestions(file, token, true);
+      setImportPreview(res);
+      setSelectedFile(file);
+    } catch (e) {
+      setImportPreview(null);
+      setSelectedFile(null);
+      setImportError(e instanceof Error ? e.message : "Failed to preview import");
+    } finally {
+      setImportLoading(false);
+    }
+  }
+
+  async function commitImport() {
+    if (!token || !selectedFile || !importPreview) return;
+    setImportLoading(true);
+    setImportError("");
+    try {
+      await importQuestions(selectedFile, token, false);
+      setImportPreview(null);
+      setSelectedFile(null);
+      await refresh();
+    } catch (e) {
+      setImportError(e instanceof Error ? e.message : "Failed to import questions");
+    } finally {
+      setImportLoading(false);
+    }
+  }
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
@@ -252,6 +299,135 @@ export function TeacherQuestionBankPage() {
           </Button>
         </div>
       </div>
+
+      {/* Import */}
+      <Card className="p-6 glass-card">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-sm font-semibold text-foreground">Import questions (Excel/CSV/Word)</div>
+            <div className="mt-1 text-xs text-muted-foreground">Upload file để preview trước khi commit vào Question Bank.</div>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => downloadTemplate("/templates/question-import-template.docx")}
+            >
+              Download Word template
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => downloadTemplate("/templates/question-import-template.xlsx")}
+            >
+              Download Excel template
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => downloadTemplate("/templates/question-import-template.csv")}
+            >
+              Download CSV template
+            </Button>
+          </div>
+        </div>
+
+        <div className="mt-4 flex items-center gap-3">
+          <input
+            id={importInputId}
+            type="file"
+            accept=".xlsx,.csv,.docx"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void previewImport(file);
+              e.currentTarget.value = "";
+            }}
+          />
+          <Button type="button" onClick={() => document.getElementById(importInputId)?.click()} disabled={importLoading}>
+            {importLoading ? "Reading..." : "Choose file"}
+          </Button>
+          <div className="text-xs text-muted-foreground">
+            Gợi ý: use template để đúng format cột/dòng (tránh lỗi import).
+          </div>
+        </div>
+
+        {importError ? <div className="mt-3 text-sm text-rose-700">{importError}</div> : null}
+
+        {importPreview ? (
+          <div className="mt-4 space-y-3 rounded-xl border border-border bg-card/30 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold">Import preview</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  File có {importPreview.total} câu hỏi được nhận diện.
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    setImportPreview(null);
+                    setSelectedFile(null);
+                    setImportError("");
+                  }}
+                  disabled={importLoading}
+                >
+                  Cancel
+                </Button>
+                <Button type="button" onClick={() => void commitImport()} disabled={importLoading}>
+                  {importLoading ? "Importing..." : `Import ${importPreview.total}`}
+                </Button>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-border bg-card p-3">
+              <div className="text-xs font-semibold text-muted-foreground mb-2">Preview items</div>
+              {importPreview.preview.length === 0 ? (
+                <div className="text-sm text-muted-foreground">No preview items.</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Question</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Difficulty</TableHead>
+                      <TableHead>Options</TableHead>
+                      <TableHead>Tags</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {importPreview.preview.map((p, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell className="max-w-[520px]">
+                          <div className="line-clamp-2 text-sm font-medium">{p.text}</div>
+                        </TableCell>
+                        <TableCell>{p.question_type}</TableCell>
+                        <TableCell>{p.difficulty}</TableCell>
+                        <TableCell>{p.options_count}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {p.tags.length === 0 ? (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            ) : (
+                              p.tags.slice(0, 5).map((t) => (
+                                <Badge key={t} variant="outline">
+                                  {t}
+                                </Badge>
+                              ))
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </div>
+          </div>
+        ) : null}
+      </Card>
 
       <div >
         <div className="search-input max-w-md">

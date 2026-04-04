@@ -6,7 +6,17 @@ from sqlalchemy import text
 
 from app.config import settings
 from app.database import get_db
-from app.api.v1 import auth, users, classes, exams, assignments, anti_cheat, anti_cheat_analytics, question_bank
+from app.api.v1 import (
+    auth,
+    users,
+    classes,
+    exams,
+    assignments,
+    anti_cheat,
+    anti_cheat_analytics,
+    question_bank,
+    teacher_ai,
+)
 
 app = FastAPI(title=settings.app_name)
 app.include_router(auth.router, prefix="/api/v1")
@@ -17,6 +27,7 @@ app.include_router(assignments.router, prefix="/api/v1")
 app.include_router(anti_cheat.router, prefix="/api/v1")
 app.include_router(anti_cheat_analytics.router, prefix="/api/v1")
 app.include_router(question_bank.router, prefix="/api/v1")
+app.include_router(teacher_ai.router, prefix="/api/v1")
 
 # Static files (avatars uploads)
 _static_dir = Path(__file__).resolve().parent / "static"
@@ -54,6 +65,7 @@ def health_check(db: Session = Depends(get_db)):
 @app.get("/health/debug")
 def health_debug():
     from pathlib import Path
+
     url = settings.get_database_url()
     if ":" in url.split("//")[-1]:
         parts = url.split("@", 1)
@@ -67,6 +79,7 @@ def health_debug():
     db_error = None
     try:
         from app.database import engine
+
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
     except Exception as e:

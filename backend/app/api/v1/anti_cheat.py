@@ -20,8 +20,15 @@ from app.schemas.anti_cheat_schema import (
     AntiCheatMonitorRow,
     AntiCheatMonitorSummary,
 )
-from app.services.assignment_service import can_manage_assignment, is_in_class, try_auto_submit_submission_on_violation_threshold
-from app.services.anti_cheat_service import count_recent_events_for_rate_limit, submission_violation_metrics
+from app.services.assignment_service import (
+    can_manage_assignment,
+    is_in_class,
+    try_auto_submit_submission_on_violation_threshold,
+)
+from app.services.anti_cheat_service import (
+    count_recent_events_for_rate_limit,
+    submission_violation_metrics,
+)
 
 router = APIRouter(prefix="/anti-cheat", tags=["anti-cheat"])
 
@@ -123,7 +130,6 @@ def teacher_monitor(
             rows=[],
         )
 
-    # Permission check when teacher queries a single assignment.
     if assignment_id is not None and current_user.role == Role.teacher:
         assignment = db.query(Assignment).filter(Assignment.id == assignment_id).first()
         if not assignment:
@@ -131,7 +137,6 @@ def teacher_monitor(
         if not can_manage_assignment(current_user, assignment):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not your assignment")
 
-    # Summary
     class_ids = [row[0] for row in db.query(Assignment.class_id).filter(Assignment.id.in_(assignment_ids)).distinct().all()]
     total_students = (
         db.query(func.count(func.distinct(ClassMember.user_id))).filter(ClassMember.class_id.in_(class_ids)).scalar()
@@ -150,7 +155,6 @@ def teacher_monitor(
         or 0
     )
 
-    # Aggregate event counts and last event per (assignment_id, user_id)
     ev_counts = (
         db.query(
             AntiCheatEvent.assignment_id.label("assignment_id"),
@@ -163,7 +167,6 @@ def teacher_monitor(
         .subquery()
     )
 
-    # Get last event type using a max(created_at) join (good enough for MVP).
     last_ev = (
         db.query(AntiCheatEvent.assignment_id, AntiCheatEvent.user_id, AntiCheatEvent.event_type, AntiCheatEvent.created_at)
         .join(
@@ -175,7 +178,6 @@ def teacher_monitor(
         .subquery()
     )
 
-    # Build rows from submissions (active + submitted) for these assignments.
     q = (
         db.query(Submission, Assignment, Exam, Class, User, ev_counts.c.events_total, ev_counts.c.last_event_at, last_ev.c.event_type)
         .join(Assignment, Submission.assignment_id == Assignment.id)
@@ -214,6 +216,9 @@ def teacher_monitor(
                 last_event_type=last_event_type,
                 last_event_at=last_event_at,
                 suspicious=suspicious,
+                violation_count=sub.violation_count,
+                auto_submitted=sub.auto_submitted,
+                submit_reason=sub.submit_reason,
             )
         )
 
@@ -226,4 +231,3 @@ def teacher_monitor(
         ),
         rows=rows_out,
     )
-

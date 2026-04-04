@@ -63,6 +63,20 @@ export interface BankQuestionResponse {
   tags: string[];
 }
 
+export interface QuestionImportPreviewItem {
+  question_type: QuestionType;
+  text: string;
+  difficulty: QuestionDifficulty;
+  options_count: number;
+  tags: string[];
+}
+
+export interface QuestionImportResponse {
+  total: number;
+  imported: number;
+  preview: QuestionImportPreviewItem[];
+}
+
 export async function listBankQuestions(
   token: string,
   opts?: { q?: string; tag?: string; is_active?: boolean; limit?: number; offset?: number },
@@ -93,7 +107,16 @@ export async function deleteBankQuestion(id: number, token: string): Promise<voi
   await del(`/api/v1/question-bank/${id}`, token);
 }
 
-export async function addFromBankToExam(examId: number, bankQuestionIds: number[], token: string): Promise<{ added: number; question_ids: number[] }> {
+export async function addFromBankToExam(
+  examId: number,
+  bankQuestionIds: number[],
+  token: string,
+): Promise<{ added: number; question_ids: number[] }> {
   return post<{ added: number; question_ids: number[] }>(`/api/v1/question-bank/exams/${examId}/add`, { bank_question_ids: bankQuestionIds }, token);
 }
 
+export async function importQuestions(file: File, token: string, previewOnly = false): Promise<QuestionImportResponse> {
+  const form = new FormData();
+  form.append("file", file);
+  return post<QuestionImportResponse>(`/api/v1/question-bank/import?preview_only=${previewOnly ? "true" : "false"}`, form, token);
+}

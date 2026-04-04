@@ -10,6 +10,7 @@ export const getSubmissionResult = assignmentsApi.getSubmissionResult;
 export const listMySubmissions = assignmentsApi.listMySubmissions;
 export const getMySubmissionForAssignment = assignmentsApi.getMySubmissionForAssignment;
 export const getAssignmentReport = assignmentsApi.getAssignmentReport;
+export const postAssignmentReportAiInsight = assignmentsApi.postAssignmentReportAiInsight;
 export const getAdminOverviewReport = assignmentsApi.getAdminOverviewReport;
 
 export type {
@@ -20,6 +21,7 @@ export type {
   ExamRoomQuestion,
   SubmissionStartResponse,
   SubmitAnswerPayload,
+  SubmitPayload,
   OptionResultItem,
   QuestionResultDetail,
   SubmissionResultResponse,
@@ -27,5 +29,6 @@ export type {
   MyAssignmentSubmissionResponse,
   ScoreBucket,
   AssignmentReportResponse,
+  AssignmentInsightResponse,
   AdminOverviewReportResponse,
 } from "@/api/assignments";

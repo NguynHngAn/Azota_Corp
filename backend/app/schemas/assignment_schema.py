@@ -9,6 +9,9 @@ class AssignmentCreate(BaseModel):
     start_time: datetime
     end_time: datetime
     duration_minutes: int = Field(..., gt=0, le=600)
+    shuffle_questions: bool = False
+    shuffle_options: bool = False
+    max_violations: int = Field(default=3, ge=1, le=20)
 
 
 class AssignmentResponse(BaseModel):
@@ -18,6 +21,9 @@ class AssignmentResponse(BaseModel):
     start_time: datetime
     end_time: datetime
     duration_minutes: int
+    shuffle_questions: bool
+    shuffle_options: bool
+    max_violations: int
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -39,12 +45,15 @@ class SubmissionStartResponse(BaseModel):
     started_at: datetime
     duration_minutes: int
     exam_title: str
+    max_violations: int
+    violation_count: int = 0
     questions: list[dict]
     saved_answers: list[SubmissionAnswerPayload] = Field(default_factory=list)
 
 
 class SubmitPayload(BaseModel):
     answers: list[SubmissionAnswerPayload]
+    submit_reason: str | None = None
 
 
 class AutosaveAnswersResponse(BaseModel):
@@ -58,6 +67,9 @@ class SubmissionResponse(BaseModel):
     started_at: datetime
     submitted_at: datetime | None
     score: float | None = None
+    auto_submitted: bool = False
+    submit_reason: str | None = None
+    violation_count: int = 0
 
     model_config = {"from_attributes": True}
 
@@ -80,6 +92,7 @@ class QuestionResultDetail(BaseModel):
     chosen_option_ids: list[int] = []
     options: list[OptionResultItem] = []
     ai_explanation: str | None = None
+    order_index: int = 0
 
 
 class SubmissionResultResponse(BaseModel):
@@ -129,6 +142,15 @@ class ScoreBucket(BaseModel):
     count: int
 
 
+class QuestionAnalyticsItem(BaseModel):
+    question_id: int
+    question_text: str
+    incorrect_count: int
+    correct_count: int
+    total_answers: int
+    incorrect_rate: float
+
+
 class AssignmentReportResponse(BaseModel):
     assignment_id: int
     exam_id: int
@@ -144,6 +166,7 @@ class AssignmentReportResponse(BaseModel):
     min_score: float | None = None
     max_score: float | None = None
     score_buckets: list[ScoreBucket]
+    top_missed_questions: list[QuestionAnalyticsItem] = []
 
 
 class AdminOverviewReportResponse(BaseModel):
@@ -154,4 +177,3 @@ class AdminOverviewReportResponse(BaseModel):
 
     average_score: float | None = None
     score_buckets: list[ScoreBucket]
-

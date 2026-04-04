@@ -32,6 +32,9 @@ export function CreateAssignmentPage() {
   const [startDateTime, setStartDateTime] = useState("");
   const [endDateTime, setEndDateTime] = useState("");
   const [durationMinutes, setDurationMinutes] = useState<number>(60);
+  const [shuffleQuestions, setShuffleQuestions] = useState(false);
+  const [shuffleOptions, setShuffleOptions] = useState(false);
+  const [maxViolations, setMaxViolations] = useState<number>(3);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -44,6 +47,13 @@ export function CreateAssignmentPage() {
       })
       .catch((e) => setError(e instanceof Error ? e.message : t("createAssignment.failedLoad", lang)));
   }, [token]);
+
+  useEffect(() => {
+    const selectedExam = exams.find((item) => item.id === examId);
+    if (!selectedExam) return;
+    setShuffleQuestions(selectedExam.shuffle_questions);
+    setShuffleOptions(selectedExam.shuffle_options);
+  }, [examId, exams]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -75,6 +85,9 @@ export function CreateAssignmentPage() {
         start_time: start,
         end_time: end,
         duration_minutes: durationMinutes,
+        shuffle_questions: shuffleQuestions,
+        shuffle_options: shuffleOptions,
+        max_violations: maxViolations,
       };
       await createAssignment(body, token);
       navigate(`${base}/assignments`);
@@ -152,6 +165,37 @@ export function CreateAssignmentPage() {
             value={durationMinutes}
             onChange={(e) => setDurationMinutes(Number(e.target.value) || 0)}
           />
+        </div>
+        <div className="space-y-3 rounded-xl border border-border p-4">
+          <div className="text-sm font-medium text-gray-700">Exam protections</div>
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input
+              className="accent-primary"
+              type="checkbox"
+              checked={shuffleQuestions}
+              onChange={(e) => setShuffleQuestions(e.target.checked)}
+            />
+            Shuffle question order per student
+          </label>
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input
+              className="accent-primary"
+              type="checkbox"
+              checked={shuffleOptions}
+              onChange={(e) => setShuffleOptions(e.target.checked)}
+            />
+            Shuffle answer options per student
+          </label>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Auto-submit after violations</label>
+            <Input
+              type="number"
+              min={1}
+              max={20}
+              value={maxViolations}
+              onChange={(e) => setMaxViolations(Number(e.target.value) || 1)}
+            />
+          </div>
         </div>
         {error && <p className="text-red-600 text-sm">{error}</p>}
         <div className="flex gap-2">

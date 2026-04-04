@@ -7,6 +7,9 @@ export interface AssignmentResponse {
   start_time: string;
   end_time: string;
   duration_minutes: number;
+  shuffle_questions: boolean;
+  shuffle_options: boolean;
+  max_violations: number;
   created_at: string;
 }
 
@@ -21,6 +24,9 @@ export interface AssignmentCreatePayload {
   start_time: string;
   end_time: string;
   duration_minutes: number;
+  shuffle_questions?: boolean;
+  shuffle_options?: boolean;
+  max_violations?: number;
 }
 
 export interface ExamRoomOption {
@@ -42,12 +48,19 @@ export interface SubmitAnswerPayload {
   chosen_option_ids: number[];
 }
 
+export interface SubmitPayload {
+  answers: SubmitAnswerPayload[];
+  submit_reason?: string | null;
+}
+
 export interface SubmissionStartResponse {
   submission_id: number;
   assignment_id: number;
   started_at: string;
   duration_minutes: number;
   exam_title: string;
+  max_violations: number;
+  violation_count: number;
   questions: ExamRoomQuestion[];
   saved_answers?: SubmitAnswerPayload[];
 }
@@ -70,16 +83,26 @@ export function startAssignment(assignmentId: number, token: string): Promise<Su
 
 export function submitSubmission(
   submissionId: number,
-  body: { answers: SubmitAnswerPayload[] },
-  token: string
-): Promise<{ id: number; assignment_id: number; user_id: number; started_at: string; submitted_at: string | null; score: number | null }> {
+  body: SubmitPayload,
+  token: string,
+): Promise<{
+  id: number;
+  assignment_id: number;
+  user_id: number;
+  started_at: string;
+  submitted_at: string | null;
+  score: number | null;
+  auto_submitted: boolean;
+  submit_reason: string | null;
+  violation_count: number;
+}> {
   return post(`/api/v1/assignments/submissions/${submissionId}/submit`, body, token);
 }
 
 export function saveSubmissionAnswers(
   submissionId: number,
-  body: { answers: SubmitAnswerPayload[] },
-  token: string
+  body: SubmitPayload,
+  token: string,
 ): Promise<{ saved: boolean }> {
   return post<{ saved: boolean }>(`/api/v1/assignments/submissions/${submissionId}/answers`, body, token);
 }
@@ -97,6 +120,7 @@ export interface QuestionResultDetail {
   chosen_option_ids: number[];
   options: OptionResultItem[];
   ai_explanation?: string | null;
+  order_index: number;
 }
 
 export interface SubmissionResultResponse {
@@ -140,7 +164,6 @@ export function getMySubmissionForAssignment(assignmentId: number, token: string
   return get<MyAssignmentSubmissionResponse>(`/api/v1/assignments/${assignmentId}/my-submission`, token);
 }
 
-// Reporting
 export interface ScoreBucket {
   label: string;
   min_score: number;
@@ -161,6 +184,14 @@ export interface AssignmentReportResponse {
   min_score: number | null;
   max_score: number | null;
   score_buckets: ScoreBucket[];
+  top_missed_questions: {
+    question_id: number;
+    question_text: string;
+    incorrect_count: number;
+    correct_count: number;
+    total_answers: number;
+    incorrect_rate: number;
+  }[];
 }
 
 export interface AdminOverviewReportResponse {
@@ -174,6 +205,19 @@ export interface AdminOverviewReportResponse {
 
 export function getAssignmentReport(assignmentId: number, token: string): Promise<AssignmentReportResponse> {
   return get<AssignmentReportResponse>(`/api/v1/assignments/${assignmentId}/report`, token);
+}
+
+export interface AssignmentInsightResponse {
+  model: string;
+  provider: string;
+  summary: string;
+  strengths: string[];
+  concerns: string[];
+  suggestions: string[];
+}
+
+export function postAssignmentReportAiInsight(assignmentId: number, token: string): Promise<AssignmentInsightResponse> {
+  return post<AssignmentInsightResponse>(`/api/v1/assignments/${assignmentId}/report/ai-insight`, {}, token);
 }
 
 export function getAdminOverviewReport(token: string): Promise<AdminOverviewReportResponse> {
