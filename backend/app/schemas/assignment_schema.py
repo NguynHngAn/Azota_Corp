@@ -32,6 +32,8 @@ class AssignmentResponse(BaseModel):
 class AssignmentDetail(AssignmentResponse):
     exam_title: str = ""
     class_name: str = ""
+    # Student's latest submitted score (0–100), when list_my_assignments includes submission row.
+    score: float | None = None
 
 
 class SubmissionAnswerPayload(BaseModel):

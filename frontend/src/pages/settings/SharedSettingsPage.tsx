@@ -135,18 +135,18 @@ export function SharedSettingsPage() {
   const densityOptions: { value: LayoutDensity; label: string; desc: string }[] = [
     { value: "comfortable", label: t("settings.layoutDensity.comfortable", langUi), desc: t("settings.layoutDensity.comfortable.desc", langUi) },
     { value: "compact", label: t("settings.layoutDensity.compact", langUi), desc: t("settings.layoutDensity.compact.desc", langUi) },
-   ];
-  
+  ];
+
   const sidebarOptions: { value: SidebarMode; label: string; icon: typeof Icons.Maximize2 }[] = [
     { value: "expanded", label: t("settings.sidebar.expanded", langUi), icon: Icons.Maximize2 },
     { value: "collapsed", label: t("settings.sidebar.collapsed", langUi), icon: Icons.Minimize2 },
     { value: "auto", label: t("settings.sidebar.auto", langUi), icon: Icons.PanelLeft },
   ];
 
-    const languageOptions: { value: LanguageCode; label: string; flag: string }[] = [
+  const languageOptions: { value: LanguageCode; label: string; flag: string }[] = [
     { value: "en", label: t("settings.language.english", langUi), flag: "🇺🇸" },
     { value: "vi", label: t("settings.language.vietnamese", langUi), flag: "🇻🇳" },
-    ];
+  ];
   const notificationsOptions = [
     { key: "examSubmissions" as const, title: t("settings.examSubmissions", langUi), desc: t("settings.examSubmissionsDesc", langUi) },
     { key: "newStudentRegistration" as const, title: t("settings.newStudent", langUi), desc: t("settings.newStudentDesc", langUi) },
@@ -163,6 +163,15 @@ export function SharedSettingsPage() {
   const notificationRowClass = isCompact
     ? "bg-background px-3 py-2.5 flex items-start justify-between gap-3"
     : "bg-background px-4 py-3 flex items-start justify-between gap-4";
+  async function handleSaveChanges() {
+    try {
+      setLanguageSaved(languageDraft);
+      await notifyLanguageChanged(languageDraft.language);
+      setNotice({ kind: "success", message: t("settings.language.saved", langUi) });
+    } catch (error) {
+      setNotice({ kind: "error", message: error instanceof Error ? error.message : t("settings.language.saveFailed", langUi) });
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -170,12 +179,12 @@ export function SharedSettingsPage() {
         <h1 className="text-2xl font-bold text-foreground">{t("settings.title", langUi)}</h1>
         <p className="text-sm text-muted-foreground mt-1">{t("settings.subtitle", langUi)}</p>
       </div>
-      
+
       <Tabs
         value={tab}
         onValueChange={(value) => {
           setNotice(null);
-          setTab(value as SettingsTab); 
+          setTab(value as SettingsTab);
         }}
         className="flex flex-col md:flex-row gap-6"
       >
@@ -199,30 +208,29 @@ export function SharedSettingsPage() {
         </div>
         {/* Content */}
         <div className={`flex-1 glass-card ${contentCardClass}`}>
-            <div className="text-sm font-semibold text-foreground">{panelTitle}</div>
+          <div className="text-sm font-semibold text-foreground">{panelTitle}</div>
 
-            {notice && (
-              <div
-                className={`mt-4 text-sm rounded-xl px-3 py-2 border ${
-                  notice.kind === "error"
-                    ? "text-destructive bg-destructive/10 border-destructive/20"
-                    : "text-primary bg-primary/10 border-primary/20"
+          {notice && (
+            <div
+              className={`mt-4 text-sm rounded-xl px-3 py-2 border ${notice.kind === "error"
+                ? "text-destructive bg-destructive/10 border-destructive/20"
+                : "text-primary bg-primary/10 border-primary/20"
                 }`}
-              >
-                {notice.message}
-              </div>
-            )}
+            >
+              {notice.message}
+            </div>
+          )}
 
-            {switching && (
-              <div className="mt-4 space-y-3 animate-pulse">
-                <div className="h-10 bg-muted rounded-xl" />
-                <div className="h-10 bg-muted rounded-xl" />
-                <div className="h-10 bg-muted rounded-xl" />
-                <div className="h-10 bg-muted rounded-xl w-2/3" />
-              </div>
-            )}
+          {switching && (
+            <div className="mt-4 space-y-3 animate-pulse">
+              <div className="h-10 bg-muted rounded-xl" />
+              <div className="h-10 bg-muted rounded-xl" />
+              <div className="h-10 bg-muted rounded-xl" />
+              <div className="h-10 bg-muted rounded-xl w-2/3" />
+            </div>
+          )}
 
-            <TabsContent value="profile" className={tabsContentClass}>
+          <TabsContent value="profile" className={tabsContentClass}>
             {!switching && (
               <div className={sectionStackClass}>
                 <div className="flex items-center gap-4">
@@ -297,20 +305,20 @@ export function SharedSettingsPage() {
                   </div>
                 </div>
 
-                
-                  <Button
-                    className="gap-1.5 rounded-lg"
-                    size="sm"
-                    type="button"
-                    onClick={() => setNotice({ kind: "success", message: t("settings.profile.saveSuccess", langUi) })}
-                  >
-                    <Icons.Save className="size-4" /> {t("settings.button.saveChanges", langUi)}
-                  </Button>
+
+                <Button
+                  className="gap-1.5 rounded-lg"
+                  size="sm"
+                  type="button"
+                  onClick={() => setNotice({ kind: "success", message: t("settings.profile.saveSuccess", langUi) })}
+                >
+                  <Icons.Save className="size-4" /> {t("settings.button.saveChanges", langUi)}
+                </Button>
               </div>
             )}
-            </TabsContent>
+          </TabsContent>
 
-            <TabsContent value="notifications" className={tabsContentClass}>
+          <TabsContent value="notifications" className={tabsContentClass}>
             {!switching && (
               <div className="mt-4 overflow-hidden rounded-2xl border border-border divide-y divide-border">
                 {notificationsOptions.map((option) => (
@@ -330,9 +338,9 @@ export function SharedSettingsPage() {
                 ))}
               </div>
             )}
-            </TabsContent>
+          </TabsContent>
 
-            <TabsContent value="security" className={tabsContentClass}>
+          <TabsContent value="security" className={tabsContentClass}>
             {!switching && (
               <div className={`mt-4 max-w-2xl ${sectionStackClass}`}>
                 <div>
@@ -346,7 +354,7 @@ export function SharedSettingsPage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                  <label className="block text-xs font-medium text-foreground mb-1">{t("settings.security.newPassword", langUi)}</label>
+                    <label className="block text-xs font-medium text-foreground mb-1">{t("settings.security.newPassword", langUi)}</label>
                     <Input
                       type="password"
                       value={security.next}
@@ -355,7 +363,7 @@ export function SharedSettingsPage() {
                     />
                   </div>
                   <div>
-                  <label className="block text-xs font-medium text-foreground mb-1">{t("settings.security.confirmPassword", langUi)}</label>
+                    <label className="block text-xs font-medium text-foreground mb-1">{t("settings.security.confirmPassword", langUi)}</label>
                     <Input
                       type="password"
                       value={security.confirm}
@@ -374,9 +382,9 @@ export function SharedSettingsPage() {
                 </div>
               </div>
             )}
-            </TabsContent>
+          </TabsContent>
 
-            <TabsContent value="appearance" className={tabsContentClass}>
+          <TabsContent value="appearance" className={tabsContentClass}>
             {!switching && (
               <div className={appearanceSectionClass}>
                 {/* Theme */}
@@ -386,11 +394,10 @@ export function SharedSettingsPage() {
                     {themeOptions.map((themeMode) => (
                       <button
                         key={themeMode.value}
-                        className={`p-4 rounded-lg border text-sm font-medium transition-colors flex flex-col items-center gap-2 ${
-                          theme === themeMode.value
-                            ? "border-primary bg-primary/5 text-primary"
-                            : "border-border text-muted-foreground hover:border-primary/30"
-                        }`}
+                        className={`p-4 rounded-lg border text-sm font-medium transition-colors flex flex-col items-center gap-2 ${theme === themeMode.value
+                          ? "border-primary bg-primary/5 text-primary"
+                          : "border-border text-muted-foreground hover:border-primary/30"
+                          }`}
                         onClick={() => setTheme(themeMode.value)}
                       >
                         {themeMode.icon && <themeMode.icon className="size-5" />}
@@ -406,11 +413,10 @@ export function SharedSettingsPage() {
                     {colorOptions.map((colorMode) => (
                       <button
                         key={colorMode.value}
-                        className={`p-4 rounded-lg border text-sm font-medium transition-colors flex items-center gap-3 ${
-                          themeColor === colorMode.value
-                            ? "border-primary bg-primary/5 text-primary"
-                            : "border-border text-muted-foreground hover:border-primary/30"
-                        }`}
+                        className={`p-4 rounded-lg border text-sm font-medium transition-colors flex items-center gap-3 ${themeColor === colorMode.value
+                          ? "border-primary bg-primary/5 text-primary"
+                          : "border-border text-muted-foreground hover:border-primary/30"
+                          }`}
                         onClick={() => setThemeColor(colorMode.value)}
                       >
                         <div className={`size-5 rounded-full ${colorMode.swatch} shrink-0`} />
@@ -427,11 +433,10 @@ export function SharedSettingsPage() {
                     {densityOptions.map((densityMode) => (
                       <button
                         key={densityMode.value}
-                        className={`p-4 rounded-lg border text-left transition-colors ${
-                          density === densityMode.value
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/30"
-                        }`}
+                        className={`p-4 rounded-lg border text-left transition-colors ${density === densityMode.value
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/30"
+                          }`}
                         onClick={() => setDensity(densityMode.value)}
                       >
                         <span
@@ -451,11 +456,10 @@ export function SharedSettingsPage() {
                     {sidebarOptions.map((sidebarModeOption) => (
                       <button
                         key={sidebarModeOption.value}
-                        className={`p-4 rounded-lg border text-sm font-medium transition-colors flex flex-col items-center gap-2 ${
-                          sidebarMode === sidebarModeOption.value
-                            ? "border-primary bg-primary/5 text-primary"
-                            : "border-border text-muted-foreground hover:border-primary/30"
-                        }`}
+                        className={`p-4 rounded-lg border text-sm font-medium transition-colors flex flex-col items-center gap-2 ${sidebarMode === sidebarModeOption.value
+                          ? "border-primary bg-primary/5 text-primary"
+                          : "border-border text-muted-foreground hover:border-primary/30"
+                          }`}
                         onClick={() => setSidebarMode(sidebarModeOption.value)}
                       >
                         {sidebarModeOption.icon && <sidebarModeOption.icon className="size-5 " />}
@@ -466,9 +470,9 @@ export function SharedSettingsPage() {
                 </div>
               </div>
             )}
-            </TabsContent>
+          </TabsContent>
 
-            <TabsContent value="language" className={tabsContentClass}>
+          <TabsContent value="language" className={tabsContentClass}>
             {(
               <div >
                 <div className={sectionStackClass}>
@@ -479,11 +483,10 @@ export function SharedSettingsPage() {
                         key={opt.value}
                         type="button"
                         onClick={() => setLanguageDraft((current) => ({ ...current, language: opt.value }))}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors ${
-                          languageDraft.language === opt.value
-                            ? "bg-primary/10 text-primary font-medium border border-primary/20"
-                            : "text-muted-foreground hover:bg-secondary border border-transparent"
-                        }`}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors ${languageDraft.language === opt.value
+                          ? "bg-primary/10 text-primary font-medium border border-primary/20"
+                          : "text-muted-foreground hover:bg-secondary border border-transparent"
+                          }`}
                       >
                         <span className="text-lg">{opt.flag}</span>
                         <span>{opt.label}</span>
@@ -513,18 +516,14 @@ export function SharedSettingsPage() {
                     size="sm"
                     className="gap-1.5 rounded-lg"
                     type="button"
-                    onClick={() => {
-                      setLanguageSaved(languageDraft);
-                      notifyLanguageChanged(languageDraft.language);
-                      setNotice({ kind: "success", message: t("settings.language.saved", langUi) });
-                    }}
+                    onClick={handleSaveChanges}
                   >
                     <Icons.Save className="size-4" /> {t("settings.button.saveChanges", langUi)}
                   </Button>
                 </div>
               </div>
             )}
-            </TabsContent>
+          </TabsContent>
         </div>
       </Tabs>
     </div>

@@ -7,7 +7,7 @@ import { JoinClassPanel } from "@/components/features/student/join-class-panel";
 import { Button } from "@/components/ui/button";
 import { formatDateTimeVietnam } from "@/utils/date";
 import { useNavigate } from "react-router";
-import { Clock, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { t, useLanguage } from "@/i18n";
 
 function firstName(fullNameOrEmail?: string | null): string {
@@ -15,6 +15,25 @@ function firstName(fullNameOrEmail?: string | null): string {
   if (!raw) return "Student";
   const parts = raw.split(/\s+/).filter(Boolean);
   return parts[0] || raw;
+}
+
+function formatScorePercent(score: number): string {
+  const n = Number(score);
+  if (!Number.isFinite(n)) return "—";
+  const label = Number.isInteger(n) ? String(Math.round(n)) : n.toFixed(1);
+  return `${label}`;
+}
+
+/** Maps 0–100 score to red (low) → amber → green (high). */
+function scorePercentColorClass(score: number): string {
+  const n = Math.min(100, Math.max(0, Number(score)));
+  if (!Number.isFinite(n)) return "text-muted-foreground";
+  if (n < 40) return "text-red-600 dark:text-red-400";
+  if (n < 55) return "text-orange-600 dark:text-orange-400";
+  if (n < 70) return "text-amber-600 dark:text-amber-400";
+  if (n < 82) return "text-lime-600 dark:text-lime-400";
+  if (n < 92) return "text-emerald-600 dark:text-emerald-400";
+  return "text-green-600 dark:text-green-400";
 }
 
 export function StudentDashboardPage() {
@@ -51,9 +70,10 @@ export function StudentDashboardPage() {
   const stats = useMemo(() => {
     const now = new Date();
     const upcoming = assignments.filter((a) => new Date(a.start_time) > now).length;
+    const submissions = assignments.filter((a) => a.score != null).length;
     return {
       classes: classes.length,
-      submissions: 0,
+      submissions,
       upcoming,
     };
   }, [assignments, classes.length]);
@@ -66,9 +86,18 @@ export function StudentDashboardPage() {
       .slice(0, 3);
   }, [assignments]);
 
+  const recentGraded = useMemo(() => {
+    return assignments
+      .filter((a) => a.score != null)
+      .sort((a, b) => +new Date(b.end_time) - +new Date(a.end_time))
+      .slice(0, 5);
+  }, [assignments]);
+
   if (loading) {
     return (
-        <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+      <div className="flex items-center justify-center py-20">
+        <Icons.Loader2 className="w-6 h-6 animate-spin text-primary" />
+      </div>
     );
   }
 
@@ -84,21 +113,27 @@ export function StudentDashboardPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-lg border bg-card text-card-foreground shadow-sm hover:shadow-sm p-5 flex items-center gap-4">
-          <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center"><Icons.BookOpen className="size-5 text-primary" /></div>
+          <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Icons.BookOpen className="size-5 text-primary" />
+          </div>
           <div>
             <div className="text-2xl font-bold text-foreground">{stats.classes}</div>
             <div className="text-sm text-muted-foreground">{t("nav.myClasses", lang)}</div>
           </div>
         </div>
         <div className="rounded-lg border bg-card text-card-foreground shadow-sm hover:shadow-sm p-5 flex items-center gap-4">
-          <div className="size-10 rounded-lg bg-success/10 flex items-center justify-center"><Icons.CheckCircle className="size-5 text-success" /></div>
+          <div className="size-10 rounded-lg bg-success/10 flex items-center justify-center">
+            <Icons.CheckCircle className="size-5 text-success" />
+          </div>
           <div>
             <div className="text-2xl font-bold text-foreground">{stats.submissions}</div>
-            <div className="text-sm text-muted-foreground">{t("teacherDashboard.submissions", lang)}</div>
+            <div className="text-sm text-muted-foreground">{t("studentDashboard.submitted", lang)}</div>
           </div>
         </div>
         <div className="rounded-lg border bg-card text-card-foreground shadow-sm hover:shadow-sm p-5 flex items-center gap-4">
-          <div className="size-10 rounded-lg bg-info/10 flex items-center justify-center"><Icons.FileText className="size-5 text-info" /></div>
+          <div className="size-10 rounded-lg bg-info/10 flex items-center justify-center">
+            <Icons.FileText className="size-5 text-info" />
+          </div>
           <div>
             <div className="text-2xl font-bold text-foreground">{stats.upcoming}</div>
             <div className="text-sm text-muted-foreground">{t("studentDashboard.upcoming", lang)}</div>
@@ -119,84 +154,67 @@ export function StudentDashboardPage() {
               onClick={() => navigate("/student/assignments")}
               className="text-xs font-medium text-muted-foreground hover:text-primary hover:bg-secondary"
             >
-              {t("common.viewAll", lang)} →
+              {t("common.viewAll", lang)} <Icons.ArrowRight className="size-3 inline-block ml-1" />
             </Button>
           </div>
           <div className="mt-3">
-            {loading ? (
-              <div className="py-8">
-                <div className="h-10 bg-muted rounded-xl animate-pulse mb-3" />
-                <div className="h-10 bg-muted rounded-xl animate-pulse" />
-              </div>
-            ) : upcomingAssignments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                {t("studentDashboard.noUpcomingAssignments", lang)}
-              </p>
+            {upcomingAssignments.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{t("studentDashboard.noUpcomingAssignments", lang)}</p>
             ) : (
               <div className="space-y-3">
                 {upcomingAssignments.map((a) => (
                   <div key={a.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center"><Icons.FileText /></div>
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Icons.FileText />
+                      </div>
                       <div>
                         <div className="text-sm font-medium text-foreground">{a.exam_title}</div>
-                        <div className="text-xs text-muted-foreground">{a.class_name} · {a.duration_minutes} min</div>
+                        <div className="text-xs text-muted-foreground">
+                          {a.class_name} · {a.duration_minutes} {t("common.minutes", lang)}
+                        </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
+                      <div className="text-xs text-muted-foreground flex items-center justify-end gap-1">
+                        <Icons.Clock className="w-3 h-3 shrink-0" />
                         {formatDateTimeVietnam(a.start_time)}
                       </div>
-                      {new Date(a.start_time) <= new Date() && (
-                        <Button
-                        key={a.id}
-                        type="button"
-                        variant="outline"
-                        onClick={() => navigate("/student/assignments")}
-                        className="h-auto w-full flex-col items-stretch rounded-xl border-muted bg-background px-4 py-3 text-left font-normal hover:bg-muted"
-                        >
-                          <div className="text-sm font-medium text-foreground">{a.exam_title}</div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {a.class_name} · {formatDateTimeVietnam(a.start_time)}
-                          </div>
-                        </Button>
-                      )}
                     </div>
                   </div>
-                  ))}
-
+                ))}
               </div>
             )}
           </div>
         </div>
 
         <div className="glass-card p-5">
-            <h3 className="text-sm font-semibold text-foreground mb-4">{t("studentDashboard.recentResults", lang)}</h3>
-            {assignments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t("studentDashboard.noSubmissions", lang)}</p>
-            ) : (
-              <div className="space-y-3">
-                {assignments.map((a) => (
-                  <div key={a.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/30 transition-colors">
-                    <div>
-                      <div className="text-sm font-medium text-foreground">{a.exam_title}</div>
-                      <div className="text-xs text-muted-foreground">{a.start_time ? formatDateTimeVietnam(a.start_time) : t("studentDashboard.inProgress", lang)}</div>
-                    </div>
-                    <div className="text-right">
-                      {/* {a.score != null ? (
-                        <span className="text-lg font-bold text-primary">100%</span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">{t("myAssignments.upcoming", lang)}</span>
-                      )}  */}
-                    </div>
+          <h3 className="text-sm font-semibold text-foreground mb-4">{t("studentDashboard.recentResults", lang)}</h3>
+          {assignments.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("studentDashboard.noSubmissions", lang)}</p>
+          ) : recentGraded.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("studentDashboard.noGradedYet", lang)}</p>
+          ) : (
+            <div className="space-y-3">
+              {recentGraded.map((a) => (
+                <div key={a.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/30 transition-colors">
+                  <div>
+                    <div className="text-sm font-medium text-foreground">{a.exam_title}</div>
+                    <div className="text-xs text-muted-foreground">{formatDateTimeVietnam(a.end_time)}</div>
                   </div>
-                ))}
-              </div>
-            )}
+                  <div className="text-right">
+                    <span
+                      className={cn("text-lg font-bold tabular-nums", scorePercentColorClass(a.score as number))}
+                    >
+                      {formatScorePercent(a.score as number)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
-

@@ -1,4 +1,4 @@
-import { get, post, del, put } from "@/api/client";
+import { get, post, del, put, patch } from "@/api/client";
 
 export interface ClassResponse {
   id: number;
@@ -7,11 +7,13 @@ export interface ClassResponse {
   created_by: number;
   invite_code: string;
   created_at: string;
+  is_archived: boolean;
 }
 
 export interface ClassDetail extends ClassResponse {
   creator?: { id: number; email: string; full_name: string; role: string } | null;
   member_count: number;
+  can_manage: boolean;
 }
 
 export interface ClassMemberResponse {
@@ -22,12 +24,14 @@ export interface ClassMemberResponse {
   user?: { id: number; email: string; full_name: string; role: string } | null;
 }
 
-export function listClasses(token: string): Promise<ClassResponse[]> {
-  return get<ClassResponse[]>("/api/v1/classes", token);
+export function listClasses(token: string, opts?: { includeArchived?: boolean }): Promise<ClassResponse[]> {
+  const q = opts?.includeArchived ? "?include_archived=true" : "";
+  return get<ClassResponse[]>(`/api/v1/classes${q}`, token);
 }
 
-export function listMyClasses(token: string): Promise<ClassResponse[]> {
-  return get<ClassResponse[]>("/api/v1/classes/my", token);
+export function listMyClasses(token: string, opts?: { includeArchived?: boolean }): Promise<ClassResponse[]> {
+  const q = opts?.includeArchived ? "?include_archived=true" : "";
+  return get<ClassResponse[]>(`/api/v1/classes/my${q}`, token);
 }
 
 export function getClass(classId: number, token: string): Promise<ClassDetail> {
@@ -42,16 +46,32 @@ export function createClass(body: { name: string; description?: string | null },
   return post<ClassResponse>("/api/v1/classes", body, token);
 }
 
+export function updateClass(
+  classId: number,
+  body: { name?: string; description?: string | null },
+  token: string,
+): Promise<ClassResponse> {
+  return patch<ClassResponse>(`/api/v1/classes/${classId}`, body, token);
+}
+
+export function archiveClass(classId: number, token: string): Promise<ClassResponse> {
+  return post<ClassResponse>(`/api/v1/classes/${classId}/archive`, {}, token);
+}
+
 export function joinClass(inviteCode: string, token: string): Promise<ClassResponse> {
   return post<ClassResponse>("/api/v1/classes/join", { invite_code: inviteCode.trim() }, token);
+}
+
+export function leaveClass(classId: number, token: string): Promise<void> {
+  return del(`/api/v1/classes/${classId}/members/me`, token);
 }
 
 export function removeMember(classId: number, userId: number, token: string): Promise<void> {
   return del(`/api/v1/classes/${classId}/members/${userId}`, token);
 }
 
-export function updateClassTeacher(classId: number, teacherId: number, token: string): Promise<ClassDetail> {
-  return put<ClassDetail>(`/api/v1/classes/${classId}/owner`, { teacher_id: teacherId }, token);
+export function updateClassTeacher(classId: number, teacherId: number, token: string): Promise<ClassResponse> {
+  return put<ClassResponse>(`/api/v1/classes/${classId}/owner`, { teacher_id: teacherId }, token);
 }
 
 export function listClassTeachers(classId: number, token: string): Promise<{ id: number; email: string; full_name: string; role: string }[]> {

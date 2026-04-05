@@ -6,6 +6,7 @@ import { formatDateTimeVietnam } from "@/utils/date";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { t, useLanguage } from "@/i18n";
+import { Icons } from "@/components/layouts/Icons";
 
 function getStatus(a: AssignmentDetail): { label: string; variant: "default" | "secondary" | "outline" } {
   const now = new Date();
@@ -43,15 +44,15 @@ export function MyAssignmentsPage() {
         </div>
       </div>
       {assignments.length === 0 ? (
-          <div className="text-center py-20 text-muted-foreground text-sm">
-            {t("myAssignments.empty", lang)}
-          </div>
+        <div className="text-center py-20 text-muted-foreground text-sm">
+          {t("myAssignments.empty", lang)}
+        </div>
       ) : (
         <div className="space-y-2">
           {assignments.map((a) => {
             const status = getStatus(a);
             return (
-              <div key={a.id} className="rounded-lg border bg-card text-card-foreground shadow-sm hover:shadow-sm p-4 flex items-center justify-between gap-4">
+              <div key={a.id} className="glass-card p-6 flex items-center justify-between gap-4 hover:bg-secondary/30 transition-colors rounded-2xl">
                 <div className="min-w-0">
                   <div className="flex justify-between items-start gap-2">
                     <span className="font-medium text-foreground">{a.exam_title}</span>
@@ -63,10 +64,16 @@ export function MyAssignmentsPage() {
                           : t("myAssignments.closed", lang)}
                     </Badge>
                   </div>
-                  <span className="text-muted-foreground text-sm">· {a.class_name}</span>
-                  <div className="text-sm text-muted-foreground mt-1">
-                    {formatDateTimeVietnam(a.start_time)} – {formatDateTimeVietnam(a.end_time)} ·{" "}
-                    {a.duration_minutes} min
+                  <span className="text-muted-foreground text-sm flex items-center gap-2">
+                    <Icons.Backpack className="size-3" /> {a.class_name}
+                  </span>
+                  <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
+                    <Icons.Calendar className="size-3" />
+                    {formatDateTimeVietnam(a.start_time)} – {formatDateTimeVietnam(a.end_time)}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
+                    <Icons.Clock className="size-3" />
+                    {a.duration_minutes} {t("common.minutes", lang)}
                   </div>
                 </div>
                 {status.label === "open" && (

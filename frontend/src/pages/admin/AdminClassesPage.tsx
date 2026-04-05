@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { createClass, listClasses, type ClassResponse } from "@/services/classes.service";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DataTableLayout } from "@/components/features/admin/data-table-layout";
@@ -28,7 +29,7 @@ export function AdminClassesPage() {
     if (!token) return;
     setLoading(true);
     setError("");
-    listClasses(token)
+    listClasses(token, { includeArchived: true })
       .then(setClasses)
       .catch((e) => setError(e instanceof Error ? e.message : t("adminClasses.failed", lang)))
       .finally(() => setLoading(false));
@@ -105,7 +106,16 @@ export function AdminClassesPage() {
           <TableBody>
             {filtered.map((c) => (
               <TableRow key={c.id}>
-                <TableCell className="font-medium text-foreground">{c.name}</TableCell>
+                <TableCell className="font-medium text-foreground">
+                  <span className="inline-flex flex-wrap items-center gap-2">
+                    {c.name}
+                    {c.is_archived ? (
+                      <Badge variant="secondary" className="text-xs font-normal">
+                        {t("classSettings.archivedBadge", lang)}
+                      </Badge>
+                    ) : null}
+                  </span>
+                </TableCell>
                 <TableCell className="text-muted-foreground">{c.description || "—"}</TableCell>
                 <TableCell className="text-right">
                   <Button

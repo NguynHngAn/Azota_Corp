@@ -6,7 +6,7 @@ import {
   type AntiCheatMonitorRow,
 } from "@/services/antiCheat.service";
 import { Badge } from "@/components/ui/badge";
-import { Icons } from "@/components/layouts/Icons"; 
+import { Icons } from "@/components/layouts/Icons";
 import { FilterChips } from "@/components/features/admin/filter-chips";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -57,12 +57,15 @@ export function TeacherAntiCheatingPage() {
     });
   }, [data, query]);
 
-  const stats = {
-    total: (data?.rows ?? []).length,
-    active: (data?.rows ?? []).filter((s) => !s.submitted_at).length,
-    suspicious: (data?.rows ?? []).filter((s) => s.suspicious).length,
-    submitted: (data?.rows ?? []).filter((s) => s.submitted_at).length,
-  };
+  const stats = useMemo(() => {
+    const s = data?.summary;
+    return {
+      total: s?.total_students ?? 0,
+      active: s?.active_now ?? 0,
+      suspicious: s?.suspicious ?? 0,
+      submitted: s?.submitted ?? 0,
+    };
+  }, [data?.summary]);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -82,51 +85,51 @@ export function TeacherAntiCheatingPage() {
         </Button>
       </div>
 
-        {/* Overview stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="stat-card">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Icons.User className="size-5 text-primary" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-foreground">{stats.total}</div>
-                <div className="text-xs text-muted-foreground">{t("antiCheat.totalStudents", lang)}</div>
-              </div>
+      {/* Overview stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="stat-card">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Icons.User className="size-5 text-primary" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-foreground">{stats.total}</div>
+              <div className="text-xs text-muted-foreground">{t("antiCheat.totalStudents", lang)}</div>
             </div>
           </div>
-          <div className="stat-card">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-                <Icons.Monitor className="size-5 text-success" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-foreground">{stats.active}</div>
-                <div className="text-xs text-muted-foreground">{t("antiCheat.activeNow", lang)}</div>
-              </div>
+        </div>
+        <div className="stat-card">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+              <Icons.Monitor className="size-5 text-success" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-foreground">{stats.active}</div>
+              <div className="text-xs text-muted-foreground">{t("antiCheat.activeNow", lang)}</div>
             </div>
           </div>
-          <div className="stat-card">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
-                <Icons.AlertTriangle className="size-5 text-destructive" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-foreground">{stats.suspicious}</div>
-                <div className="text-xs text-muted-foreground">{t("antiCheat.suspicious", lang)}</div>
-              </div>
+        </div>
+        <div className="stat-card">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
+              <Icons.AlertTriangle className="size-5 text-destructive" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-foreground">{stats.suspicious}</div>
+              <div className="text-xs text-muted-foreground">{t("antiCheat.suspicious", lang)}</div>
             </div>
           </div>
-          <div className="stat-card">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center">
-                <Icons.CheckCircle className="size-5 text-info" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-foreground">{stats.submitted}</div>
-                <div className="text-xs text-muted-foreground">{t("antiCheat.submitted", lang)}</div>
-              </div>
+        </div>
+        <div className="stat-card">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center">
+              <Icons.CheckCircle className="size-5 text-info" />
             </div>
+            <div>
+              <div className="text-2xl font-bold text-foreground">{stats.submitted}</div>
+              <div className="text-xs text-muted-foreground">{t("antiCheat.submitted", lang)}</div>
+            </div>
+          </div>
         </div>
       </div>
 

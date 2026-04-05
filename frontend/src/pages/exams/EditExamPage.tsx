@@ -1,14 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, Link, useLocation } from "react-router";
 import { useAuth } from "@/context/AuthContext";
-import {
-  getExam,
-  updateExam,
-  addQuestion,
-  updateQuestion,
-  deleteQuestion,
-  type ExamDetail,
-} from "@/services/exams.service";
+import { getExam, type ExamDetail } from "@/services/exams.service";
 import { addFromBankToExam, listBankQuestions, type BankQuestionListItem } from "@/services/questionBank.service";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -18,6 +11,14 @@ import type { ExamFormState } from "@/pages/exams/types";
 import { validateExamForm } from "@/pages/exams/types";
 import { ExamEditorForm } from "@/pages/exams/ExamEditorForm";
 import { t, useLanguage } from "@/i18n";
+import { useAutoSave } from "@/hooks/useAutoSave";
+import {
+  clearExamDraftBackup,
+  examDraftStorageKey,
+  readExamDraftBackup,
+  writeExamDraftBackup,
+} from "@/pages/exams/examDraftStorage";
+import { persistExamForm } from "@/pages/exams/persistExamForm";
 
 function examToFormState(exam: ExamDetail): ExamFormState {
   return {
@@ -40,6 +41,15 @@ function examToFormState(exam: ExamDetail): ExamFormState {
   };
 }
 
+const autosavePlaceholderState: ExamFormState = {
+  title: "",
+  description: "",
+  is_draft: true,
+  shuffle_questions: false,
+  shuffle_options: false,
+  questions: [],
+};
+
 export function EditExamPage() {
   const { id } = useParams<{ id: string }>();
   const { token } = useAuth();
@@ -48,7 +58,9 @@ export function EditExamPage() {
   const lang = useLanguage();
   const examId = id ? parseInt(id, 10) : NaN;
   const [state, setState] = useState<ExamFormState | null>(null);
-  const [originalQuestionIds, setOriginalQuestionIds] = useState<number[]>([]);
+  const [trackedQuestionIds, setTrackedQuestionIds] = useState<number[]>([]);
+  const trackedIdsRef = useRef<number[]>([]);
+  const [hydrationKey, setHydrationKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -61,15 +73,41 @@ export function EditExamPage() {
   const [bankAutoOpened, setBankAutoOpened] = useState(false);
 
   useEffect(() => {
-    if (!token || !id || isNaN(examId)) return;
+    trackedIdsRef.current = trackedQuestionIds;
+  }, [trackedQuestionIds]);
+
+  useEffect(() => {
+    if (!token || !id || Number.isNaN(examId)) return;
     getExam(examId, token)
       .then((exam) => {
-        setState(examToFormState(exam));
-        setOriginalQuestionIds(exam.questions.map((q) => q.id));
+        const serverIds = exam.questions.map((q) => q.id);
+        const base = examToFormState(exam);
+        const key = examDraftStorageKey(examId);
+        const backup = readExamDraftBackup(key);
+        const preferLocal =
+          exam.is_draft && backup !== null && backup.updatedAt > Date.parse(exam.updated_at);
+        const next = preferLocal ? backup.state : base;
+        setState(next);
+        setTrackedQuestionIds(serverIds);
+        setHydrationKey((k) => k + 1);
       })
       .catch((e) => setError(e instanceof Error ? e.message : t("editExam.failedLoad", lang)))
       .finally(() => setLoading(false));
-  }, [token, id, examId]);
+  }, [token, id, examId, lang]);
+
+  useEffect(() => {
+    if (!state || loading || Number.isNaN(examId)) return;
+    const key = examDraftStorageKey(examId);
+    if (!state.is_draft) {
+      clearExamDraftBackup(key);
+      return;
+    }
+    writeExamDraftBackup(key, {
+      version: 1,
+      updatedAt: Date.now(),
+      state,
+    });
+  }, [state, examId, loading]);
 
   useEffect(() => {
     if (!token) return;
@@ -108,7 +146,8 @@ export function EditExamPage() {
       await addFromBankToExam(examId, selectedIds, token);
       const exam = await getExam(examId, token);
       setState(examToFormState(exam));
-      setOriginalQuestionIds(exam.questions.map((q) => q.id));
+      setTrackedQuestionIds(exam.questions.map((q) => q.id));
+      setHydrationKey((k) => k + 1);
       setBankOpen(false);
       setSelectedIds([]);
     } catch (e) {
@@ -117,6 +156,36 @@ export function EditExamPage() {
       setBankLoading(false);
     }
   }
+
+  const handleAutoSave = useCallback(
+    async (payload: ExamFormState) => {
+      if (!token || Number.isNaN(examId)) return;
+      const result = await persistExamForm(examId, payload, trackedIdsRef.current, token, {
+        lockDraftUntilPublished: false,
+      });
+      setTrackedQuestionIds(result.trackedQuestionIds);
+      setState((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          questions: prev.questions.map((q, i) => {
+            const rid = result.state.questions[i]?.id;
+            return rid != null ? { ...q, id: rid } : q;
+          }),
+        };
+      });
+      clearExamDraftBackup(examDraftStorageKey(examId));
+    },
+    [examId, token],
+  );
+
+  useAutoSave({
+    data: state ?? autosavePlaceholderState,
+    onSave: handleAutoSave,
+    delay: 1000,
+    enabled: Boolean(state && !loading && state.is_draft),
+    resetToken: hydrationKey,
+  });
 
   async function handleSave() {
     if (!state || !token) return;
@@ -128,73 +197,12 @@ export function EditExamPage() {
     setError("");
     setSubmitting(true);
     try {
-      await updateExam(
-        examId,
-        {
-          title: state.title.trim(),
-          description: state.description.trim() || null,
-          is_draft: true,
-          shuffle_questions: state.shuffle_questions,
-          shuffle_options: state.shuffle_options,
-        },
-        token
-      );
-
-      const currentIds = new Set(state.questions.map((q) => q.id).filter((x): x is number => x != null));
-      for (const oldId of originalQuestionIds) {
-        if (!currentIds.has(oldId)) {
-          await deleteQuestion(examId, oldId, token);
-        }
-      }
-
-      const newIds: (number | undefined)[] = [];
-      for (let i = 0; i < state.questions.length; i++) {
-        const q = state.questions[i];
-        const payload = {
-          order_index: i,
-          question_type: q.question_type,
-          text: q.text.trim(),
-          options: q.options.map((o, j) => ({
-            order_index: j,
-            text: o.text.trim(),
-            is_correct: o.is_correct,
-          })),
-        };
-        if (q.id != null) {
-          await updateQuestion(examId, q.id, payload, token);
-        } else {
-          const added = await addQuestion(examId, payload, token);
-          newIds[i] = added.id;
-        }
-      }
-      if (newIds.some((id) => id != null)) {
-        setOriginalQuestionIds((prev) => [...prev, ...newIds.filter((x): x is number => x != null)]);
-        setState((s) => {
-          if (!s) return s;
-          return {
-            ...s,
-            questions: s.questions.map((q, i) => ({ ...q, id: newIds[i] ?? q.id })),
-          };
-        });
-      }
-
-      // Publish as the final step (after question updates).
-      if (!state.is_draft) {
-        await updateExam(
-          examId,
-          {
-            title: state.title.trim(),
-            description: state.description.trim() || null,
-            is_draft: false,
-            shuffle_questions: state.shuffle_questions,
-            shuffle_options: state.shuffle_options,
-          },
-          token
-        );
-      } else {
-        // If user wants draft, we're already editing as draft, nothing else to do.
-      }
-
+      const result = await persistExamForm(examId, state, trackedQuestionIds, token, {
+        lockDraftUntilPublished: !state.is_draft,
+      });
+      setTrackedQuestionIds(result.trackedQuestionIds);
+      setState(result.state);
+      clearExamDraftBackup(examDraftStorageKey(examId));
       navigate("/teacher/exams");
     } catch (err) {
       setError(err instanceof Error ? err.message : t("editExam.failedSave", lang));
@@ -245,7 +253,7 @@ export function EditExamPage() {
           setBankOpen(true);
           void loadBank();
         }}
-        onSave={handleSave}
+        onSave={() => void handleSave()}
         saving={submitting}
         saveLabel={t("editExam.save", lang)}
       />

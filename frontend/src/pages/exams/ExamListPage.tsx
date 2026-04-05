@@ -37,6 +37,12 @@ export function ExamListPage() {
     });
   }, [exams, q, filter]);
 
+  async function handleDelete(examId: number) {
+    await deleteExam(examId, token ?? "")
+      .then(() => setExams((prev) => prev.filter((e) => e.id !== examId)))
+      .catch((e) => setError(e instanceof Error ? e.message : t("examList.failed", lang)));
+  };
+
   if (loading) return <p className="text-muted-foreground">{t("common.loading", lang)}</p>;
   if (error) return <p className="text-destructive">{error}</p>;
 
@@ -62,59 +68,59 @@ export function ExamListPage() {
           />
         </div>
         <FilterChips
-            value={filter}
-            onChange={setFilter}
-            options={[
-              { value: "all", label: t("common.all", lang) },
-              { value: "published", label: t("common.status.published", lang) },
-              { value: "draft", label: t("common.status.draft", lang) },
-            ]}
-          />
+          value={filter}
+          onChange={setFilter}
+          options={[
+            { value: "all", label: t("common.all", lang) },
+            { value: "published", label: t("common.status.published", lang) },
+            { value: "draft", label: t("common.status.draft", lang) },
+          ]}
+        />
       </div>
       <div className="mt-4">
-          {filtered.length === 0 ? (
-            <div className="text-center py-20 text-muted-foreground text-sm">{t("examList.empty", lang)}</div>
-          ) : (
-            <div className="space-y-2">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("examList.title", lang)}</TableHead>
-                    <TableHead>{t("common.status", lang)}</TableHead>
-                    <TableHead className="text-right">{t("common.actions", lang)}</TableHead>
+        {filtered.length === 0 ? (
+          <div className="text-center py-20 text-muted-foreground text-sm">{t("examList.empty", lang)}</div>
+        ) : (
+          <div className="space-y-2">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t("examList.title", lang)}</TableHead>
+                  <TableHead>{t("common.status", lang)}</TableHead>
+                  <TableHead className="text-right">{t("common.actions", lang)}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((e) => (
+                  <TableRow key={e.id}>
+                    <TableCell>{e.title}</TableCell>
+                    <TableCell><Badge variant={e.is_draft ? "outline" : "default"}>{e.is_draft ? t("common.status.draft", lang) : t("common.status.published", lang)}</Badge></TableCell>
+                    <TableCell className="text-right">
+                      <Link
+                        to={`/teacher/exams/${e.id}/detail`}
+                        className="p-1.5 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
+                      >
+                        <Button variant="outline" size="icon">
+                          <Icons.Eye className="size-4 " />
+                        </Button>
+                      </Link>
+                      {e.is_draft ? (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                          onClick={() => handleDelete(e.id)}
+                        >
+                          <Icons.Trash className="size-4 " />
+                        </Button>
+                      ) : null}
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {filtered.map((e) => (
-                      <TableRow key={e.id}>
-                        <TableCell>{e.title}</TableCell>
-                        <TableCell><Badge variant={e.is_draft ? "outline" : "default"}>{e.is_draft ? t("common.status.draft", lang) : t("common.status.published", lang)}</Badge></TableCell>
-                        <TableCell className="text-right">
-                          <Link
-                            to={`/teacher/exams/${e.id}/detail`}
-                            className="p-1.5 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
-                          >
-                            <Button variant="outline" size="icon">
-                              <Icons.Eye className="size-4 " />
-                            </Button>
-                          </Link>
-                          {e.is_draft ? (
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-                              onClick={() => void deleteExam(e.id, token ?? "")}
-                            >
-                              <Icons.Trash className="size-4 " />
-                            </Button>
-                          ) : null}
-                        </TableCell>
-                      </TableRow> 
-                    ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </div>
 
     </div>

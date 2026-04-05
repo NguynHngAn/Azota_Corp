@@ -123,7 +123,7 @@ export function AdminDashboardPage() {
           change="--"
           trend="up"
         />
-        <StatCard 
+        <StatCard
           icon={<Icons.GraduationCap className="size-5" />}
           value={String(stats.teachers)}
           title={t("role.teacher", lang)}
@@ -139,7 +139,7 @@ export function AdminDashboardPage() {
         />
         <StatCard
           icon={<Icons.FileText className="size-5" />}
-          value="—"
+          value={String(stats.total)}
           title={t("adminDashboard.totalExams", lang)}
           change="--"
           trend="up"
@@ -214,29 +214,29 @@ export function AdminDashboardPage() {
             <DialogTitle>{t("adminUsers.createDialogTitle", lang)}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-          <div>
+            <div>
               <label className="mb-1 block text-xs font-medium text-foreground">{t("settings.profile.fullName", lang)} *</label>
-            <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder={t("adminUsers.fullNamePlaceholder", lang)} />
-          </div>
-          <div>
+              <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder={t("adminUsers.fullNamePlaceholder", lang)} />
+            </div>
+            <div>
               <label className="mb-1 block text-xs font-medium text-foreground">{t("common.email", lang)} *</label>
-            <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t("login.emailPlaceholder", lang)} />
-          </div>
-          <div>
+              <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t("login.emailPlaceholder", lang)} />
+            </div>
+            <div>
               <label className="mb-1 block text-xs font-medium text-foreground">{t("login.password", lang)} *</label>
-            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t("adminUsers.passwordHint", lang)} />
-          </div>
-          <div>
+              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t("adminUsers.passwordHint", lang)} />
+            </div>
+            <div>
               <label className="mb-1 block text-xs font-medium text-foreground">{t("common.roleLabel", lang)} *</label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value as "teacher" | "student")}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            >
-              <option value="teacher">{t("role.teacher", lang)}</option>
-              <option value="student">{t("role.student", lang)}</option>
-            </select>
-          </div>
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value as "teacher" | "student")}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                <option value="teacher">{t("role.teacher", lang)}</option>
+                <option value="student">{t("role.student", lang)}</option>
+              </select>
+            </div>
             {notice && <p className="text-sm text-destructive">{notice}</p>}
           </div>
           <DialogFooter className="mt-4">

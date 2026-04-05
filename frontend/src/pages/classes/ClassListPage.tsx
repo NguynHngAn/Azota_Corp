@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { listClasses, type ClassResponse } from "@/services/classes.service";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Icons } from "@/components/layouts/Icons";
 import { t, useLanguage } from "@/i18n";
 
@@ -67,16 +68,23 @@ export function ClassListPage() {
           {filtered.length === 0 ? (
             <div className="text-center py-20 text-muted-foreground text-sm">{t("classList.empty", lang)}</div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className=" grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {filtered.map((c) => (
                 <Button
                   key={c.id}
                   type="button"
                   variant="outline"
                   onClick={() => navigate(`${base}/classes/${c.id}`)}
-                  className="h-auto w-full flex-col items-stretch rounded-2xl border-border bg-card px-4 py-4 text-left font-normal hover:bg-secondary"
+                  className="h-auto w-full flex-col items-stretch rounded-2xl border-border/50 bg-card px-4 py-4 text-left font-normal hover:bg-secondary glass-card hover:shadow-card"
                 >
-                  <div className="text-sm font-semibold text-foreground">{c.name}</div>
+                  <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-foreground">
+                    {c.name}
+                    {c.is_archived ? (
+                      <Badge variant="secondary" className="text-xs font-normal">
+                        {t("classSettings.archivedBadge", lang)}
+                      </Badge>
+                    ) : null}
+                  </div>
                   {c.description ? (
                     <div className="mt-1 text-sm text-muted-foreground line-clamp-2">{c.description}</div>
                   ) : (

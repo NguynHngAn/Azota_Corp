@@ -102,110 +102,110 @@ export function CreateAssignmentPage() {
     "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
   return (
-    <div>
+    <div className="space-y-4 max-w-md mx-auto mt-10">
       <h2 className="text-lg font-semibold mb-4">{t("createAssignment.title", lang)}</h2>
-      <Card className="max-w-md p-6">
+      <Card className="max-w-md p-6 glass-card hover:shadow-card">
         <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t("createAssignment.exam", lang)}</label>
-          <select
-            value={examId}
-            onChange={(e) => setExamId(e.target.value === "" ? "" : Number(e.target.value))}
-            required
-            className={selectClass}
-          >
-            <option value="">{t("createAssignment.selectExam", lang)}</option>
-            {exams.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.title} {e.is_draft ? `(${t("common.status.draft", lang)})` : ""}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t("createAssignment.class", lang)}</label>
-          <select
-            value={classId}
-            onChange={(e) => setClassId(e.target.value === "" ? "" : Number(e.target.value))}
-            required
-            className={selectClass}
-          >
-            <option value="">{t("createAssignment.selectClass", lang)}</option>
-            {classes.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t("createAssignment.startTime", lang)}</label>
-          <Input
-            type="datetime-local"
-            value={startDateTime}
-            onChange={(e) => setStartDateTime(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t("createAssignment.endTime", lang)}</label>
-          <Input
-            type="datetime-local"
-            value={endDateTime}
-            onChange={(e) => setEndDateTime(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t("createAssignment.duration", lang)}</label>
-          <Input
-            type="number"
-            min={1}
-            max={600}
-            value={durationMinutes}
-            onChange={(e) => setDurationMinutes(Number(e.target.value) || 0)}
-          />
-        </div>
-        <div className="space-y-3 rounded-xl border border-border p-4">
-          <div className="text-sm font-medium text-gray-700">Exam protections</div>
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input
-              className="accent-primary"
-              type="checkbox"
-              checked={shuffleQuestions}
-              onChange={(e) => setShuffleQuestions(e.target.checked)}
-            />
-            Shuffle question order per student
-          </label>
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input
-              className="accent-primary"
-              type="checkbox"
-              checked={shuffleOptions}
-              onChange={(e) => setShuffleOptions(e.target.checked)}
-            />
-            Shuffle answer options per student
-          </label>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Auto-submit after violations</label>
+            <label className="block text-sm font-medium text-foreground mb-1">{t("createAssignment.exam", lang)}</label>
+            <select
+              value={examId}
+              onChange={(e) => setExamId(e.target.value === "" ? "" : Number(e.target.value))}
+              required
+              className={selectClass}
+            >
+              <option value="">{t("createAssignment.selectExam", lang)}</option>
+              {exams.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.title} {e.is_draft ? `(${t("common.status.draft", lang)})` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">{t("createAssignment.class", lang)}</label>
+            <select
+              value={classId}
+              onChange={(e) => setClassId(e.target.value === "" ? "" : Number(e.target.value))}
+              required
+              className={selectClass}
+            >
+              <option value="">{t("createAssignment.selectClass", lang)}</option>
+              {classes.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">{t("createAssignment.startTime", lang)}</label>
+            <Input
+              type="datetime-local"
+              value={startDateTime}
+              onChange={(e) => setStartDateTime(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">{t("createAssignment.endTime", lang)}</label>
+            <Input
+              type="datetime-local"
+              value={endDateTime}
+              onChange={(e) => setEndDateTime(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">{t("createAssignment.duration", lang)}</label>
             <Input
               type="number"
               min={1}
-              max={20}
-              value={maxViolations}
-              onChange={(e) => setMaxViolations(Number(e.target.value) || 1)}
+              max={600}
+              value={durationMinutes}
+              onChange={(e) => setDurationMinutes(Number(e.target.value) || 0)}
             />
           </div>
-        </div>
-        {error && <p className="text-red-600 text-sm">{error}</p>}
-        <div className="flex gap-2">
-          <Button type="submit" disabled={submitting}>
-            {submitting ? t("createClass.creating", lang) : t("createAssignment.assign", lang)}
-          </Button>
-          <Button type="button" variant="secondary" onClick={() => navigate(`${base}/assignments`)}>
-            {t("common.cancel", lang)}
-          </Button>
-        </div>
+          <div className="space-y-3 rounded-xl border border-border p-4">
+            <div className="text-sm font-medium text-foreground">Exam protections</div>
+            <label className="flex items-center gap-2 text-sm text-foreground">
+              <input
+                className="accent-primary"
+                type="checkbox"
+                checked={shuffleQuestions}
+                onChange={(e) => setShuffleQuestions(e.target.checked)}
+              />
+              Shuffle question order per student
+            </label>
+            <label className="flex items-center gap-2 text-sm text-foreground">
+              <input
+                className="accent-primary"
+                type="checkbox"
+                checked={shuffleOptions}
+                onChange={(e) => setShuffleOptions(e.target.checked)}
+              />
+              Shuffle answer options per student
+            </label>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Auto-submit after violations</label>
+              <Input
+                type="number"
+                min={1}
+                max={20}
+                value={maxViolations}
+                onChange={(e) => setMaxViolations(Number(e.target.value) || 1)}
+              />
+            </div>
+          </div>
+          {error && <p className="text-destructive text-sm">{error}</p>}
+          <div className="flex gap-2">
+            <Button type="submit" disabled={submitting}>
+              {submitting ? t("createClass.creating", lang) : t("createAssignment.assign", lang)}
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => navigate(`${base}/assignments`)}>
+              {t("common.cancel", lang)}
+            </Button>
+          </div>
         </form>
       </Card>
     </div>

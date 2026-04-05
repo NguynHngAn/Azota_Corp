@@ -40,6 +40,7 @@ from app.services.assignment_service import (
     is_submission_expired,
     upsert_submission_answers_only,
 )
+from app.services.class_service import can_manage_class
 from app.services.anti_cheat_service import submit_submission_now
 from app.services.grading_service import grade_submission
 from app.services.ai_explanation_service import generate_explanations_for_submission
@@ -453,19 +454,21 @@ def get_admin_overview_report(
 @router.post("", response_model=AssignmentResponse, status_code=status.HTTP_201_CREATED)
 def create_assignment(
     body: AssignmentCreate,
-    current_user: Annotated[User, Depends(require_role(Role.teacher))],
+    current_user: Annotated[User, Depends(require_role(Role.admin, Role.teacher))],
     db: Session = Depends(get_db),
 ):
     exam = db.query(Exam).filter(Exam.id == body.exam_id).first()
     if not exam:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found")
-    if exam.created_by != current_user.id:
+    if current_user.role != Role.admin and exam.created_by != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not your exam")
     cls = db.query(Class).filter(Class.id == body.class_id).first()
     if not cls:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Class not found")
-    if cls.created_by != current_user.id and current_user.role != Role.admin:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not your class")
+    if cls.is_archived:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot assign to an archived class")
+    if not can_manage_class(db, current_user, cls):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed to manage this class")
     if body.start_time >= body.end_time:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="start_time must be before end_time")
     exam.is_draft = False
@@ -522,23 +525,36 @@ def list_my_assignments(
         return []
     q = db.query(Assignment).filter(Assignment.class_id.in_(class_ids))
     assignments = q.order_by(Assignment.start_time.desc()).all()
-    return [
-        AssignmentDetail(
-            id=a.id,
-            exam_id=a.exam_id,
-            class_id=a.class_id,
-            start_time=a.start_time,
-            end_time=a.end_time,
-            duration_minutes=a.duration_minutes,
-            shuffle_questions=a.shuffle_questions,
-            shuffle_options=a.shuffle_options,
-            max_violations=a.max_violations,
-            created_at=a.created_at,
-            exam_title=a.exam.title,
-            class_name=a.class_.name,
+    rows: list[AssignmentDetail] = []
+    for a in assignments:
+        sub = (
+            db.query(Submission)
+            .filter(
+                Submission.assignment_id == a.id,
+                Submission.user_id == current_user.id,
+                Submission.submitted_at.isnot(None),
+            )
+            .first()
         )
-        for a in assignments
-    ]
+        score_val = float(sub.score) if sub and sub.score is not None else None
+        rows.append(
+            AssignmentDetail(
+                id=a.id,
+                exam_id=a.exam_id,
+                class_id=a.class_id,
+                start_time=a.start_time,
+                end_time=a.end_time,
+                duration_minutes=a.duration_minutes,
+                shuffle_questions=a.shuffle_questions,
+                shuffle_options=a.shuffle_options,
+                max_violations=a.max_violations,
+                created_at=a.created_at,
+                exam_title=a.exam.title,
+                class_name=a.class_.name,
+                score=score_val,
+            )
+        )
+    return rows
 
 
 @router.post("/{assignment_id}/start", response_model=SubmissionStartResponse)

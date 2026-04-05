@@ -16,6 +16,8 @@ export interface AssignmentResponse {
 export interface AssignmentDetail extends AssignmentResponse {
   exam_title: string;
   class_name: string;
+  /** Present for student `/assignments/my` when they have a finalized submission (0–100). */
+  score?: number | null;
 }
 
 export interface AssignmentCreatePayload {

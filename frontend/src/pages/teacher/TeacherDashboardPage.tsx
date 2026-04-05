@@ -328,13 +328,13 @@ export function TeacherDashboardPage() {
             <div className="text-xs text-muted-foreground">{t("teacherDashboard.classes", lang)}</div>
             <div className="text-lg font-semibold text-foreground">{classes.length}</div>
           </div>
-            <div className="rounded-xl border border-muted px-4 py-3">
+          <div className="rounded-xl border border-muted px-4 py-3">
             <div className="text-xs text-muted-foreground">{t("teacherDashboard.assignments", lang)}</div>
             <div className="text-lg font-semibold text-foreground">{assignments.length}</div>
           </div>
           <div className="rounded-xl border border-muted px-4 py-3">
             <div className="text-xs text-muted-foreground">{t("teacherDashboard.students", lang)}</div>
-            <div className="text-lg font-semibold text-foreground">—</div>
+            <div className="text-lg font-semibold text-foreground">{stats.myStudents}</div>
           </div>
         </div>
       </div>

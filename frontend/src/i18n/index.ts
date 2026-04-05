@@ -224,6 +224,23 @@ export type I18nKey =
   | "classDetail.addTeacherFailed"
   | "classDetail.removeTeacherSuccess"
   | "classDetail.removeTeacherFailed"
+  | "classDetail.overviewHint"
+  | "classNav.members"
+  | "classNav.settings"
+  | "classNav.classOverview"
+  | "classMembers.readOnlyHint"
+  | "classSettings.title"
+  | "classSettings.save"
+  | "classSettings.saved"
+  | "classSettings.saveFailed"
+  | "classSettings.archive"
+  | "classSettings.archiveConfirm"
+  | "classSettings.archiveFailed"
+  | "classSettings.archiveHint"
+  | "classSettings.dangerZone"
+  | "classSettings.archivedBadge"
+  | "classSettings.accessDenied"
+  | "classSettings.backToClass"
   | "teacherDashboard.title"
   | "teacherDashboard.welcome"
   | "teacherDashboard.myStudents"
@@ -341,6 +358,8 @@ export type I18nKey =
   | "studentDashboard.recentResults"
   | "studentDashboard.noSubmissions"
   | "studentDashboard.inProgress"
+  | "studentDashboard.submitted"
+  | "studentDashboard.noGradedYet"
   | "assignmentReport.invalid"
   | "assignmentReport.failed"
   | "assignmentReport.loading"
@@ -458,6 +477,9 @@ export type I18nKey =
   | "studentClass.notFound"
   | "studentClass.back"
   | "studentClass.teacher"
+  | "studentClass.leave"
+  | "studentClass.leaveConfirm"
+  | "studentClass.archived"
   | "joinClassPage.failed"
   | "joinClassPage.title"
   | "joinClassPage.subtitle"
@@ -735,7 +757,10 @@ export type I18nKey =
   | "examDetail.questions"
   | "examDetail.createdAt"
   | "examDetail.questionNumber"
-  | "examDetail.questionType";
+  | "examDetail.questionType"
+  | "examDetail.publishedReadOnly"
+  | "settings.language.saveFailed"
+  | "common.minutes";
 const dict: Record<LanguageCode, Record<I18nKey, string>> = {
   en: {
     "app.brand": "EduFlow",
@@ -997,6 +1022,23 @@ const dict: Record<LanguageCode, Record<I18nKey, string>> = {
     "classDetail.addTeacherFailed": "Failed to add teachers.",
     "classDetail.removeTeacherSuccess": "Removed teacher successfully.",
     "classDetail.removeTeacherFailed": "Failed to remove teacher.",
+    "classDetail.overviewHint": "Use Members to view the roster. Managers can open Settings for invite links, class details, and admin teacher tools.",
+    "classNav.members": "Members",
+    "classNav.settings": "Settings",
+    "classNav.classOverview": "Overview",
+    "classMembers.readOnlyHint": "You can view members but cannot remove them.",
+    "classSettings.title": "Class details",
+    "classSettings.save": "Save changes",
+    "classSettings.saved": "Saved successfully.",
+    "classSettings.saveFailed": "Failed to save.",
+    "classSettings.archive": "Archive class",
+    "classSettings.archiveConfirm": "Archive this class? It will be hidden from class lists. Data is kept.",
+    "classSettings.archiveFailed": "Failed to archive.",
+    "classSettings.archiveHint": "Archived classes no longer accept new students or assignments. Members can still leave.",
+    "classSettings.dangerZone": "Danger zone",
+    "classSettings.archivedBadge": "Archived",
+    "classSettings.accessDenied": "You do not have permission to manage this class.",
+    "classSettings.backToClass": "Back to class",
     "teacherDashboard.title": "Dashboard",
     "teacherDashboard.welcome": "Welcome back, {{name}}. Here's your overview.",
     "teacherDashboard.myStudents": "My Students",
@@ -1114,6 +1156,8 @@ const dict: Record<LanguageCode, Record<I18nKey, string>> = {
     "studentDashboard.recentResults": "Recent Results",
     "studentDashboard.noSubmissions": "No submissions yet.",
     "studentDashboard.inProgress": "In progress",
+    "studentDashboard.submitted": "Submitted",
+    "studentDashboard.noGradedYet": "No graded results yet. Finish an exam to see your score here.",
     "assignmentReport.invalid": "Invalid assignment",
     "assignmentReport.failed": "Failed to load report",
     "assignmentReport.loading": "Loading report...",
@@ -1231,6 +1275,9 @@ const dict: Record<LanguageCode, Record<I18nKey, string>> = {
     "studentClass.notFound": "Not found",
     "studentClass.back": "Back to my classes",
     "studentClass.teacher": "Teacher",
+    "studentClass.leave": "Leave class",
+    "studentClass.leaveConfirm": "Leave this class? You will need a new invite to rejoin.",
+    "studentClass.archived": "This class is archived.",
     "joinClassPage.failed": "Failed to join",
     "joinClassPage.title": "Join a class",
     "joinClassPage.subtitle": "Enter the invite code from your teacher or use an invite link.",
@@ -1471,6 +1518,9 @@ const dict: Record<LanguageCode, Record<I18nKey, string>> = {
     "examDetail.createdAt": "Created at",
     "examDetail.questionNumber": "Question",
     "examDetail.questionType": "Type",
+    "examDetail.publishedReadOnly": "Published – cannot edit",
+    "settings.language.saveFailed": "Failed to save language settings.",
+    "common.minutes": "minutes",
   },
   vi: {
     "app.brand": "EduFlow",
@@ -1732,6 +1782,23 @@ const dict: Record<LanguageCode, Record<I18nKey, string>> = {
       "classDetail.addTeacherFailed": "Thêm giáo viên thất bại.",
       "classDetail.removeTeacherSuccess": "Gỡ giáo viên thành công.",
       "classDetail.removeTeacherFailed": "Gỡ giáo viên thất bại.",
+      "classDetail.overviewHint": "Xem danh sách tại Thành viên. Người quản lý có thể mở Cài đặt để lấy mã mời, chỉnh thông tin lớp và công cụ giáo viên (admin).",
+      "classNav.members": "Thành viên",
+      "classNav.settings": "Cài đặt",
+      "classNav.classOverview": "Tổng quan",
+      "classMembers.readOnlyHint": "Bạn chỉ xem được danh sách, không thể gỡ thành viên.",
+      "classSettings.title": "Thông tin lớp",
+      "classSettings.save": "Lưu thay đổi",
+      "classSettings.saved": "Đã lưu.",
+      "classSettings.saveFailed": "Lưu thất bại.",
+      "classSettings.archive": "Lưu trữ lớp",
+      "classSettings.archiveConfirm": "Lưu trữ lớp này? Lớp sẽ ẩn khỏi danh sách. Dữ liệu được giữ lại.",
+      "classSettings.archiveFailed": "Lưu trữ thất bại.",
+      "classSettings.archiveHint": "Lớp đã lưu trữ không nhận học sinh mới hoặc bài giao mới. Học sinh vẫn có thể rời lớp.",
+      "classSettings.dangerZone": "Vùng nguy hiểm",
+      "classSettings.archivedBadge": "Đã lưu trữ",
+      "classSettings.accessDenied": "Bạn không có quyền quản lý lớp này.",
+      "classSettings.backToClass": "Quay lại lớp",
       "teacherDashboard.title": "Tổng quan",
       "teacherDashboard.welcome": "Chào mừng quay lại, {{name}}. Đây là tổng quan của bạn.",
       "teacherDashboard.myStudents": "Học sinh của tôi",
@@ -1849,6 +1916,8 @@ const dict: Record<LanguageCode, Record<I18nKey, string>> = {
       "studentDashboard.recentResults": "Kết quả gần đây",
       "studentDashboard.noSubmissions": "Chưa có lượt nộp nào.",
       "studentDashboard.inProgress": "Đang diễn ra",
+      "studentDashboard.submitted": "Đã nộp",
+      "studentDashboard.noGradedYet": "Chưa có kết quả chấm điểm. Hoàn thành một bài thi để xem điểm tại đây.",
       "assignmentReport.invalid": "Bài tập không hợp lệ",
       "assignmentReport.failed": "Không thể tải báo cáo",
       "assignmentReport.loading": "Đang tải báo cáo...",
@@ -1966,6 +2035,9 @@ const dict: Record<LanguageCode, Record<I18nKey, string>> = {
       "studentClass.notFound": "Không tìm thấy",
       "studentClass.back": "Quay lại lớp của tôi",
       "studentClass.teacher": "Giáo viên",
+      "studentClass.leave": "Rời lớp",
+      "studentClass.leaveConfirm": "Rời lớp này? Bạn cần mã mời mới để tham gia lại.",
+      "studentClass.archived": "Lớp này đã được lưu trữ.",
       "joinClassPage.failed": "Tham gia lớp thất bại",
       "joinClassPage.title": "Tham gia lớp học",
       "joinClassPage.subtitle": "Nhập mã mời từ giáo viên hoặc dùng liên kết mời.",
@@ -2206,6 +2278,9 @@ const dict: Record<LanguageCode, Record<I18nKey, string>> = {
       "examDetail.createdAt": "Được tạo vào",
       "examDetail.questionNumber": "Câu hỏi",
       "examDetail.questionType": "Loại",
+      "examDetail.publishedReadOnly": "Đã xuất bản – không thể chỉnh sửa",
+      "settings.language.saveFailed": "Lưu cài đặt ngôn ngữ thất bại.",
+      "common.minutes": "phút",
   }
 }
 

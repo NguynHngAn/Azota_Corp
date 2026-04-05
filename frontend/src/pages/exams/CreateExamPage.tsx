@@ -1,12 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { createExam } from "@/services/exams.service";
-import { type ExamFormState, emptyQuestion, validateExamForm } from "@/pages/exams/types";
+import { type ExamFormState, emptyQuestion } from "@/pages/exams/types";
 import { ExamEditorForm } from "@/pages/exams/ExamEditorForm";
 import { Card } from "@/components/ui/card";
 import { Icons } from "@/components/layouts/Icons";
 import { t, useLanguage } from "@/i18n";
+import {
+  NEW_EXAM_DRAFT_KEY,
+  clearExamDraftBackup,
+  readExamDraftBackup,
+  writeExamDraftBackup,
+} from "@/pages/exams/examDraftStorage";
 
 const initialState: ExamFormState = {
   title: "",
@@ -17,6 +23,26 @@ const initialState: ExamFormState = {
   questions: [],
 };
 
+function buildCreatePayload(state: ExamFormState) {
+  return {
+    title: state.title.trim(),
+    description: state.description.trim() || null,
+    is_draft: true as const,
+    shuffle_questions: state.shuffle_questions,
+    shuffle_options: state.shuffle_options,
+    questions: state.questions.map((q, i) => ({
+      order_index: i,
+      question_type: q.question_type,
+      text: q.text.trim(),
+      options: q.options.map((o, j) => ({
+        order_index: j,
+        text: o.text.trim(),
+        is_correct: o.is_correct,
+      })),
+    })),
+  };
+}
+
 export function CreateExamPage() {
   const { token } = useAuth();
   const lang = useLanguage();
@@ -25,7 +51,21 @@ export function CreateExamPage() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  async function createDraftAndGo(openBank: boolean) {
+  // Restore unsaved new-exam work after refresh (no server id yet)
+  useEffect(() => {
+    const backup = readExamDraftBackup(NEW_EXAM_DRAFT_KEY);
+    if (backup) setState(backup.state);
+  }, []);
+
+  useEffect(() => {
+    writeExamDraftBackup(NEW_EXAM_DRAFT_KEY, {
+      version: 1,
+      updatedAt: Date.now(),
+      state,
+    });
+  }, [state]);
+
+  async function createDraftOnServer(openBank: boolean) {
     if (!token) return;
     if (!state.title.trim()) {
       setError(t("examEditor.title", lang));
@@ -34,24 +74,8 @@ export function CreateExamPage() {
     setError("");
     setSubmitting(true);
     try {
-      const payload = {
-        title: state.title.trim(),
-        description: state.description.trim() || null,
-        is_draft: true,
-        shuffle_questions: state.shuffle_questions,
-        shuffle_options: state.shuffle_options,
-        questions: state.questions.map((q, i) => ({
-          order_index: i,
-          question_type: q.question_type,
-          text: q.text.trim(),
-          options: q.options.map((o, j) => ({
-            order_index: j,
-            text: o.text.trim(),
-            is_correct: o.is_correct,
-          })),
-        })),
-      };
-      const created = await createExam(payload, token);
+      const created = await createExam(buildCreatePayload(state), token);
+      clearExamDraftBackup(NEW_EXAM_DRAFT_KEY);
       navigate(`/teacher/exams/${created.id}${openBank ? "?openBank=1" : ""}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("questionBank.saveFailed", lang));
@@ -60,40 +84,9 @@ export function CreateExamPage() {
     }
   }
 
+  /** First save always creates a server draft (no id on this page) and moves to the editor route */
   async function handleSave() {
-    const errors = validateExamForm(state);
-    if (errors.length > 0) {
-      setError(errors.join(" "));
-      return;
-    }
-    setError("");
-    setSubmitting(true);
-    if (!token) return;
-    try {
-      const payload = {
-        title: state.title.trim(),
-        description: state.description.trim() || null,
-        is_draft: state.is_draft,
-        shuffle_questions: state.shuffle_questions,
-        shuffle_options: state.shuffle_options,
-        questions: state.questions.map((q, i) => ({
-          order_index: i,
-          question_type: q.question_type,
-          text: q.text.trim(),
-          options: q.options.map((o, j) => ({
-            order_index: j,
-            text: o.text.trim(),
-            is_correct: o.is_correct,
-          })),
-        })),
-      };
-      const created = await createExam(payload, token);
-      navigate(`/teacher/exams/${created.id}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("questionBank.saveFailed", lang));
-    } finally {
-      setSubmitting(false);
-    }
+    await createDraftOnServer(false);
   }
 
   function addQuestion() {
@@ -116,7 +109,7 @@ export function CreateExamPage() {
           <p className="text-sm text-muted-foreground mt-0.5">{t("examEditor.reviewMessage", lang)}</p>
         </div>
       </div>
-        
+
       {error && (
         <Card className="border border-border bg-secondary shadow-none hover:shadow-none">
           <div className="text-sm text-muted-foreground">{error}</div>
@@ -126,8 +119,8 @@ export function CreateExamPage() {
         state={state}
         setState={setState}
         onAddQuestion={addQuestion}
-        onAddFromBank={() => void createDraftAndGo(true)}
-        onSave={handleSave}
+        onAddFromBank={() => void createDraftOnServer(true)}
+        onSave={() => void handleSave()}
         saving={submitting}
         saveLabel={t("common.save", lang)}
       />

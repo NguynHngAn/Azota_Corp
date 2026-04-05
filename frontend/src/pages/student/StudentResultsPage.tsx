@@ -6,6 +6,7 @@ import { formatDateTimeVietnam } from "@/utils/date";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { t, useLanguage } from "@/i18n";
+import { Icons } from "@/components/layouts/Icons";
 
 export function StudentResultsPage() {
   const { token } = useAuth();
@@ -63,20 +64,20 @@ export function StudentResultsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">{t("studentResults.title", lang)}</h1>
-        <p className="text-sm text-slate-500">{t("studentResults.subtitle", lang)}</p>
+        <h1 className="text-2xl font-semibold text-foreground">{t("studentResults.title", lang)}</h1>
+        <p className="text-sm text-muted-foreground">{t("studentResults.subtitle", lang)}</p>
       </div>
 
       <div className="">
         {loading ? (
           <div className="py-10 animate-pulse space-y-3">
-            <div className="h-10 bg-slate-50 rounded-xl" />
-            <div className="h-10 bg-slate-50 rounded-xl" />
-            <div className="h-10 bg-slate-50 rounded-xl" />
+            <div className="h-10 bg-muted rounded-xl" />
+            <div className="h-10 bg-muted rounded-xl" />
+            <div className="h-10 bg-muted rounded-xl" />
           </div>
         ) : error ? (
           <div className="py-10 text-center">
-            <div className="text-sm font-medium text-rose-700">{error}</div>
+            <div className="text-sm font-medium text-destructive">{error}</div>
             <div className="mt-4">
               <Button size="sm" variant="secondary" type="button" onClick={() => navigate(0)}>
                 {t("studentResults.retry", lang)}
@@ -84,11 +85,11 @@ export function StudentResultsPage() {
             </div>
           </div>
         ) : !hasAny ? (
-            <div className="text-center py-20 text-muted-foreground text-sm">{t("studentResults.empty", lang)}
-              <div className="text-center text-muted-foreground text-sm mt-2">
-                {t("studentResults.emptyHint", lang)}
-              </div>
+          <div className="text-center py-20 text-muted-foreground text-sm">{t("studentResults.empty", lang)}
+            <div className="text-center text-muted-foreground text-sm mt-2">
+              {t("studentResults.emptyHint", lang)}
             </div>
+          </div>
         ) : (
           <div className="mt-2 space-y-2">
             {items.map((it) => (
@@ -97,23 +98,23 @@ export function StudentResultsPage() {
                 type="button"
                 variant="outline"
                 onClick={() => navigate(`/student/assignments/result/${it.submission_id}`)}
-                className="h-auto w-full justify-between gap-4 rounded-2xl border-slate-100 bg-white px-4 py-3 text-left font-normal hover:bg-slate-50"
+                className="h-auto w-full justify-between gap-4 rounded-2xl border-border bg-card px-4 py-3 text-left font-normal hover:bg-secondary"
               >
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <div className="text-sm font-semibold text-slate-900 truncate">{it.exam_title}</div>
+                    <div className="text-sm font-semibold text-foreground truncate">{it.exam_title}</div>
                     <Badge variant="secondary">{t("studentResults.score", lang)}: {it.score ?? 0}</Badge>
                   </div>
-                  <div className="text-xs text-slate-500 mt-1 truncate">
+                  <div className="text-xs text-muted-foreground mt-1 truncate">
                     {it.class_name} · {formatDateTimeVietnam(it.submitted_at)}
                   </div>
 
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     {detailLoading[it.submission_id] ? (
                       <>
-                        <span className="inline-block h-5 w-14 rounded-full bg-slate-50 animate-pulse" />
-                        <span className="inline-block h-5 w-14 rounded-full bg-slate-50 animate-pulse" />
-                        <span className="inline-block h-5 w-14 rounded-full bg-slate-50 animate-pulse" />
+                        <span className="inline-block h-5 w-14 rounded-full bg-muted animate-pulse" />
+                        <span className="inline-block h-5 w-14 rounded-full bg-muted animate-pulse" />
+                        <span className="inline-block h-5 w-14 rounded-full bg-muted animate-pulse" />
                       </>
                     ) : detailMap[it.submission_id] ? (
                       <>
@@ -127,8 +128,10 @@ export function StudentResultsPage() {
                   </div>
                 </div>
                 <div className="shrink-0 text-right">
-                  <div className="text-xs text-slate-500">{t("studentResults.open", lang)}</div>
-                  <div className="text-sm font-semibold text-slate-900">{t("studentResults.view", lang)} →</div>
+                  <div className="text-xs text-muted-foreground">{t("studentResults.open", lang)}</div>
+                  <div className="text-sm font-semibold text-foreground flex items-center">
+                    {t("studentResults.view", lang)} <Icons.ArrowRight className="size-3 inline-block ml-1" />
+                  </div>
                 </div>
               </Button>
             ))}

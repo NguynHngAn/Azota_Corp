@@ -85,7 +85,7 @@ export function LandingHero() {
             transition={{ duration: 0.6, delay: 0.5 }}
             className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
           >
-            <Link to="/signup">
+            <Link to="/login">
               <Button
                 size="lg"
                 className="rounded-full px-8 h-13 text-base gap-2 shadow-xl shadow-primary/25 hover:shadow-primary/40 hover:scale-[1.02] transition-all duration-300 group"

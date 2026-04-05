@@ -77,10 +77,16 @@ export function AssignmentListPage() {
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                       <div className="text-sm font-medium text-foreground truncate">{a.exam_title}</div>
-                      <div className="text-xs text-muted-foreground truncate">{a.class_name}</div>
+                      <div className="text-xs text-muted-foreground truncate flex items-center gap-2">
+                        <Icons.Minus className="size-3" />
+                        {a.class_name}
+                      </div>
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {formatDateTimeVietnam(a.start_time)} – {formatDateTimeVietnam(a.end_time)} · {a.duration_minutes} min
+                    <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
+                      <Icons.Calendar className="size-3" /> {formatDateTimeVietnam(a.start_time)} – {formatDateTimeVietnam(a.end_time)}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
+                      <Icons.Clock className="size-3" /> {a.duration_minutes} {t("common.minutes", lang)}
                     </div>
                   </div>
                   {base === "/teacher" && (
@@ -88,9 +94,10 @@ export function AssignmentListPage() {
                       size="sm"
                       variant="ghost"
                       type="button"
+                      className="text-sm hover:text-primary hover:bg-secondary"
                       onClick={() => navigate(`/teacher/assignments/${a.id}/report`)}
                     >
-                      {t("assignmentList.viewReport", lang)} →
+                      {t("assignmentList.viewReport", lang)} <Icons.ArrowRight className="size-3 inline-block ml-1" />
                     </Button>
                   )}
                 </div>

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
-import { GraduationCap } from "lucide-react";
+import { Icons } from "@/components/layouts/Icons";
 import { motion } from "framer-motion";
 import { t, useLanguage } from "@/i18n";
 
@@ -17,7 +17,7 @@ export function LandingNav() {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/25">
-              <GraduationCap className="w-4.5 h-4.5 text-primary-foreground" />
+              <Icons.GraduationCap className="w-4.5 h-4.5 text-primary-foreground" />
             </div>
             <span className="text-lg font-bold text-foreground tracking-tight">{t("app.brand", lang)}</span>
           </div>
@@ -25,7 +25,7 @@ export function LandingNav() {
             {[
               { label: t("landing.nav.features", lang), href: "#features" },
               { label: t("landing.nav.how", lang), href: "#how-it-works" },
-              { label: t("landing.nav.pricing", lang), href: "#pricing" },
+              // { label: t("landing.nav.pricing", lang), href: "#pricing" },
               { label: t("landing.nav.faq", lang), href: "#faq" },
             ].map((item) => (
               <a
@@ -39,12 +39,12 @@ export function LandingNav() {
           </div>
           <div className="flex items-center gap-3">
             <Link to="/login">
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+              <Button variant="ghost" size="sm" className=" duration-300 text-muted-foreground duration-400 hover:text-background rounded-full transition-all duration-200">
                 {t("landing.nav.login", lang)}
               </Button>
             </Link>
-            <Link to="/signup">
-              <Button size="sm" className="rounded-full px-5 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-shadow">
+            <Link to="/login">
+              <Button size="sm" className="rounded-full px-5 shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] transition-all duration-300">
                 {t("landing.nav.getStarted", lang)}
               </Button>
             </Link>

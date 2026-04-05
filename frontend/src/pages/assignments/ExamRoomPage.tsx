@@ -104,7 +104,7 @@ export function ExamRoomPage() {
           event_type: "EXAM_SUBMIT",
         },
         token,
-      ).catch(() => {});
+      ).catch(() => { });
       await exitFullScreen();
       navigate(`/student/assignments/result/${room.submission_id}`, { replace: true });
     } catch (e) {
@@ -183,7 +183,7 @@ export function ExamRoomPage() {
     if (!room || !token || !examStarted || submitting) return;
     const base = { assignment_id: room.assignment_id, submission_id: room.submission_id };
     const log = (event_type: string, meta?: Record<string, unknown>) => {
-      void logAntiCheatEvent({ ...base, event_type, meta }, token).catch(() => {});
+      void logAntiCheatEvent({ ...base, event_type, meta }, token).catch(() => { });
     };
     const block = (e: Event) => {
       e.preventDefault();
@@ -235,7 +235,7 @@ export function ExamRoomPage() {
       void logAntiCheatEvent(
         { ...base, event_type: "TEXT_SELECTION", meta: { length: text.length } },
         token,
-      ).catch(() => {});
+      ).catch(() => { });
     };
     const schedule = () => {
       if (timer) clearTimeout(timer);
@@ -270,7 +270,7 @@ export function ExamRoomPage() {
           meta: { diffOuterInnerW: w, diffOuterInnerH: h },
         },
         token,
-      ).catch(() => {});
+      ).catch(() => { });
     }, 2000);
     return () => clearInterval(iv);
   }, [room, token, examStarted, submitting]);
@@ -296,13 +296,13 @@ export function ExamRoomPage() {
           void logAntiCheatEvent(
             { assignment_id: room.assignment_id, submission_id: room.submission_id, event_type: "FULLSCREEN_EXIT", meta },
             token,
-          ).catch(() => {});
+          ).catch(() => { });
         }
         if (!isVisible) {
           void logAntiCheatEvent(
             { assignment_id: room.assignment_id, submission_id: room.submission_id, event_type: "TAB_HIDDEN", meta },
             token,
-          ).catch(() => {});
+          ).catch(() => { });
         }
       }
       setViolationMessage(t("examRoom.violationMessage", lang));
@@ -372,7 +372,7 @@ export function ExamRoomPage() {
   const showStartOverlay = !examStarted;
 
   return (
-    <div className="max-w-2xl mx-auto relative">
+    <div className="max-w-2xl mx-auto relative space-y-6">
       <Card className="mb-4 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-foreground">{room.exam_title}</h2>
@@ -381,9 +381,8 @@ export function ExamRoomPage() {
           </p>
         </div>
         <div
-          className={`font-mono text-lg px-3 py-1 rounded-md ${
-            remainingMs !== null && remainingMs <= 60 * 1000 ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"
-          }`}
+          className={`font-mono text-lg px-3 py-1 rounded-md ${remainingMs !== null && remainingMs <= 60 * 1000 ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"
+            }`}
         >
           {remainingMs !== null ? formatCountdown(remainingMs) : "—"}
         </div>
@@ -419,7 +418,7 @@ export function ExamRoomPage() {
                         meta: { enteredFullScreen: true },
                       },
                       token,
-                    ).catch(() => {});
+                    ).catch(() => { });
                   }
                   setExamStarted(true);
                 }}

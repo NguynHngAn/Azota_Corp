@@ -1,37 +1,19 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
-import {
-  ArrowRight,
-  FileText,
-  CheckCircle,
-  Shield,
-  Eye,
-  BarChart3,
-  Users,
-  Zap,
-  Star,
-  ChevronDown,
-  ChevronRight,
-  GraduationCap,
-  BookOpen,
-  Award,
-  Sparkles,
-  Languages,
-  Palette,
-  Sun,
-  Moon,
-  Monitor,
-  SlidersHorizontal,
-} from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { features, steps, plans, testimonials, faqs, trustedLogos } from "@/pages/landing/landing-data";
+import {
+  features, steps,
+  // plans,
+  testimonials, faqs, trustedLogos
+} from "@/pages/landing/landing-data";
 import { fadeUp, staggerContainer } from "@/pages/landing/landing-motion";
 import { SectionHeader } from "@/pages/landing/landing-primitives";
 import { LandingNav } from "@/pages/landing/landing-nav";
 import { LandingHero } from "@/pages/landing/landing-hero";
 import { t, useLanguage } from "@/i18n";
+import { Icons } from "@/components/layouts/Icons";
 
 const LandingPage = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -55,7 +37,7 @@ const LandingPage = () => {
           >
             {trustedLogos.map((nameKey, i) => (
               <motion.div key={nameKey} variants={fadeUp} custom={i} className="flex items-center gap-2.5 text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors duration-300">
-                <BookOpen className="w-5 h-5" />
+                <Icons.BookOpen className="w-5 h-5" />
                 <span className="text-sm font-semibold tracking-wide">{t(nameKey as never, lang)}</span>
               </motion.div>
             ))}
@@ -119,8 +101,8 @@ const LandingPage = () => {
                   <p className="text-sm text-muted-foreground leading-relaxed">{t(s.descKey as never, lang)}</p>
                 </div>
                 {i < 3 && (
-                  <div className="hidden lg:flex absolute top-1/2 -right-3 -translate-y-1/2 z-10">
-                    <ChevronRight className="w-5 h-5 text-primary/25" />
+                  <div className="hidden lg:flex absolute top-1/2 -right-5.5 -translate-y-1/2 z-10">
+                    <Icons.ChevronRight className="w-5 h-5 text-primary/25" />
                   </div>
                 )}
               </motion.div>
@@ -147,7 +129,7 @@ const LandingPage = () => {
                 {/* Grading mockup header */}
                 <div className="px-6 py-4 border-b border-border/50 bg-muted/20 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-accent" />
+                    <Icons.CheckCircle className="w-4 h-4 text-accent" />
                     <span className="text-sm font-semibold text-foreground">{t("landing.grading.header", lang)}</span>
                   </div>
                   <span className="text-xs text-muted-foreground">{t("landing.grading.gradedIn", lang)}</span>
@@ -185,7 +167,7 @@ const LandingPage = () => {
                     >
                       <span className="text-xs text-foreground truncate flex-1">{item.q}</span>
                       <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ml-3 ${item.correct ? "bg-accent/20 text-accent" : "bg-destructive/20 text-destructive"}`}>
-                        {item.correct ? <CheckCircle className="w-3 h-3" /> : <span className="text-xs font-bold">✕</span>}
+                        {item.correct ? <Icons.CheckCircle className="w-3 h-3" /> : <span className="text-xs font-bold">✕</span>}
                       </div>
                     </motion.div>
                   ))}
@@ -205,10 +187,10 @@ const LandingPage = () => {
               </motion.p>
               <motion.div variants={staggerContainer} className="mt-8 space-y-4">
                 {[
-                  { text: t("landing.grading.point1", lang), icon: <Zap className="w-3.5 h-3.5" /> },
-                  { text: t("landing.grading.point2", lang), icon: <Sparkles className="w-3.5 h-3.5" /> },
-                  { text: t("landing.grading.point3", lang), icon: <FileText className="w-3.5 h-3.5" /> },
-                  { text: t("landing.grading.point4", lang), icon: <BarChart3 className="w-3.5 h-3.5" /> },
+                  { text: t("landing.grading.point1", lang), icon: <Icons.Zap className="w-3.5 h-3.5" /> },
+                  { text: t("landing.grading.point2", lang), icon: <Icons.Sparkles className="w-3.5 h-3.5" /> },
+                  { text: t("landing.grading.point3", lang), icon: <Icons.FileText className="w-3.5 h-3.5" /> },
+                  { text: t("landing.grading.point4", lang), icon: <Icons.Chart className="w-3.5 h-3.5" /> },
                 ].map((item) => (
                   <motion.div key={item.text} variants={fadeUp} className="flex items-center gap-3 group">
                     <div className="w-6 h-6 rounded-full bg-accent/15 flex items-center justify-center text-accent group-hover:bg-accent/30 transition-colors">
@@ -219,9 +201,9 @@ const LandingPage = () => {
                 ))}
               </motion.div>
               <motion.div variants={fadeUp} className="mt-10">
-                <Link to="/signup">
+                <Link to="/login">
                   <Button className="rounded-full px-6 gap-2 shadow-lg shadow-accent/20 hover:shadow-accent/30 transition-shadow group bg-accent text-accent-foreground hover:bg-accent/90">
-                    {t("landing.grading.cta", lang)} <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                    {t("landing.grading.cta", lang)} <Icons.ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                   </Button>
                 </Link>
               </motion.div>
@@ -249,19 +231,19 @@ const LandingPage = () => {
               <motion.div variants={staggerContainer} className="mt-10 space-y-6">
                 {[
                   {
-                    icon: <BarChart3 className="w-5 h-5" />,
+                    icon: <Icons.Chart className="w-5 h-5" />,
                     title: t("landing.analytics.item1.title", lang),
                     desc: t("landing.analytics.item1.desc", lang),
                     color: "bg-primary/15 text-primary",
                   },
                   {
-                    icon: <Users className="w-5 h-5" />,
+                    icon: <Icons.Users className="w-5 h-5" />,
                     title: t("landing.analytics.item2.title", lang),
                     desc: t("landing.analytics.item2.desc", lang),
                     color: "bg-accent/15 text-accent",
                   },
                   {
-                    icon: <Eye className="w-5 h-5" />,
+                    icon: <Icons.Eye className="w-5 h-5" />,
                     title: t("landing.analytics.item3.title", lang),
                     desc: t("landing.analytics.item3.desc", lang),
                     color: "bg-info/15 text-info",
@@ -293,11 +275,11 @@ const LandingPage = () => {
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-border/50 bg-muted/20 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <BarChart3 className="w-4 h-4 text-primary" />
+                    <Icons.Chart className="w-4 h-4 text-primary" />
                     <span className="text-sm font-semibold text-foreground">{t("landing.analytics.header", lang)}</span>
                   </div>
                   <div className="flex gap-1">
-            {["7D", "30D", t("common.all", lang)].map((period, i) => (
+                    {["7D", "30D", t("common.all", lang)].map((period, i) => (
                       <Badge
                         key={period}
                         variant={i === 1 ? "default" : "secondary"}
@@ -414,19 +396,19 @@ const LandingPage = () => {
               <motion.div variants={staggerContainer} className="mt-10 space-y-6">
                 {[
                   {
-                    icon: <Eye className="w-5 h-5" />,
+                    icon: <Icons.Eye className="w-5 h-5" />,
                     title: t("landing.integrity.item1.title", lang),
                     desc: t("landing.integrity.item1.desc", lang),
                     color: "bg-warning/15 text-warning",
                   },
                   {
-                    icon: <Shield className="w-5 h-5" />,
+                    icon: <Icons.Shield className="w-5 h-5" />,
                     title: t("landing.integrity.item2.title", lang),
                     desc: t("landing.integrity.item2.desc", lang),
                     color: "bg-destructive/15 text-destructive",
                   },
                   {
-                    icon: <Users className="w-5 h-5" />,
+                    icon: <Icons.Users className="w-5 h-5" />,
                     title: t("landing.integrity.item3.title", lang),
                     desc: t("landing.integrity.item3.desc", lang),
                     color: "bg-info/15 text-info",
@@ -458,7 +440,7 @@ const LandingPage = () => {
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-border/50 bg-muted/20 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-destructive" />
+                    <Icons.Shield className="w-4 h-4 text-destructive" />
                     <span className="text-sm font-semibold text-foreground">{t("landing.integrity.header", lang)}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -484,13 +466,12 @@ const LandingPage = () => {
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: 0.4 + idx * 0.1 }}
-                      className={`rounded-xl border px-4 py-3 flex items-center justify-between ${
-                        student.status === "flagged"
-                          ? "border-destructive/30 bg-destructive/5"
-                          : student.status === "warning"
+                      className={`rounded-xl border px-4 py-3 flex items-center justify-between ${student.status === "flagged"
+                        ? "border-destructive/30 bg-destructive/5"
+                        : student.status === "warning"
                           ? "border-warning/30 bg-warning/5"
                           : "border-border/30 bg-muted/20"
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-foreground shrink-0">
@@ -505,22 +486,21 @@ const LandingPage = () => {
                         {/* Tab switches */}
                         <Badge
                           variant={student.tabs > 2 ? "outline" : "secondary"}
-                          className={`gap-1 text-[10px] px-2 py-0.5 h-auto font-semibold ${
-                            student.tabs > 2
-                              ? "border-warning/30 bg-warning/10 text-warning"
-                              : "border-transparent bg-muted/50 text-muted-foreground"
-                          }`}
+                          className={`gap-1 text-[10px] px-2 py-0.5 h-auto font-semibold ${student.tabs > 2
+                            ? "border-warning/30 bg-warning/10 text-warning"
+                            : "border-transparent bg-muted/50 text-muted-foreground"
+                            }`}
                         >
-                          <Eye className="w-2.5 h-2.5" />
+                          <Icons.Eye className="w-2.5 h-2.5" />
                           {student.tabs}
                         </Badge>
                         {/* Fullscreen */}
                         <div className={`w-5 h-5 rounded-full flex items-center justify-center ${student.fullscreen ? "bg-accent/20 text-accent" : "bg-destructive/20 text-destructive"}`}>
-                          <Shield className="w-2.5 h-2.5" />
+                          <Icons.Shield className="w-2.5 h-2.5" />
                         </div>
                         {/* Webcam */}
                         <div className={`w-5 h-5 rounded-full flex items-center justify-center ${student.webcam ? "bg-accent/20 text-accent" : "bg-destructive/20 text-destructive"}`}>
-                          <Users className="w-2.5 h-2.5" />
+                          <Icons.Users className="w-2.5 h-2.5" />
                         </div>
                       </div>
                     </motion.div>
@@ -540,7 +520,7 @@ const LandingPage = () => {
           </div>
         </div>
       </section>
-      <section id="pricing" className="py-24 lg:py-32 relative overflow-hidden">
+      {/* <section id="pricing" className="py-24 lg:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-muted/40 via-muted/20 to-background" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <SectionHeader badge={t("landing.pricing.badge", lang)} title={t("landing.pricing.title", lang)} subtitle={t("landing.pricing.subtitle", lang)} />
@@ -586,7 +566,7 @@ const LandingPage = () => {
                     </li>
                   ))}
                 </ul>
-                <Link to="/signup">
+                <Link to="/login">
                   <Button
                     className={`w-full rounded-full h-11 transition-all duration-300 ${plan.highlighted ? "shadow-lg shadow-primary/20 hover:shadow-primary/30" : ""}`}
                     variant={plan.highlighted ? "default" : "outline"}
@@ -598,7 +578,7 @@ const LandingPage = () => {
             ))}
           </motion.div>
         </div>
-      </section>
+      </section> */}
 
       {/* ─── Customization & Preferences ─── */}
       <section className="py-24 lg:py-32 relative overflow-hidden">
@@ -619,14 +599,14 @@ const LandingPage = () => {
                 {/* Theme selector */}
                 <div>
                   <div className="flex items-center gap-2 mb-3">
-                    <Palette className="w-4 h-4 text-primary" />
+                    <Icons.Palette className="w-4 h-4 text-primary" />
                     <span className="text-xs font-semibold text-foreground uppercase tracking-wider">{t("landing.customization.theme", lang)}</span>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
                     {[
-                      { label: t("settings.appearance.theme.light", lang), icon: <Sun className="w-4 h-4" />, active: false },
-                      { label: t("settings.appearance.theme.dark", lang), icon: <Moon className="w-4 h-4" />, active: true },
-                      { label: t("settings.appearance.theme.system", lang), icon: <Monitor className="w-4 h-4" />, active: false },
+                      { label: t("settings.appearance.theme.light", lang), icon: <Icons.Sun className="w-4 h-4" />, active: false },
+                      { label: t("settings.appearance.theme.dark", lang), icon: <Icons.Moon className="w-4 h-4" />, active: true },
+                      { label: t("settings.appearance.theme.system", lang), icon: <Icons.Monitor className="w-4 h-4" />, active: false },
                     ].map((t, i) => (
                       <motion.div
                         key={t.label}
@@ -634,11 +614,10 @@ const LandingPage = () => {
                         whileInView={{ opacity: 1, scale: 1 }}
                         viewport={{ once: true }}
                         transition={{ delay: 0.3 + i * 0.1 }}
-                        className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-xs font-medium transition-colors cursor-pointer ${
-                          t.active
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-border/60 text-muted-foreground hover:border-primary/30"
-                        }`}
+                        className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-xs font-medium transition-colors cursor-pointer ${t.active
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border/60 text-muted-foreground hover:border-primary/30"
+                          }`}
                       >
                         {t.icon}
                         {t.label}
@@ -650,7 +629,7 @@ const LandingPage = () => {
                 {/* Language selector */}
                 <div>
                   <div className="flex items-center gap-2 mb-3">
-                    <Languages className="w-4 h-4 text-primary" />
+                    <Icons.Languages className="w-4 h-4 text-primary" />
                     <span className="text-xs font-semibold text-foreground uppercase tracking-wider">{t("settings.tab.language", lang)}</span>
                   </div>
                   <div className="space-y-1.5">
@@ -665,15 +644,14 @@ const LandingPage = () => {
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: 0.5 + i * 0.1 }}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm cursor-pointer transition-colors ${
-                          l.active
-                            ? "bg-primary/10 text-primary font-medium border border-primary/20"
-                            : "text-muted-foreground hover:bg-secondary border border-transparent"
-                        }`}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm cursor-pointer transition-colors ${l.active
+                          ? "bg-primary/10 text-primary font-medium border border-primary/20"
+                          : "text-muted-foreground hover:bg-secondary border border-transparent"
+                          }`}
                       >
                         <span className="text-base">{l.flag}</span>
                         <span>{l.lang}</span>
-                        {l.active && <CheckCircle className="w-3.5 h-3.5 ml-auto" />}
+                        {l.active && <Icons.CheckCircle className="w-3.5 h-3.5 ml-auto" />}
                       </motion.div>
                     ))}
                   </div>
@@ -682,7 +660,7 @@ const LandingPage = () => {
                 {/* UI Preferences */}
                 <div>
                   <div className="flex items-center gap-2 mb-3">
-                    <SlidersHorizontal className="w-4 h-4 text-primary" />
+                    <Icons.SlidersHorizontal className="w-4 h-4 text-primary" />
                     <span className="text-xs font-semibold text-foreground uppercase tracking-wider">{t("landing.customization.preferences", lang)}</span>
                   </div>
                   <div className="space-y-2.5">
@@ -718,11 +696,11 @@ const LandingPage = () => {
               variants={staggerContainer}
               className="order-1 lg:order-2 space-y-6"
             >
-            {[
-              { icon: <Languages className="w-5 h-5" />, title: t("landing.customization.item1.title", lang), desc: t("landing.customization.item1.desc", lang) },
-              { icon: <Palette className="w-5 h-5" />, title: t("landing.customization.item2.title", lang), desc: t("landing.customization.item2.desc", lang) },
-              { icon: <SlidersHorizontal className="w-5 h-5" />, title: t("landing.customization.item3.title", lang), desc: t("landing.customization.item3.desc", lang) },
-            ].map((item) => (
+              {[
+                { icon: <Icons.Languages className="w-5 h-5" />, title: t("landing.customization.item1.title", lang), desc: t("landing.customization.item1.desc", lang) },
+                { icon: <Icons.Palette className="w-5 h-5" />, title: t("landing.customization.item2.title", lang), desc: t("landing.customization.item2.desc", lang) },
+                { icon: <Icons.SlidersHorizontal className="w-5 h-5" />, title: t("landing.customization.item3.title", lang), desc: t("landing.customization.item3.desc", lang) },
+              ].map((item) => (
                 <motion.div key={item.title} variants={fadeUp} className="flex gap-4">
                   <div className="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br from-primary/15 to-accent/15 flex items-center justify-center text-primary">
                     {item.icon}
@@ -759,7 +737,7 @@ const LandingPage = () => {
               >
                 <div className="flex gap-1 mb-5">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-warning text-warning" />
+                    <Icons.Star key={i} className="w-4 h-4 fill-warning text-warning" />
                   ))}
                 </div>
                 <p className="text-sm text-foreground leading-relaxed mb-7">"{t(testimonial.quoteKey as never, lang)}"</p>
@@ -798,7 +776,7 @@ const LandingPage = () => {
                 >
                   <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{t(faq.qKey as never, lang)}</span>
                   <motion.div animate={{ rotate: openFaq === i ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                    <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <Icons.ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
                   </motion.div>
                 </Button>
                 <AnimatePresence>
@@ -840,7 +818,7 @@ const LandingPage = () => {
                 animate={{ rotate: [0, 5, -5, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
               >
-                <Award className="w-14 h-14 text-primary-foreground/25 mx-auto mb-8" />
+                <Icons.Award className="w-14 h-14 text-primary-foreground/25 mx-auto mb-8" />
               </motion.div>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-primary-foreground tracking-tight">
                 {t("landing.cta.title", lang)}
@@ -849,9 +827,9 @@ const LandingPage = () => {
                 {t("landing.cta.subtitle", lang)}
               </p>
               <div className="mt-10">
-                <Link to="/signup">
+                <Link to="/login">
                   <Button size="lg" className="rounded-full px-10 h-13 text-base gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90 shadow-2xl hover:scale-[1.03] transition-all duration-300 group">
-                    {t("landing.cta.button", lang)} <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                    {t("landing.cta.button", lang)} <Icons.ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                   </Button>
                 </Link>
               </div>
@@ -867,7 +845,7 @@ const LandingPage = () => {
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2.5 mb-5">
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/20">
-                  <GraduationCap className="w-4 h-4 text-primary-foreground" />
+                  <Icons.GraduationCap className="w-4 h-4 text-primary-foreground" />
                 </div>
                 <span className="text-base font-bold text-foreground">{t("app.brand", lang)}</span>
               </div>

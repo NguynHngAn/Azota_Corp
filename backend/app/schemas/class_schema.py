@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.schemas.user import UserResponse
 
@@ -14,11 +14,23 @@ class ClassCreate(ClassBase):
     pass
 
 
+class ClassUpdate(BaseModel):
+    name: str | None = Field(None, min_length=1, max_length=255)
+    description: str | None = Field(None, max_length=2000)
+
+    @model_validator(mode="after")
+    def at_least_one_field(self):
+        if self.name is None and self.description is None:
+            raise ValueError("At least one of name or description must be provided")
+        return self
+
+
 class ClassResponse(ClassBase):
     id: int
     created_by: int
     invite_code: str
     created_at: datetime
+    is_archived: bool = False
 
     model_config = {"from_attributes": True}
 
@@ -26,6 +38,7 @@ class ClassResponse(ClassBase):
 class ClassDetail(ClassResponse):
     creator: UserResponse | None = None
     member_count: int = 0
+    can_manage: bool = False
 
 
 class ClassMemberResponse(BaseModel):

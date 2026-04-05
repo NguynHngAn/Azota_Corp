@@ -35,6 +35,10 @@ export async function put<T>(path: string, body: unknown, token?: string): Promi
   return request<T>(path, { method: "PUT", body: body instanceof FormData ? body : JSON.stringify(body), token });
 }
 
+export async function patch<T>(path: string, body: unknown, token?: string): Promise<T> {
+  return request<T>(path, { method: "PATCH", body: JSON.stringify(body), token });
+}
+
 export async function del<T>(path: string, token?: string): Promise<T> {
   return request<T>(path, { method: "DELETE", token });
 }

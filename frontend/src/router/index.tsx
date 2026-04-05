@@ -8,6 +8,8 @@ import {
   ClassListPage,
   CreateClassPage,
   ClassDetailPage,
+  ClassMembersPage,
+  ClassSettingsPage,
   MyClassesPage,
   JoinClassPage,
   StudentClassDetailPage,
@@ -107,7 +109,7 @@ export function AppRouter() {
         <Routes>
           <Route path="/" element={<RootRedirect />} />
           <Route path="/login" element={<LoginRedirect />} />
-          <Route path="/signup" element={<LoginRedirect />} />
+          <Route path="/signup" element={<Navigate to="/login" replace />} />
           <Route path="/admin" element={<DashboardLayout role="admin" />}>
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboardPage />} />
@@ -116,6 +118,8 @@ export function AppRouter() {
             <Route path="classes" element={<AdminClassesPage />} />
             <Route path="classes/new" element={<CreateClassPage />} />
             <Route path="classes/:id" element={<ClassDetailPage />} />
+            <Route path="classes/:id/members" element={<ClassMembersPage />} />
+            <Route path="classes/:id/settings" element={<ClassSettingsPage />} />
             <Route path="assignments" element={<AdminAssignmentsPage />} />
             <Route path="analytics" element={<AdminAnalyticsPage />} />
             <Route path="settings" element={<AdminSettingsPage />} />
@@ -128,6 +132,8 @@ export function AppRouter() {
             <Route path="classes" element={<ClassListPage />} />
             <Route path="classes/new" element={<CreateClassPage />} />
             <Route path="classes/:id" element={<ClassDetailPage />} />
+            <Route path="classes/:id/members" element={<ClassMembersPage />} />
+            <Route path="classes/:id/settings" element={<ClassSettingsPage />} />
             <Route path="exams" element={<ExamListPage />} />
             <Route path="exams/new" element={<CreateExamPage />} />
             <Route path="exams/:id" element={<EditExamPage />} />
