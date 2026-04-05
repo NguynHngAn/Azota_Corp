@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useParams } from "react-router";
 
 import { useAuth } from "@/context/AuthContext";
@@ -13,15 +13,19 @@ function basePath(pathname: string): string {
   return "/teacher";
 }
 
-function questionTypeLabel(type: ExamDetail["questions"][number]["question_type"]): string {
-  return type === "single_choice" ? "Single choice" : "Multiple choice";
-}
+// function questionTypeLabel(type: ExamDetail["questions"][number]["question_type"]): string {
+//   return type === "single_choice" ? "Single choice" : "Multiple choice";
+// }
 
 export default function ExamDetailPage() {
   const { token } = useAuth();
   const lang = useLanguage();
   const location = useLocation();
   const { id, examId } = useParams<{ id?: string; examId?: string }>();
+
+  const questionTypeLabel = useCallback((type: ExamDetail["questions"][number]["question_type"]): string => {
+    return type === "single_choice" ? t("questionBank.singleChoice", lang) : t("questionBank.multipleChoice", lang);
+  }, [lang]);
 
   const examIdRaw = id ?? examId;
   const examIdNum = examIdRaw ? Number.parseInt(examIdRaw, 10) : NaN;
@@ -65,11 +69,15 @@ export default function ExamDetailPage() {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-              <Icons.Backpack className="size-4" /> {exam.title}
+              <Icons.Backpack className="size-5" /> {exam.title}
             </h2>
-            {exam.description ? <p className="mt-1 text-sm text-muted-foreground">{exam.description}</p> : null}
+            {exam.description
+              ? <p className="flex items-center gap-2 mr-2 mt-1 text-sm text-muted-foreground">
+                <Icons.ScrollText className="size-4" /> {exam.description}
+              </p>
+              : null}
             <p className="mt-1 text-xs text-muted-foreground">
-              {exam.questions.length} questions · Created {new Date(exam.created_at).toLocaleDateString()}
+              {exam.questions.length} {t("examDetail.questions", lang)} · {t("examDetail.createdAt", lang)} {new Date(exam.created_at).toLocaleDateString()}
             </p>
           </div>
 
@@ -87,7 +95,7 @@ export default function ExamDetailPage() {
             <Card key={q.id} className="glass-card p-5 space-y-3">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-xs font-medium text-muted-foreground">
-                  Question {qIndex + 1} · {questionTypeLabel(q.question_type)}
+                    {t("examDetail.questionNumber", lang)} {qIndex + 1} · {t("examDetail.questionType", lang)} {questionTypeLabel(q.question_type)}
                 </span>
               </div>
               <p className="text-sm font-medium text-foreground">{q.text}</p>

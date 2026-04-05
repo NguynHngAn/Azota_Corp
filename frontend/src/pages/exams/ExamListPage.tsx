@@ -98,9 +98,16 @@ export function ExamListPage() {
                               <Icons.Eye className="size-4 " />
                             </Button>
                           </Link>
-                          <Button variant="outline" size="icon" className="hover:bg-destructive/10 text-muted-foreground hover:text-destructive" onClick={() => void deleteExam(e.id, token ?? "")}>
-                            <Icons.Trash className="size-4 " />
-                          </Button>
+                          {e.is_draft ? (
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                              onClick={() => void deleteExam(e.id, token ?? "")}
+                            >
+                              <Icons.Trash className="size-4 " />
+                            </Button>
+                          ) : null}
                         </TableCell>
                       </TableRow> 
                     ))}

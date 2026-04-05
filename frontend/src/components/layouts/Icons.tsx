@@ -47,8 +47,10 @@ import {
    Edit,
    Trash,
    XCircle,
+   ScrollText,
   } from "lucide-react";
 export const Icons = {
+  ScrollText: ScrollText,
   XCircle: XCircle,
   Trash: Trash,
   Edit: Edit,

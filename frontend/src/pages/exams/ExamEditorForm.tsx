@@ -43,17 +43,17 @@ function Stepper({ step, lang }: { step: Step; lang: ReturnType<typeof useLangua
               <div key={it.n} className="flex-1">
                 <div className="flex items-center gap-3">
                   <div
-                    className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-semibold transition ${
+                    className={`size-7 rounded-full flex items-center justify-center text-xs font-semibold transition ${
                       done ? "bg-success text-success-foreground" : active ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
                     }`}
                   >
-                    {done ? "✓" : it.n}
+                    {done ? <Icons.Check className="size-4" /> : it.n}
                   </div>
                   <div className={`text-sm ${active ? "text-foreground font-medium" : "text-muted-foreground"}`}>
                     {it.label}
                   </div>
                 </div>
-                {idx < items.length - 1 && (
+                {idx < items.length - 0 && (
                   <div className="mt-3 h-px bg-border" />
                 )}
               </div>
@@ -341,7 +341,7 @@ export function ExamEditorForm({
               onClick={() => setStep((s) => (s === 1 ? 1 : ((s - 1) as Step)))}
               disabled={step === 1}
             >
-              ← {t("examEditor.previous", lang)}
+              <Icons.ArrowLeft className="size-4" /> {t("examEditor.previous", lang)}
             </Button>
             {step < 3 ? (
               <Button
@@ -353,7 +353,8 @@ export function ExamEditorForm({
               </Button>
             ) : (
               <Button type="button" onClick={onSave} disabled={saving}>
-                {saving ? t("common.saving", lang) : saveLabel}
+                  {saving ? <Icons.Loader2 className="size-4 animate-spin" /> : <Icons.Save className="size-4" />}
+                  {saving ? t("common.saving", lang) : saveLabel}
               </Button>
             )}
           </div>

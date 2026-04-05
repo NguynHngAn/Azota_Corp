@@ -319,6 +319,32 @@ export function TeacherAnalyticsPage() {
       .catch(() => setTimelineData(null))
       .finally(() => setTimelineLoading(false));
   };
+  const topMissedQuestions = useMemo(() => {
+    const map = new Map<number, { question_text: string; incorrect_count: number; total_answers: number }>();
+    for (const report of reportCache.values()) {
+      for (const item of report.top_missed_questions ?? []) {
+        const existing = map.get(item.question_id);
+        if (existing) {
+          existing.incorrect_count += item.incorrect_count;
+          existing.total_answers += item.total_answers;
+        } else {
+          map.set(item.question_id, {
+            question_text: item.question_text,
+            incorrect_count: item.incorrect_count,
+            total_answers: item.total_answers,
+          });
+        }
+      }
+    }
+    return Array.from(map.entries())
+      .map(([question_id, item]) => ({
+        question_id,
+        ...item,
+        incorrect_rate: item.total_answers > 0 ? (item.incorrect_count / item.total_answers) * 100 : 0,
+      }))
+      .sort((a, b) => b.incorrect_rate - a.incorrect_rate)
+      .slice(0, 5);
+  }, [statsLoading, statsProgress.reportsDone]);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -394,6 +420,22 @@ export function TeacherAnalyticsPage() {
               </div>
             )}
           </div>
+
+          {!loading && !error && topMissedQuestions.length > 0 ? (
+            <div className="glass-card p-6">
+              <h3 className="text-sm font-semibold text-foreground mb-4">{t("teacherAnalytics.topMissedTitle", lang)}</h3>
+              <ul className="space-y-3">
+                {topMissedQuestions.map((row) => (
+                  <li key={row.question_id} className="border-b border-border/60 pb-3 last:border-0 last:pb-0">
+                    <p className="text-sm text-foreground line-clamp-2">{row.question_text}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {t("teacherAnalytics.incorrectRateLabel", lang).replace("{{rate}}", row.incorrect_rate.toFixed(1))}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </TabsContent>
 
         <TabsContent value="anti-cheat" className="mt-0 space-y-6 focus-visible:ring-0 focus-visible:ring-offset-0">
@@ -574,3 +616,80 @@ export function TeacherAnalyticsPage() {
     </div>
   );
 }
+//       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+//         <StatCard
+//           icon={<Icons.Users className="text-primary" />}
+//           value={String(stats.myStudents)}
+//           title={t("teacherDashboard.myStudents", lang)}
+//           change="--"
+//           trend="up"
+//         />
+//         <StatCard
+//           icon={<Icons.BookOpen className="text-primary" />}
+//           value={String(stats.myExams)}
+//           title={t("nav.exams", lang)}
+//           change="--"
+//           trend="up"
+//         />
+//         <StatCard
+//           icon={<Icons.CheckCircle className="text-info" />}
+//           value={String(stats.submissions)}
+//           title={t("teacherDashboard.submissions", lang)}
+//           change="--"
+//           trend="up"
+//         />
+//         <StatCard
+//           icon={<Icons.Chart className="text-success" />}
+//           value={String(stats.avgScore)}
+//           title={t("teacherDashboard.avgScore", lang)}
+//           change="--"
+//           trend="up"
+//         />
+//       </div>
+
+//       <div className="glass-card p-6">
+//         {error ? (
+//           <div className="text-sm text-destructive">{error}</div>
+//         ) : loading ? (
+//           <div className="space-y-3">
+//             <div className="h-4 w-2/3 rounded-lg bg-muted animate-pulse" />
+//             <div className="h-4 w-1/2 rounded-lg bg-muted animate-pulse" />
+//           </div>
+//         ) : (
+//           <div className="space-y-2">
+//             {statsLoading && (
+//               <div className="text-xs text-muted-foreground">
+//                 {t("teacherDashboard.calculatingStats", lang)} {statsProgress.classesDone}/{statsProgress.classesTotal} {t("teacherDashboard.classes", lang).toLowerCase()},{" "}
+//                 {statsProgress.reportsDone}/{statsProgress.reportsTotal} assignments
+//               </div>
+//             )}
+//             <div className="text-sm text-muted-foreground">
+//               {t("teacherAnalytics.info", lang)}
+//             </div>
+//           </div>
+//         )}
+//       </div>
+
+//       <div className="glass-card p-6">
+//         <div className="text-sm font-semibold text-foreground">Most missed questions</div>
+//         <div className="mt-3 space-y-2">
+//           {topMissedQuestions.length === 0 ? (
+//             <div className="text-sm text-muted-foreground">No report data available yet.</div>
+//           ) : (
+//             topMissedQuestions.map((item, index) => (
+//               <div key={item.question_id} className="rounded-xl border border-border px-3 py-3">
+//                 <div className="text-sm font-medium text-foreground">
+//                   {index + 1}. {item.question_text}
+//                 </div>
+//                 <div className="mt-1 text-xs text-muted-foreground">
+//                   Incorrect {item.incorrect_count}/{item.total_answers} ({item.incorrect_rate.toFixed(2)}%)
+//                 </div>
+//               </div>
+//             ))
+//           )}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
+
