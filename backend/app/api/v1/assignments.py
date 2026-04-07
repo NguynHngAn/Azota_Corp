@@ -528,38 +528,67 @@ def list_my_assignments(
     class_ids = [m.class_id for m in memberships]
     if not class_ids:
         return []
-    q = db.query(Assignment).filter(Assignment.class_id.in_(class_ids))
-    assignments = q.order_by(Assignment.start_time.desc()).all()
-    rows: list[AssignmentDetail] = []
-    for a in assignments:
-        sub = (
-            db.query(Submission)
-            .filter(
-                Submission.assignment_id == a.id,
-                Submission.user_id == current_user.id,
-                Submission.submitted_at.isnot(None),
-            )
-            .first()
+    rows = (
+        db.query(Assignment, Submission.score)
+        .outerjoin(
+            Submission,
+            (Submission.assignment_id == Assignment.id)
+            & (Submission.user_id == current_user.id)
+            & (Submission.submitted_at.is_not(None)),
         )
-        score_val = float(sub.score) if sub and sub.score is not None else None
-        rows.append(
-            AssignmentDetail(
-                id=a.id,
-                exam_id=a.exam_id,
-                class_id=a.class_id,
-                start_time=a.start_time,
-                end_time=a.end_time,
-                duration_minutes=a.duration_minutes,
-                shuffle_questions=a.shuffle_questions,
-                shuffle_options=a.shuffle_options,
-                max_violations=a.max_violations,
-                created_at=a.created_at,
-                exam_title=a.exam.title,
-                class_name=a.class_.name,
-                score=score_val,
-            )
+        .filter(Assignment.class_id.in_(class_ids))
+        .order_by(Assignment.start_time.desc())
+        .all()
+    )
+    # q = db.query(Assignment).filter(Assignment.class_id.in_(class_ids))
+    # assignments = q.order_by(Assignment.start_time.desc()).all()
+    # rows: list[AssignmentDetail] = []
+    # for a in assignments:
+    #     sub = (
+    #         db.query(Submission)
+    #         .filter(
+    #             Submission.assignment_id == a.id,
+    #             Submission.user_id == current_user.id,
+    #             Submission.submitted_at.isnot(None),
+    #         )
+    #         .first()
+    #     )
+    #     score_val = float(sub.score) if sub and sub.score is not None else None
+    #     rows.append(
+    #         AssignmentDetail(
+    #             id=a.id,
+    #             exam_id=a.exam_id,
+    #             class_id=a.class_id,
+    #             start_time=a.start_time,
+    #             end_time=a.end_time,
+    #             duration_minutes=a.duration_minutes,
+    #             shuffle_questions=a.shuffle_questions,
+    #             shuffle_options=a.shuffle_options,
+    #             max_violations=a.max_violations,
+    #             created_at=a.created_at,
+    #             exam_title=a.exam.title,
+    #             class_name=a.class_.name,
+    #             score=score_val,
+    #         )
+    #     )
+    return [
+        AssignmentDetail(
+            id=a.id,
+            exam_id=a.exam_id,
+            class_id=a.class_id,
+            start_time=a.start_time,
+            end_time=a.end_time,
+            duration_minutes=a.duration_minutes,
+            shuffle_questions=a.shuffle_questions,
+            shuffle_options=a.shuffle_options,
+            max_violations=a.max_violations,
+            created_at=a.created_at,
+            exam_title=a.exam.title,
+            class_name=a.class_.name,
+            score=float(score) if score is not None else None,
         )
-    return rows
+        for (a, score) in rows
+    ]
 
 
 @router.post("/{assignment_id}/start", response_model=SubmissionStartResponse)
