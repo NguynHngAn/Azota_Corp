@@ -114,7 +114,12 @@ def submit_submission(
     current_user: Annotated[User, Depends(require_role(Role.student))],
     db: Session = Depends(get_db),
 ):
-    submission = db.query(Submission).filter(Submission.id == submission_id).first()
+    submission = (
+        db.query(Submission)
+        .filter(Submission.id == submission_id)
+        .with_for_update()
+        .first()
+    )
     if not submission:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
     if submission.user_id != current_user.id:

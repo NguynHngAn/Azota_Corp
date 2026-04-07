@@ -45,9 +45,16 @@ def create_event(
     if not is_in_class(db, assignment.class_id, current_user.id):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not in this class")
 
-    submission_id = body.submission_id
+    # submission_id = body.submission_id or None
+    submission_id = None
     if submission_id is not None:
-        submission = db.query(Submission).filter(Submission.id == submission_id).first()
+        # violation_weighted_score, violation_count = submission_violation_metrics(db, submission_id)
+        submission = (
+            db.query(Submission)
+            .filter(Submission.id == submission_id)
+            .with_for_update()
+            .first()
+            )
         if not submission or submission.assignment_id != assignment.id or submission.user_id != current_user.id:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid submission_id")
 
@@ -75,6 +82,8 @@ def create_event(
     db.flush()
     if submission_id is not None:
         violation_weighted_score, violation_count = submission_violation_metrics(db, submission_id)
+        if submission:
+            submission.violation_count = violation_count
     else:
         violation_weighted_score, violation_count = 0.0, 0
     auto_submitted = False

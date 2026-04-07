@@ -88,11 +88,13 @@ export function ExamRoomPage() {
     autoSubmitTriggered.current = true;
     setSubmitting(true);
     const currentAnswers = answersRef.current;
+    const isTimeOut = remainingMs !== null && remainingMs <= 0;
     const payload = {
       answers: room.questions.map((q: ExamRoomQuestion) => ({
         question_id: q.id,
         chosen_option_ids: currentAnswers[q.id] ?? [],
       })),
+      submit_reason: isTimeOut ? "time_limit_reached" : "manual_submit",
     };
     try {
       await submitSubmission(room.submission_id, payload, token);
@@ -404,8 +406,8 @@ export function ExamRoomPage() {
               <Button
                 type="button"
                 onClick={async () => {
-                  await requestFullScreen();
-                  lastOkRef.current = isFullScreen && isVisible;
+                  const entered = await requestFullScreen();
+                  lastOkRef.current = entered && isFullScreen && isVisible;
                   if (room) {
                     startExam({ assignmentId: room.assignment_id, submissionId: room.submission_id });
                   }
@@ -474,8 +476,8 @@ export function ExamRoomPage() {
                 onClick={async () => {
                   setShowViolationModal(false);
                   if (!isFullScreen) {
-                    await requestFullScreen();
-                    lastOkRef.current = isFullScreen && isVisible;
+                    const entered = await requestFullScreen();
+                    lastOkRef.current = entered && isFullScreen && isVisible;
                   }
                 }}
               >
