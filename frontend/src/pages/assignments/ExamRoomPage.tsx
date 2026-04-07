@@ -127,6 +127,17 @@ export function ExamRoomPage() {
     }
     startAssignment(id, token)
       .then((data) => {
+        const nowClient = Date.now();
+        if (data.server_now && data.deadline_at) {
+          const serverNowMs = new Date(data.server_now).getTime();
+          const deadlineMs = new Date(data.deadline_at).getTime();
+          const offset = serverNowMs - nowClient; //server-client drift
+          setRemainingMs(Math.max(0, deadlineMs - (Date.now() + offset)));
+          // store offset/deadline refs for interval ticks
+        } else {
+          const endTime = new Date(data.started_at).getTime() + data.duration_minutes * 60 * 1000;
+          setRemainingMs(Math.max(0, endTime - nowClient));
+        }
         setRoom(data);
         const initial: Record<number, number[]> = {};
         for (const row of data.saved_answers ?? []) {

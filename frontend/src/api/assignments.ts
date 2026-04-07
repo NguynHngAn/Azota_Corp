@@ -65,6 +65,8 @@ export interface SubmissionStartResponse {
   violation_count: number;
   questions: ExamRoomQuestion[];
   saved_answers?: SubmitAnswerPayload[];
+  server_now?: string;
+  deadline_at?: string;
 }
 
 export function createAssignment(body: AssignmentCreatePayload, token: string): Promise<AssignmentResponse> {

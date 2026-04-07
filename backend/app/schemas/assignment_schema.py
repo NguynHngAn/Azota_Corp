@@ -2,6 +2,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+from app.schemas.exam_schema import ExamRoomQuestion
+
 
 class AssignmentCreate(BaseModel):
     exam_id: int = Field(..., gt=0)
@@ -48,9 +50,16 @@ class SubmissionStartResponse(BaseModel):
     duration_minutes: int
     exam_title: str
     max_violations: int
-    violation_count: int = 0
-    questions: list[dict]
-    saved_answers: list[SubmissionAnswerPayload] = Field(default_factory=list)
+    # violation_count: int = 0
+    # questions: list[dict]
+    # saved_answers: list[SubmissionAnswerPayload] = Field(default_factory=list)
+    violation_count: int
+    questions: list[ExamRoomQuestion]
+    saved_answers: list[SubmissionAnswerPayload] = []
+    # backward-compatible additive fields
+    server_now: datetime | None = None
+    deadline_at: datetime | None = None
+
 
 
 class SubmitPayload(BaseModel):

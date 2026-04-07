@@ -597,6 +597,10 @@ def start_assignment(
     current_user: Annotated[User, Depends(require_role(Role.student))],
     db: Session = Depends(get_db),
 ):
+    deadline_at = min(
+        submission.started_at + timedelta(minutes=assignment.duration_minutes),
+        assignment.end_time,
+    )
     assignment = db.query(Assignment).filter(Assignment.id == assignment_id).first()
     if not assignment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found")
@@ -655,4 +659,6 @@ def start_assignment(
         violation_count=submission.violation_count,
         questions=questions,
         saved_answers=saved_answers,
+        server_now=now,
+        deadline_at=deadline_at,
     )
