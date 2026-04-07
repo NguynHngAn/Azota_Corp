@@ -2,7 +2,22 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from app.schemas.exam_schema import ExamRoomQuestion
+from app.models.exam import QuestionType
+
+
+class ExamRoomOption(BaseModel):
+    id: int
+    order_index: int
+    text: str
+
+
+class ExamRoomQuestion(BaseModel):
+    id: int
+    order_index: int
+    question_type: QuestionType
+    text: str
+    options: list[ExamRoomOption]
+
 
 
 class AssignmentCreate(BaseModel):
