@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
@@ -337,7 +337,7 @@ def get_assignment_report(
     db: Session = Depends(get_db),
 ):
     assignment = db.query(Assignment).filter(Assignment.id == assignment_id).first()
-    if not assignment:
+    if not assignment or assignment.deleted_at is not None or assignment.exam.deleted_at is not None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found")
     # Only owner teacher or admin can view
     if current_user.role == Role.teacher and not can_manage_assignment(current_user, assignment):
@@ -355,7 +355,7 @@ def post_assignment_report_ai_insight(
     db: Session = Depends(get_db),
 ):
     assignment = db.query(Assignment).filter(Assignment.id == assignment_id).first()
-    if not assignment:
+    if not assignment or assignment.deleted_at is not None or assignment.exam.deleted_at is not None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found")
     if current_user.role == Role.teacher and not can_manage_assignment(current_user, assignment):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not your assignment")
@@ -424,6 +424,8 @@ def create_assignment(
     exam = db.query(Exam).filter(Exam.id == body.exam_id).first()
     if not exam:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found")
+    if exam.deleted_at is not None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found")
     if exam.created_by != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not your exam")
     cls = db.query(Class).filter(Class.id == body.class_id).first()
@@ -454,8 +456,11 @@ def create_assignment(
 def list_assignments(
     current_user: Annotated[User, Depends(require_role(Role.teacher))],
     db: Session = Depends(get_db),
+    include_deleted: bool = Query(default=False),
 ):
     q = db.query(Assignment).join(Exam).filter(Exam.created_by == current_user.id)
+    if not include_deleted:
+        q = q.filter(Assignment.deleted_at.is_(None), Exam.deleted_at.is_(None))
     # Newest (latest start) first
     assignments = q.order_by(Assignment.start_time.desc()).all()
     return [
@@ -470,6 +475,7 @@ def list_assignments(
             shuffle_options=a.shuffle_options,
             max_violations=a.max_violations,
             created_at=a.created_at,
+            deleted_at=a.deleted_at,
             exam_title=a.exam.title,
             class_name=a.class_.name,
         )
@@ -486,7 +492,15 @@ def list_my_assignments(
     class_ids = [m.class_id for m in memberships]
     if not class_ids:
         return []
-    q = db.query(Assignment).filter(Assignment.class_id.in_(class_ids))
+    q = (
+        db.query(Assignment)
+        .join(Exam)
+        .filter(
+            Assignment.class_id.in_(class_ids),
+            Assignment.deleted_at.is_(None),
+            Exam.deleted_at.is_(None),
+        )
+    )
     assignments = q.order_by(Assignment.start_time.desc()).all()
     return [
         AssignmentDetail(
@@ -514,15 +528,21 @@ def start_assignment(
     db: Session = Depends(get_db),
 ):
     assignment = db.query(Assignment).filter(Assignment.id == assignment_id).first()
-    if not assignment:
+    if not assignment or assignment.deleted_at is not None or assignment.exam.deleted_at is not None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found")
     if not is_in_class(db, assignment.class_id, current_user.id):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not in this class")
+    now = datetime.now(timezone.utc)
     submission = db.query(Submission).filter(
         Submission.assignment_id == assignment_id,
         Submission.user_id == current_user.id,
     ).first()
     if not submission:
+        # Entry window rule: student must start within [start_time, end_time].
+        if now < assignment.start_time:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Assignment has not started yet")
+        if now > assignment.end_time:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Assignment entry window is closed")
         try:
             submission = Submission(assignment_id=assignment_id, user_id=current_user.id)
             db.add(submission)
@@ -550,17 +570,53 @@ def start_assignment(
         db.refresh(submission)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Already submitted")
     questions = exam_questions_for_student(submission)
+    # This is the exact server-side deadline used for expiration checks.
+    deadline_at = get_submission_deadline(submission)
     db.commit()
     db.refresh(submission)
     return SubmissionStartResponse(
         submission_id=submission.id,
         assignment_id=assignment_id,
         started_at=submission.started_at,
+        deadline_at=deadline_at,
         duration_minutes=assignment.duration_minutes,
         exam_title=assignment.exam.title,
         max_violations=assignment.max_violations,
         violation_count=submission.violation_count,
         questions=questions,
     )
+
+
+@router.delete("/{assignment_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_assignment(
+    assignment_id: int,
+    current_user: Annotated[User, Depends(require_role(Role.teacher))],
+    db: Session = Depends(get_db),
+):
+    assignment = db.query(Assignment).filter(Assignment.id == assignment_id).first()
+    if not assignment or assignment.deleted_at is not None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found")
+    if not can_manage_assignment(current_user, assignment) and current_user.role != Role.admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not your assignment")
+    assignment.deleted_at = datetime.now(timezone.utc)
+    db.commit()
+    return None
+
+
+@router.post("/{assignment_id}/restore", response_model=AssignmentResponse)
+def restore_assignment(
+    assignment_id: int,
+    current_user: Annotated[User, Depends(require_role(Role.teacher))],
+    db: Session = Depends(get_db),
+):
+    assignment = db.query(Assignment).filter(Assignment.id == assignment_id).first()
+    if not assignment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found")
+    if not can_manage_assignment(current_user, assignment) and current_user.role != Role.admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not your assignment")
+    assignment.deleted_at = None
+    db.commit()
+    db.refresh(assignment)
+    return assignment
 
 

@@ -1,4 +1,4 @@
-import { get, post } from "@/api/client";
+import { get, post, del } from "@/api/client";
 
 export interface AssignmentResponse {
   id: number;
@@ -11,6 +11,7 @@ export interface AssignmentResponse {
   shuffle_options: boolean;
   max_violations: number;
   created_at: string;
+  deleted_at?: string | null;
 }
 
 export interface AssignmentDetail extends AssignmentResponse {
@@ -47,6 +48,7 @@ export interface SubmissionStartResponse {
   submission_id: number;
   assignment_id: number;
   started_at: string;
+  deadline_at: string;
   duration_minutes: number;
   exam_title: string;
   max_violations: number;
@@ -68,8 +70,11 @@ export function createAssignment(body: AssignmentCreatePayload, token: string): 
   return post<AssignmentResponse>("/api/v1/assignments", body, token);
 }
 
-export function listAssignments(token: string): Promise<AssignmentDetail[]> {
-  return get<AssignmentDetail[]>("/api/v1/assignments", token);
+export function listAssignments(token: string, opts?: { include_deleted?: boolean }): Promise<AssignmentDetail[]> {
+  const params = new URLSearchParams();
+  if (opts?.include_deleted) params.set("include_deleted", "true");
+  const qs = params.toString();
+  return get<AssignmentDetail[]>(`/api/v1/assignments${qs ? `?${qs}` : ""}`, token);
 }
 
 export function listMyAssignments(token: string): Promise<AssignmentDetail[]> {
@@ -78,6 +83,14 @@ export function listMyAssignments(token: string): Promise<AssignmentDetail[]> {
 
 export function startAssignment(assignmentId: number, token: string): Promise<SubmissionStartResponse> {
   return post<SubmissionStartResponse>(`/api/v1/assignments/${assignmentId}/start`, {}, token);
+}
+
+export function deleteAssignment(assignmentId: number, token: string): Promise<void> {
+  return del(`/api/v1/assignments/${assignmentId}`, token);
+}
+
+export function restoreAssignment(assignmentId: number, token: string): Promise<AssignmentResponse> {
+  return post<AssignmentResponse>(`/api/v1/assignments/${assignmentId}/restore`, {}, token);
 }
 
 export function submitSubmission(

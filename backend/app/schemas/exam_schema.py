@@ -94,6 +94,7 @@ class ExamResponse(ExamBase):
     created_by: int
     created_at: datetime
     updated_at: datetime
+    deleted_at: datetime | None = None
 
     model_config = {"from_attributes": True}
 

@@ -35,6 +35,7 @@ import { TeacherStudentsPage } from "@/pages/teacher/TeacherStudentsPage";
 import { TeacherAntiCheatingPage } from "@/pages/teacher/TeacherAntiCheatingPage";
 import { TeacherAnalyticsPage } from "@/pages/teacher/TeacherAnalyticsPage";
 import { TeacherSettingsPage } from "@/pages/teacher/TeacherSettingsPage";
+import { TeacherTrashPage } from "@/pages/teacher/TeacherTrashPage";
 import { StudentDashboardPage } from "@/pages/student/StudentDashboardPage";
 import { StudentResultsPage } from "@/pages/student/StudentResultsPage";
 import { StudentSettingsPage } from "@/pages/student/StudentSettingsPage";
@@ -139,6 +140,7 @@ export function AppRouter() {
           <Route path="students" element={<TeacherStudentsPage />} />
           <Route path="anti-cheating" element={<TeacherAntiCheatingPage />} />
           <Route path="analytics" element={<TeacherAnalyticsPage />} />
+          <Route path="trash" element={<TeacherTrashPage />} />
           <Route path="settings" element={<TeacherSettingsPage />} />
         </Route>
 

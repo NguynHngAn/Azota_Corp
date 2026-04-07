@@ -1,6 +1,7 @@
+from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -30,6 +31,10 @@ def _exam_owner_or_admin(current_user: User, exam: Exam) -> None:
 def _exam_editable(exam: Exam) -> None:
     if not can_edit_exam(exam):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot edit exam that is not draft")
+
+def _exam_not_deleted(exam: Exam) -> None:
+    if getattr(exam, "deleted_at", None) is not None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found")
 
 
 def _question_response(question: Question) -> QuestionResponse:
@@ -95,6 +100,7 @@ def create_exam(
         shuffle_options=exam.shuffle_options,
         created_at=exam.created_at,
         updated_at=exam.updated_at,
+        deleted_at=exam.deleted_at,
         questions=[_question_response(q) for q in exam.questions],
     )
 
@@ -103,8 +109,11 @@ def create_exam(
 def list_exams(
     current_user: Annotated[User, Depends(require_role(Role.teacher))],
     db: Session = Depends(get_db),
+    include_deleted: bool = Query(default=False),
 ):
     q = db.query(Exam).filter(Exam.created_by == current_user.id)
+    if not include_deleted:
+        q = q.filter(Exam.deleted_at.is_(None))
     # Newest first
     return q.order_by(Exam.created_at.desc()).all()
 
@@ -118,6 +127,7 @@ def get_exam(
     exam = db.query(Exam).filter(Exam.id == exam_id).first()
     if not exam:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found")
+    _exam_not_deleted(exam)
     _exam_owner_or_admin(current_user, exam)
     return ExamDetail(
         id=exam.id,
@@ -129,6 +139,7 @@ def get_exam(
         shuffle_options=exam.shuffle_options,
         created_at=exam.created_at,
         updated_at=exam.updated_at,
+        deleted_at=exam.deleted_at,
         questions=[_question_response(q) for q in exam.questions],
     )
 
@@ -143,6 +154,7 @@ def update_exam(
     exam = db.query(Exam).filter(Exam.id == exam_id).first()
     if not exam:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found")
+    _exam_not_deleted(exam)
     _exam_owner_or_admin(current_user, exam)
     _exam_editable(exam)
     if body.title is not None:
@@ -169,11 +181,28 @@ def delete_exam(
     exam = db.query(Exam).filter(Exam.id == exam_id).first()
     if not exam:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found")
+    _exam_not_deleted(exam)
     _exam_owner_or_admin(current_user, exam)
-    _exam_editable(exam)
-    db.delete(exam)
+    # Soft delete (keep analytics/submissions history intact)
+    exam.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return None
+
+
+@router.post("/{exam_id}/restore", response_model=ExamResponse)
+def restore_exam(
+    exam_id: int,
+    current_user: Annotated[User, Depends(require_role(Role.teacher))],
+    db: Session = Depends(get_db),
+):
+    exam = db.query(Exam).filter(Exam.id == exam_id).first()
+    if not exam:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found")
+    _exam_owner_or_admin(current_user, exam)
+    exam.deleted_at = None
+    db.commit()
+    db.refresh(exam)
+    return exam
 
 
 @router.post("/{exam_id}/questions", response_model=QuestionResponse, status_code=status.HTTP_201_CREATED)
@@ -186,6 +215,7 @@ def add_question(
     exam = db.query(Exam).filter(Exam.id == exam_id).first()
     if not exam:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found")
+    _exam_not_deleted(exam)
     _exam_owner_or_admin(current_user, exam)
     _exam_editable(exam)
     question = Question(
@@ -223,6 +253,7 @@ def update_question(
     exam = db.query(Exam).filter(Exam.id == exam_id).first()
     if not exam:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found")
+    _exam_not_deleted(exam)
     _exam_owner_or_admin(current_user, exam)
     _exam_editable(exam)
     question = db.query(Question).filter(Question.id == question_id, Question.exam_id == exam_id).first()
@@ -263,6 +294,7 @@ def delete_question(
     exam = db.query(Exam).filter(Exam.id == exam_id).first()
     if not exam:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found")
+    _exam_not_deleted(exam)
     _exam_owner_or_admin(current_user, exam)
     _exam_editable(exam)
     question = db.query(Question).filter(Question.id == question_id, Question.exam_id == exam_id).first()
