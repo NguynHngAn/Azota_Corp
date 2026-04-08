@@ -46,6 +46,7 @@ from app.services.grading_service import grade_submission
 from app.services.ai_explanation_service import generate_explanations_for_submission
 from app.services.reporting_service import build_top_missed_questions
 
+from sqlalchemy.exc import OperationalError
 router = APIRouter(prefix="/assignments", tags=["assignments"])
 
 
@@ -114,12 +115,15 @@ def submit_submission(
     current_user: Annotated[User, Depends(require_role(Role.student))],
     db: Session = Depends(get_db),
 ):
-    submission = (
+    try:
+        submission = (
         db.query(Submission)
         .filter(Submission.id == submission_id)
-        .with_for_update()
+        .with_for_update(nowait=True)
         .first()
-    )
+        )
+    except OperationalError:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Submission is being processed, please retry")
     if not submission:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
     if submission.user_id != current_user.id:

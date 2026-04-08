@@ -45,10 +45,9 @@ def create_event(
     if not is_in_class(db, assignment.class_id, current_user.id):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not in this class")
 
-    # submission_id = body.submission_id or None
-    submission_id = None
+    submission_id = body.submission_id or None
+    submission = None
     if submission_id is not None:
-        # violation_weighted_score, violation_count = submission_violation_metrics(db, submission_id)
         submission = (
             db.query(Submission)
             .filter(Submission.id == submission_id)
