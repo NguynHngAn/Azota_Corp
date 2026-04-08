@@ -42,6 +42,7 @@ class AssignmentResponse(BaseModel):
     shuffle_options: bool
     max_violations: int
     created_at: datetime
+    deleted_at: datetime | None = None
 
     model_config = {"from_attributes": True}
 
@@ -62,6 +63,8 @@ class SubmissionStartResponse(BaseModel):
     submission_id: int
     assignment_id: int
     started_at: datetime
+    # Absolute deadline for this submission (min(started_at + duration, assignment.end_time))
+    deadline_at: datetime
     duration_minutes: int
     exam_title: str
     max_violations: int

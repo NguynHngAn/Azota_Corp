@@ -34,7 +34,7 @@ export function ExamRoomPage() {
   const { token } = useAuth();
   const { startExam } = useExam();
   const lang = useLanguage();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [alreadySubmittedSubmissionId, setAlreadySubmittedSubmissionId] = useState<number | null>(null);
   const [room, setRoom] = useState<SubmissionStartResponse | null>(null);
@@ -115,53 +115,66 @@ export function ExamRoomPage() {
     } finally {
       setSubmitting(false);
     }
-  }, [room, token, navigate, exitFullScreen]);
+  }, [room, token, navigate, exitFullScreen, remainingMs, lang]);
 
-  useEffect(() => {
-    if (!token || !assignmentId) return;
+  const handleStartExam = useCallback(async () => {
+    if (!token || !assignmentId || submitting || autoSubmitTriggered.current) return;
     const id = parseInt(assignmentId, 10);
     if (Number.isNaN(id)) {
       setError(t("examRoom.invalidAssignment", lang));
-      setLoading(false);
       return;
     }
-    startAssignment(id, token)
-      .then((data) => {
-        const nowClient = Date.now();
-        if (data.server_now && data.deadline_at) {
-          const serverNowMs = new Date(data.server_now).getTime();
-          const deadlineMs = new Date(data.deadline_at).getTime();
-          const offset = serverNowMs - nowClient; //server-client drift
-          setRemainingMs(Math.max(0, deadlineMs - (Date.now() + offset)));
-          // store offset/deadline refs for interval ticks
-        } else {
-          const endTime = new Date(data.started_at).getTime() + data.duration_minutes * 60 * 1000;
-          setRemainingMs(Math.max(0, endTime - nowClient));
-        }
-        setRoom(data);
-        const initial: Record<number, number[]> = {};
-        for (const row of data.saved_answers ?? []) {
-          initial[row.question_id] = [...row.chosen_option_ids];
-        }
-        setAnswers(initial);
-        answersRef.current = initial;
-        const endTime = new Date(data.started_at).getTime() + data.duration_minutes * 60 * 1000;
-        setRemainingMs(Math.max(0, endTime - Date.now()));
-      })
-      .catch(async (e) => {
-        const msg = e instanceof Error ? e.message : t("examRoom.failedStart", lang);
-        setError(msg);
-        if (msg.toLowerCase().includes("already submitted")) {
-          try {
-            const mine = await getMySubmissionForAssignment(id, token);
-            setAlreadySubmittedSubmissionId(mine.submission_id);
-          } catch {
-            setAlreadySubmittedSubmissionId(null);
-          }
-        }
-      })
-      .finally(() => setLoading(false));
-  }, [token, assignmentId]);
+
+    setLoading(true);
+    setError("");
+  try {
+      // 1. Fullscreen first
+      await requestFullScreen();
+      lastOkRef.current = true;
+
+      // 2. Call API
+      const data = await startAssignment(id, token);
+      setRoom(data);
+
+      // 3. Use server deadline (NO client calc)
+      const endTime = new Date(data.deadline_at).getTime();
+      setRemainingMs(Math.max(0, endTime - Date.now()));
+
+      // 4. Restore saved answers (HEAD giữ lại)
+      const initial: Record<number, number[]> = {};
+      for (const row of data.saved_answers ?? []) {
+        initial[row.question_id] = [...row.chosen_option_ids];
+      }
+      setAnswers(initial);
+      answersRef.current = initial;
+
+      // 5. Start exam
+      startExam({ assignmentId: data.assignment_id, submissionId: data.submission_id });
+      setExamStarted(true);
+
+      // 6. Anti-cheat log
+      void logAntiCheatEvent(
+      {
+        assignment_id: data.assignment_id,
+        submission_id: data.submission_id,
+        event_type: "EXAM_START",
+      },
+      token
+    ).catch(() => {});
+  } catch (e) {
+      const msg = e instanceof Error ? e.message : t("examRoom.failedStart", lang);
+      setError(msg);
+      try {
+        const mine = await getMySubmissionForAssignment(id, token);
+        setAlreadySubmittedSubmissionId(mine.submission_id);
+      } catch {
+        setAlreadySubmittedSubmissionId(null);
+      }
+      await exitFullScreen().catch(() => {});
+    } finally {
+      setLoading(false);
+    }
+  }, [token, assignmentId, submitting, requestFullScreen, startExam, exitFullScreen, lang]);
 
   useEffect(() => {
     if (remainingMs === null || !room) return;
@@ -170,7 +183,9 @@ export function ExamRoomPage() {
       return;
     }
     const t = setInterval(() => {
-      const endTime = new Date(room.started_at).getTime() + room.duration_minutes * 60 * 1000;
+      const endTime = room.deadline_at
+        ? new Date(room.deadline_at).getTime()
+        : new Date(room.started_at).getTime() + room.duration_minutes * 60 * 1000;
       const next = Math.max(0, endTime - Date.now());
       setRemainingMs(next);
       if (next <= 0) clearInterval(t);
@@ -309,13 +324,25 @@ export function ExamRoomPage() {
           void logAntiCheatEvent(
             { assignment_id: room.assignment_id, submission_id: room.submission_id, event_type: "FULLSCREEN_EXIT", meta },
             token,
-          ).catch(() => { });
+          ).then(async (res) => {
+            if (res?.auto_submitted) {
+              autoSubmitTriggered.current = true;
+              await exitFullScreen();
+              navigate(`/student/assignments/result/${room.submission_id}`, { replace: true });
+            }
+          }).catch(() => {});
         }
         if (!isVisible) {
           void logAntiCheatEvent(
             { assignment_id: room.assignment_id, submission_id: room.submission_id, event_type: "TAB_HIDDEN", meta },
             token,
-          ).catch(() => { });
+          ).then(async (res) => {
+            if (res?.auto_submitted) {
+              autoSubmitTriggered.current = true;
+              await exitFullScreen();
+              navigate(`/student/assignments/result/${room.submission_id}`, { replace: true });
+            }
+          }).catch(() => {});
         }
       }
       setViolationMessage(t("examRoom.violationMessage", lang));
@@ -377,7 +404,24 @@ export function ExamRoomPage() {
       </div>
     );
   }
-  if (!room) return null;
+  if (!room) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-4">
+        <Card className="p-4">
+          <div className="text-lg font-semibold text-foreground">{t("examRoom.startTitle", lang)}</div>
+          <div className="mt-2 text-sm text-muted-foreground">{t("examRoom.startDescription", lang)}</div>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Button type="button" variant="secondary" onClick={() => navigate("/student/assignments")}>
+              {t("common.cancel", lang)}
+            </Button>
+            <Button type="button" onClick={() => void handleStartExam()} disabled={!token || loading}>
+              {t("examRoom.enterFullscreen", lang)}
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   const sortedQuestions = [...room.questions].sort((a, b) => a.order_index - b.order_index);
   const isTimeUp = remainingMs !== null && remainingMs <= 0;

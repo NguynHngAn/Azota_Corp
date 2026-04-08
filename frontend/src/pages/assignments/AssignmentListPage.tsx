@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useAuth } from "@/context/AuthContext";
-import { listAssignments, type AssignmentDetail } from "@/services/assignments.service";
+import { deleteAssignment, listAssignments, restoreAssignment, type AssignmentDetail } from "@/services/assignments.service";
 import { formatDateTimeVietnam } from "@/utils/date";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/layouts/Icons";
@@ -22,17 +22,49 @@ export function AssignmentListPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [q, setQ] = useState("");
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [tab, setTab] = useState<"active" | "deleted">("active");
 
   useEffect(() => {
     if (!token) return;
-    listAssignments(token)
+    listAssignments(token, { include_deleted: tab === "deleted" })
       .then(setAssignments)
       .catch((e) => setError(e instanceof Error ? e.message : t("assignmentList.failed", lang)))
       .finally(() => setLoading(false));
-  }, [token]);
+  }, [token, tab]);
+
+  async function handleDelete(id: number) {
+    if (!token) return;
+    const ok = window.confirm("Xóa assignment này? (Có thể khôi phục sau nếu cần)");
+    if (!ok) return;
+    setDeletingId(id);
+    try {
+      await deleteAssignment(id, token);
+      setAssignments((prev) => prev.filter((a) => a.id !== id));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Delete failed");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  async function handleRestore(id: number) {
+    if (!token) return;
+    setDeletingId(id);
+    try {
+      await restoreAssignment(id, token);
+      setAssignments((prev) => prev.filter((a) => a.id !== id));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Restore failed");
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   const filtered = assignments.filter((a) => {
     const query = q.trim().toLowerCase();
+    if (tab === "active" && a.deleted_at) return false;
+    if (tab === "deleted" && !a.deleted_at) return false;
     if (!query) return true;
     return `${a.exam_title} ${a.class_name}`.toLowerCase().includes(query);
   });
@@ -51,6 +83,14 @@ export function AssignmentListPage() {
       </div>
 
       <div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button type="button" variant={tab === "active" ? "secondary" : "outline"} onClick={() => setTab("active")}>
+            Active
+          </Button>
+          <Button type="button" variant={tab === "deleted" ? "secondary" : "outline"} onClick={() => setTab("deleted")}>
+            Deleted
+          </Button>
+        </div>
         <div className="search-input max-w-md">
           <Icons.Search className="size-4" />
           <input
@@ -89,17 +129,41 @@ export function AssignmentListPage() {
                       <Icons.Clock className="size-3" /> {a.duration_minutes} {t("common.minutes", lang)}
                     </div>
                   </div>
-                  {base === "/teacher" && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      type="button"
-                      className="text-sm hover:text-primary hover:bg-secondary"
-                      onClick={() => navigate(`/teacher/assignments/${a.id}/report`)}
-                    >
-                      {t("assignmentList.viewReport", lang)} <Icons.ArrowRight className="size-3 inline-block ml-1" />
-                    </Button>
-                  )}
+                  {base === "/teacher" ? (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        type="button"
+                        className="text-sm hover:text-primary hover:bg-secondary"
+                        onClick={() => navigate(`/teacher/assignments/${a.id}/report`)}
+                      >
+                        {t("assignmentList.viewReport", lang)} <Icons.ArrowRight className="size-3 inline-block ml-1" />
+                      </Button>
+                      {tab === "deleted" ? (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          type="button"
+                          disabled={deletingId === a.id}
+                          onClick={() => void handleRestore(a.id)}
+                        >
+                          <Icons.ArchiveRestore  className="size-3 inline-block mr-1" />
+                         {deletingId === a.id ? "Restoring..." : "Restore"}
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          type="button"
+                          disabled={deletingId === a.id}
+                          onClick={() => void handleDelete(a.id)}
+                        >
+                          <Icons.Trash2 className="size-3 inline-block mr-1" />{deletingId === a.id ? "Deleting..." : "Delete"}
+                        </Button>
+                      )}
+                    </div>
+                  ) : null}
                 </div>
               ))}
             </div>

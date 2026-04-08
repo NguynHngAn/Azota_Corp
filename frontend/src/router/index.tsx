@@ -37,6 +37,7 @@ import { TeacherStudentsPage } from "@/pages/teacher/TeacherStudentsPage";
 import { TeacherAntiCheatingPage } from "@/pages/teacher/TeacherAntiCheatingPage";
 import { TeacherAnalyticsPage } from "@/pages/teacher/TeacherAnalyticsPage";
 import { TeacherSettingsPage } from "@/pages/teacher/TeacherSettingsPage";
+import { TeacherTrashPage } from "@/pages/teacher/TeacherTrashPage";
 import { StudentDashboardPage } from "@/pages/student/StudentDashboardPage";
 import { StudentResultsPage } from "@/pages/student/StudentResultsPage";
 import { StudentSettingsPage } from "@/pages/student/StudentSettingsPage";
@@ -132,12 +133,12 @@ export function AppRouter() {
             <Route path="classes" element={<ClassListPage />} />
             <Route path="classes/new" element={<CreateClassPage />} />
             <Route path="classes/:id" element={<ClassDetailPage />} />
-            <Route path="classes/:id/members" element={<ClassMembersPage />} />
-            <Route path="classes/:id/settings" element={<ClassSettingsPage />} />
+            <Route path="classes/:id/members" element={<ClassMembersPage />} />.
+            <Route path="classes/:id/settings" element={<ClassSettingsPage />} />.
             <Route path="exams" element={<ExamListPage />} />
             <Route path="exams/new" element={<CreateExamPage />} />
             <Route path="exams/:id" element={<EditExamPage />} />
-            <Route path="exams/:id/detail" element={<ExamDetalPage />} />
+            <Route path="exams/:id/detail" element={<ExamDetalPage />} />.
             <Route path="question-bank" element={<TeacherQuestionBankPage />} />
             <Route path="assignments" element={<AssignmentListPage />} />
             <Route path="assignments/new" element={<CreateAssignmentPage />} />
@@ -145,8 +146,10 @@ export function AppRouter() {
             <Route path="assignments/:id/report" element={<AssignmentReportPage />} />
             <Route path="students" element={<TeacherStudentsPage />} />
             <Route path="anti-cheating" element={<TeacherAntiCheatingPage />} />
-            <Route path="anti-cheat-analytics" element={<Navigate to="/teacher/analytics?tab=anti-cheat" replace />} />
+            <Route path="anti-cheat-analytics" element={<Navigate to="/teacher/analytics?tab=anti-cheat" replace />} />.
             <Route path="analytics" element={<TeacherAnalyticsPage />} />
+            
+            <Route path="trash" element={<TeacherTrashPage />} />.
             <Route path="settings" element={<TeacherSettingsPage />} />
           </Route>
 

@@ -49,6 +49,7 @@ export function getBaseNavItems(role: DashboardRole, lang: LanguageCode): NavIte
       { key: "students", to: "/teacher/students", label: t("nav.students", lang), icon: Icons.GraduationCap },
       { key: "analytics", to: "/teacher/analytics", label: t("nav.analytics", lang), icon: Icons.Chart },
       { key: "anti-cheating", to: "/teacher/anti-cheating", label: t("nav.antiCheating", lang), icon: Icons.Shield },
+      { key: "trash", to: "/teacher/trash", label: "Trash", icon: Icons.Trash2 },
       { key: "settings", to: "/teacher/settings", label: t("nav.settings", lang), icon: Icons.Settings },
     ];
   }

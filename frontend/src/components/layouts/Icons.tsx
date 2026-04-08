@@ -56,8 +56,10 @@ import {
   Star,
   ChevronDown,
   Award,
+  ArchiveRestore
 } from "lucide-react";
 export const Icons = {
+  ArchiveRestore: ArchiveRestore,
   Award: Award,
   ChevronDown: ChevronDown,
   Star: Star,

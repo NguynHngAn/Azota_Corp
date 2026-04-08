@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "@/context/AuthContext";
-import { deleteExam, listExams, type ExamResponse } from "@/services/exams.service";
+import { deleteExam, listExams, restoreExam, type ExamResponse } from "@/services/exams.service";
 import { Button } from "@/components/ui/button";
 import { FilterChips } from "@/components/features/admin/filter-chips";
 import { Badge } from "@/components/ui/badge";
@@ -17,19 +17,21 @@ export function ExamListPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [q, setQ] = useState("");
-  const [filter, setFilter] = useState<"all" | "draft" | "published">("all");
+  const [filter, setFilter] = useState<"all" | "draft" | "published" | "deleted">("all");
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!token) return;
-    listExams(token)
+    listExams(token, { include_deleted: filter === "deleted" })
       .then(setExams)
       .catch((e) => setError(e instanceof Error ? e.message : t("examList.failed", lang)))
       .finally(() => setLoading(false));
-  }, [token]);
+  }, [token, filter]);
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
     return exams.filter((e) => {
+      if (filter === "deleted") return Boolean(e.deleted_at) && (!query || e.title.toLowerCase().includes(query));
       if (filter === "draft" && !e.is_draft) return false;
       if (filter === "published" && e.is_draft) return false;
       if (!query) return true;
@@ -37,14 +39,42 @@ export function ExamListPage() {
     });
   }, [exams, q, filter]);
 
-  async function handleDelete(examId: number) {
-    await deleteExam(examId, token ?? "")
-      .then(() => setExams((prev) => prev.filter((e) => e.id !== examId)))
-      .catch((e) => setError(e instanceof Error ? e.message : t("examList.failed", lang)));
-  };
+  // async function handleDelete(examId: number) {
+  //   await deleteExam(examId, token ?? "")
+  //     .then(() => setExams((prev) => prev.filter((e) => e.id !== examId)))
+  //     .catch((e) => setError(e instanceof Error ? e.message : t("examList.failed", lang)));
+  // };
 
   if (loading) return <p className="text-muted-foreground">{t("common.loading", lang)}</p>;
   if (error) return <p className="text-destructive">{error}</p>;
+
+  async function handleDeleteExam(examId: number) {
+    if (!token) return;
+    const ok = window.confirm("Xóa exam này? (Có thể khôi phục sau nếu cần)");
+    if (!ok) return;
+    setDeletingId(examId);
+    try {
+      await deleteExam(examId, token);
+      setExams((prev) => prev.filter((e) => e.id !== examId));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("examList.failed", lang));
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  async function handleRestoreExam(examId: number) {
+    if (!token) return;
+    setDeletingId(examId);
+    try {
+      await restoreExam(examId, token);
+      setExams((prev) => prev.filter((e) => e.id !== examId));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("examList.failed", lang));
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -74,6 +104,7 @@ export function ExamListPage() {
             { value: "all", label: t("common.all", lang) },
             { value: "published", label: t("common.status.published", lang) },
             { value: "draft", label: t("common.status.draft", lang) },
+            { value: "deleted", label: "Deleted" },
           ]}
         />
       </div>
@@ -94,17 +125,52 @@ export function ExamListPage() {
                 {filtered.map((e) => (
                   <TableRow key={e.id}>
                     <TableCell>{e.title}</TableCell>
-                    <TableCell><Badge variant={e.is_draft ? "outline" : "default"}>{e.is_draft ? t("common.status.draft", lang) : t("common.status.published", lang)}</Badge></TableCell>
-                    <TableCell className="text-right">
-                      <Link
-                        to={`/teacher/exams/${e.id}/detail`}
-                        className="p-1.5 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
-                      >
-                        <Button variant="outline" size="icon">
-                          <Icons.Eye className="size-4 " />
+                    <TableCell>
+                      {filter === "deleted" ? (
+                        <Badge variant="destructive">Deleted</Badge>
+                      ):(
+                        <Badge variant={e.is_draft ? "outline" : "default"}>
+                          {e.is_draft 
+                          ? t("common.status.draft", lang) 
+                          : t("common.status.published", lang)}
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right space-x-2">
+                      {/* View */}
+                      {filter !== "deleted" && (
+                        <Link
+                          to={`/teacher/exams/${e.id}/detail`}
+                          className="p-1.5 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
+                        >
+                          <Button variant="outline" size="icon">
+                            <Icons.Eye className="size-4 " />
+                          </Button>
+                        </Link>
+                      )}
+                      {/* Restore */}
+                      {filter === "deleted" ? (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled={deletingId === e.id}
+                          onClick={() => void handleRestoreExam(e.id)}
+                        >
+                          {deletingId === e.id ? "Restoring..." : "Restore"}
                         </Button>
-                      </Link>
-                      {e.is_draft ? (
+                      ) : (
+                        // Delete
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          disabled={deletingId === e.id}
+                          className="hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                          onClick={() => void handleDeleteExam(e.id)}
+                        >
+                          <Icons.Trash className="size-4" />
+                        </Button>
+                      )}
+                      {/* {e.is_draft ? (
                         <Button
                           variant="outline"
                           size="icon"
@@ -113,7 +179,7 @@ export function ExamListPage() {
                         >
                           <Icons.Trash className="size-4 " />
                         </Button>
-                      ) : null}
+                      ) : null} */}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -121,6 +187,65 @@ export function ExamListPage() {
             </Table>
           </div>
         )}
+            {/* value={filter}
+            onChange={setFilter}
+            options={[
+              { value: "all", label: t("common.all", lang) },
+              { value: "published", label: t("common.status.published", lang) },
+              { value: "draft", label: t("common.status.draft", lang) },
+              { value: "deleted", label: "Deleted" },
+            ]}
+          />
+      </div>
+      <div className="mt-4">
+          {filtered.length === 0 ? (
+            <div className="text-center py-20 text-muted-foreground text-sm">{t("examList.empty", lang)}</div>
+          ) : (
+            <div className="space-y-2">
+              {filtered.map((e) => (
+                <div
+                  key={e.id}
+                  className="rounded-xl border border-border bg-card px-4 py-3 hover:bg-secondary/80 transition flex items-center justify-between gap-3"
+                >
+                  <Link
+                    to={filter === "deleted" ? "#" : `/teacher/exams/${e.id}`}
+                    onClick={(ev) => {
+                      if (filter === "deleted") ev.preventDefault();
+                    }}
+                    className="min-w-0 flex-1"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm font-medium text-foreground truncate">{e.title}</div>
+                      <Badge variant={e.is_draft ? "outline" : "default"}>
+                        {e.is_draft ? t("common.status.draft", lang) : t("common.status.published", lang)}
+                      </Badge>
+                    </div>
+                  </Link>
+                  {filter === "deleted" ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      disabled={deletingId === e.id}
+                      onClick={() => void handleRestoreExam(e.id)}
+                    >
+                      {deletingId === e.id ? "Restoring..." : "Restore"}
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={deletingId === e.id}
+                      onClick={() => void handleDeleteExam(e.id)}
+                    >
+                      {deletingId === e.id ? "Deleting..." : "Delete"}
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )} */}
       </div>
 
     </div>

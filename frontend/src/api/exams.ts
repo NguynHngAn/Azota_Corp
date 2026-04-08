@@ -25,6 +25,7 @@ export interface ExamResponse {
   shuffle_options: boolean;
   created_at: string;
   updated_at: string;
+  deleted_at?: string | null;
 }
 
 export interface AnswerOptionResponse {
@@ -47,8 +48,11 @@ export interface ExamDetail extends ExamResponse {
   questions: QuestionResponse[];
 }
 
-export function listExams(token: string): Promise<ExamResponse[]> {
-  return get<ExamResponse[]>("/api/v1/exams", token);
+export function listExams(token: string, opts?: { include_deleted?: boolean }): Promise<ExamResponse[]> {
+  const params = new URLSearchParams();
+  if (opts?.include_deleted) params.set("include_deleted", "true");
+  const qs = params.toString();
+  return get<ExamResponse[]>(`/api/v1/exams${qs ? `?${qs}` : ""}`, token);
 }
 
 export function getExam(examId: number, token: string): Promise<ExamDetail> {
@@ -79,6 +83,10 @@ export function updateExam(
 
 export function deleteExam(examId: number, token: string): Promise<void> {
   return del(`/api/v1/exams/${examId}`, token);
+}
+
+export function restoreExam(examId: number, token: string): Promise<ExamResponse> {
+  return post<ExamResponse>(`/api/v1/exams/${examId}/restore`, {}, token);
 }
 
 export function addQuestion(examId: number, body: QuestionPayload, token: string): Promise<QuestionResponse> {

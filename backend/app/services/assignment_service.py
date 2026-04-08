@@ -71,11 +71,23 @@ def exam_questions_for_student(submission: Submission) -> list[dict]:
 
 
 def get_submission_deadline(submission: Submission) -> datetime:
+    if not submission.started_at:
+        raise ValueError("Submission has not been started")
+
     started_at = submission.started_at
+
+    # Ensure timezone-aware (UTC)
     if started_at.tzinfo is None:
         started_at = started_at.replace(tzinfo=timezone.utc)
-    time_limit = started_at + timedelta(minutes=submission.assignment.duration_minutes)
-    return min(time_limit, submission.assignment.end_time)
+    # Business rule:
+    # - assignment.start_time/end_time define the "entry window" (when students may start).
+    # - duration_minutes is the "working time" that starts counting when the student starts.
+    # If the student starts before end_time, they can finish even after end_time.
+    duration = submission.assignment.duration_minutes
+    if duration is None:
+        raise ValueError("Assignment duration is not set")
+        
+    return started_at + timedelta(minutes=duration)
 
 
 def is_submission_expired(submission: Submission, now: datetime | None = None) -> bool:

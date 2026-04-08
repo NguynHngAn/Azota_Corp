@@ -19,6 +19,7 @@ class Assignment(Base):
     shuffle_questions: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     shuffle_options: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     max_violations: Mapped[int] = mapped_column(Integer, default=3, nullable=False)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
