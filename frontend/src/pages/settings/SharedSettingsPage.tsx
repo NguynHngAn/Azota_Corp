@@ -4,17 +4,65 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import { Icons } from "@/components/layouts/Icons";
 import { useLocalStorageState } from "@/components/settings/use-local-storage-state";
 import { useTheme, type LayoutDensity, type SidebarMode, type ThemeColor } from "@/hooks/useTheme";
-import { notifyLanguageChanged, t, useLanguage, type LanguageCode } from "@/i18n";
-import { uploadMyAvatar } from "@/services/users.service";
+import {
+  notifyLanguageChanged,
+  syncLanguageSettingsStorage,
+  t,
+  useLanguage,
+  type AppTimezone,
+  type LanguageCode,
+} from "@/i18n";
+import { changeMyPassword, uploadMyAvatar } from "@/services/users.service";
 import { resolveStaticUrl } from "@/utils/url";
 
 function initials(text: string): string {
-  const t = (text || "").trim();
-  if (!t) return "U";
-  return t[0].toUpperCase();
+  const trimmed = (text || "").trim();
+  if (!trimmed) return "U";
+  return trimmed[0].toUpperCase();
+}
+
+type PasswordStrengthLevel = "empty" | "weak" | "fair" | "good" | "strong";
+
+function passwordStrength(pwd: string): { score: number; level: PasswordStrengthLevel } {
+  if (!pwd) return { score: 0, level: "empty" };
+  let score = 0;
+  if (pwd.length >= 6) score += 20;
+  if (pwd.length >= 8) score += 10;
+  if (pwd.length >= 12) score += 10;
+  if (/[a-z]/.test(pwd)) score += 15;
+  if (/[A-Z]/.test(pwd)) score += 15;
+  if (/[0-9]/.test(pwd)) score += 15;
+  if (/[^A-Za-z0-9]/.test(pwd)) score += 15;
+  score = Math.min(100, score);
+  const variety = [/[a-z]/.test(pwd), /[A-Z]/.test(pwd), /[0-9]/.test(pwd), /[^A-Za-z0-9]/.test(pwd)].filter(Boolean).length;
+  if (variety <= 1 && pwd.length < 10) {
+    score = Math.min(score, 28);
+  }
+  let level: PasswordStrengthLevel;
+  if (score < 30) level = "weak";
+  else if (score < 50) level = "fair";
+  else if (score < 75) level = "good";
+  else level = "strong";
+  return { score, level };
+}
+
+function newPasswordStrengthLabel(level: PasswordStrengthLevel, lang: LanguageCode): string {
+  switch (level) {
+    case "empty":
+      return t("settings.security.strength.hint", lang);
+    case "weak":
+      return t("settings.security.strength.weak", lang);
+    case "fair":
+      return t("settings.security.strength.fair", lang);
+    case "good":
+      return t("settings.security.strength.good", lang);
+    case "strong":
+      return t("settings.security.strength.strong", lang);
+  }
 }
 
 type NotificationsState = {
@@ -25,11 +73,9 @@ type NotificationsState = {
   systemUpdates: boolean;
 };
 
-type LanguageTimezone = "Asia/Ho_Chi_Minh" | "Asia/Tokyo" | "America/New_York";
-
 type LanguageState = {
   language: LanguageCode;
-  timezone: LanguageTimezone;
+  timezone: AppTimezone;
 };
 type SettingsTab = "profile" | "notifications" | "security" | "appearance" | "language";
 
@@ -68,6 +114,15 @@ export function SharedSettingsPage() {
   });
 
   const [security, setSecurity] = useState({ current: "", next: "", confirm: "" });
+  const [securitySaving, setSecuritySaving] = useState(false);
+
+  const newPasswordStrength = useMemo(() => passwordStrength(security.next), [security.next]);
+  const newPasswordSameAsCurrent =
+    security.next.length > 0 && security.current.length > 0 && security.next === security.current;
+  const newPasswordMeetsStrength =
+    security.next.length >= 6 &&
+    newPasswordStrength.level !== "empty" &&
+    newPasswordStrength.level !== "weak";
   const [notice, setNotice] = useState<null | { kind: "success" | "error"; message: string }>(null);
 
   const navItems = useMemo(
@@ -106,19 +161,47 @@ export function SharedSettingsPage() {
 
   // Language is applied only when user clicks "Save Changes" in Language tab.
 
-  function saveSecurity() {
+  async function saveSecurity() {
     setNotice(null);
+    if (!token) {
+      setNotice({ kind: "error", message: t("settings.security.notSignedIn", langUi) });
+      return;
+    }
+    if (!security.current.trim()) {
+      setNotice({ kind: "error", message: t("settings.security.currentRequired", langUi) });
+      return;
+    }
     if (!security.next || security.next.length < 6) {
       setNotice({ kind: "error", message: t("settings.security.minLengthError", langUi) });
+      return;
+    }
+    if (security.next === security.current) {
+      setNotice({ kind: "error", message: t("settings.security.sameAsCurrent", langUi) });
+      return;
+    }
+    if (newPasswordStrength.level === "weak" || newPasswordStrength.level === "empty") {
+      setNotice({ kind: "error", message: t("settings.security.strengthTooWeak", langUi) });
       return;
     }
     if (security.next !== security.confirm) {
       setNotice({ kind: "error", message: t("settings.security.confirmMismatch", langUi) });
       return;
     }
-    // UI-only: backend endpoint for self password change is not implemented.
-    setSecurity({ current: "", next: "", confirm: "" });
-    setNotice({ kind: "success", message: t("settings.security.updated", langUi) });
+    setSecuritySaving(true);
+    try {
+      await changeMyPassword(security.current, security.next, token);
+      setSecurity({ current: "", next: "", confirm: "" });
+      setNotice({ kind: "success", message: t("settings.security.updated", langUi) });
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : "";
+      const message =
+        raw === "Current password is incorrect"
+          ? t("settings.security.wrongCurrent", langUi)
+          : raw || t("settings.security.updateFailed", langUi);
+      setNotice({ kind: "error", message });
+    } finally {
+      setSecuritySaving(false);
+    }
   }
   const themeOptions = [
     { value: "light" as const, label: t("settings.theme.light", langUi), icon: Icons.Sun },
@@ -127,9 +210,9 @@ export function SharedSettingsPage() {
   ];
 
   const colorOptions: { value: ThemeColor; label: string; swatch: string }[] = [
-    { value: "blue", label: "Blue", swatch: "bg-[hsl(221,83%,53%)]" },
-    { value: "green", label: "Green", swatch: "bg-[hsl(142,71%,45%)]" },
-    { value: "purple", label: "Purple", swatch: "bg-[hsl(262,83%,58%)]" },
+    { value: "blue", label: t("settings.themeColor.blue", langUi), swatch: "bg-[hsl(221,83%,53%)]" },
+    { value: "green", label: t("settings.themeColor.green", langUi), swatch: "bg-[hsl(142,71%,45%)]" },
+    { value: "purple", label: t("settings.themeColor.purple", langUi), swatch: "bg-[hsl(262,83%,58%)]" },
   ];
 
   const densityOptions: { value: LayoutDensity; label: string; desc: string }[] = [
@@ -165,6 +248,8 @@ export function SharedSettingsPage() {
     : "bg-background px-4 py-3 flex items-start justify-between gap-4";
   async function handleSaveChanges() {
     try {
+      // Persist synchronously so listeners read correct timezone before React effect runs.
+      syncLanguageSettingsStorage(languageDraft);
       setLanguageSaved(languageDraft);
       await notifyLanguageChanged(languageDraft.language);
       setNotice({ kind: "success", message: t("settings.language.saved", langUi) });
@@ -306,14 +391,17 @@ export function SharedSettingsPage() {
                 </div>
 
 
-                <Button
-                  className="gap-1.5 rounded-lg"
-                  size="sm"
-                  type="button"
-                  onClick={() => setNotice({ kind: "success", message: t("settings.profile.saveSuccess", langUi) })}
-                >
-                  <Icons.Save className="size-4" /> {t("settings.button.saveChanges", langUi)}
-                </Button>
+                <div className="space-y-1.5">
+                  <Button
+                    className="gap-1.5 rounded-lg"
+                    size="sm"
+                    type="button"
+                    onClick={() => setNotice({ kind: "success", message: t("settings.profile.saveSuccess", langUi) })}
+                  >
+                    <Icons.Save className="size-4" /> {t("settings.button.saveChanges", langUi)}
+                  </Button>
+                  <p className="text-xs text-muted-foreground">{t("settings.profile.saveHint", langUi)}</p>
+                </div>
               </div>
             )}
           </TabsContent>
@@ -323,7 +411,7 @@ export function SharedSettingsPage() {
               <div className="mt-4 overflow-hidden rounded-2xl border border-border divide-y divide-border">
                 {notificationsOptions.map((option) => (
                   <div key={option.key} className={notificationRowClass}>
-                    <div >
+                    <div>
                       <div className="text-sm font-medium text-foreground">{option.title}</div>
                       <p className="text-xs text-muted-foreground">{option.desc}</p>
                     </div>
@@ -347,25 +435,64 @@ export function SharedSettingsPage() {
                   <label className="block text-xs font-medium text-foreground mb-1">{t("settings.security.currentPassword", langUi)}</label>
                   <Input
                     type="password"
+                    autoComplete="current-password"
                     value={security.current}
                     onChange={(e) => setSecurity((s) => ({ ...s, current: e.target.value }))}
                     placeholder="••••••••"
                   />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-3">
                   <div>
                     <label className="block text-xs font-medium text-foreground mb-1">{t("settings.security.newPassword", langUi)}</label>
                     <Input
                       type="password"
+                      autoComplete="new-password"
                       value={security.next}
                       onChange={(e) => setSecurity((s) => ({ ...s, next: e.target.value }))}
                       placeholder={t("settings.security.minimumLength", langUi)}
                     />
+                    <div className="mt-2 space-y-1">
+                      <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-[width] duration-300",
+                            newPasswordStrength.level === "empty" && "bg-muted-foreground/30",
+                            newPasswordStrength.level === "weak" && "bg-destructive",
+                            newPasswordStrength.level === "fair" && "bg-orange-500 dark:bg-orange-600",
+                            newPasswordStrength.level === "good" && "bg-amber-500 dark:bg-amber-600",
+                            newPasswordStrength.level === "strong" && "bg-emerald-600 dark:bg-emerald-500",
+                          )}
+                          style={{
+                            width:
+                              newPasswordStrength.level === "empty" && !security.next
+                                ? "0%"
+                                : `${Math.min(100, Math.max(4, newPasswordStrength.score))}%`,
+                          }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between gap-2 text-[11px]">
+                        <span
+                          className={cn(
+                            "text-muted-foreground",
+                            newPasswordStrength.level === "weak" && "text-destructive",
+                            newPasswordStrength.level === "fair" && "text-orange-600 dark:text-orange-400",
+                            newPasswordStrength.level === "good" && "text-amber-600 dark:text-amber-400",
+                            newPasswordStrength.level === "strong" && "text-emerald-600 dark:text-emerald-400",
+                          )}
+                        >
+                          {newPasswordStrengthLabel(newPasswordStrength.level, langUi)}
+                        </span>
+                      </div>
+                    </div>
+                    {newPasswordSameAsCurrent && (
+                      <p className="text-[11px] text-destructive mt-1">{t("settings.security.sameAsCurrent", langUi)}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-foreground mb-1">{t("settings.security.confirmPassword", langUi)}</label>
                     <Input
                       type="password"
+                      autoComplete="new-password"
                       value={security.confirm}
                       onChange={(e) => setSecurity((s) => ({ ...s, confirm: e.target.value }))}
                       placeholder={t("settings.security.confirmPassword", langUi)}
@@ -373,12 +500,20 @@ export function SharedSettingsPage() {
                   </div>
                 </div>
                 <div className="pt-2">
-                  <Button size="sm" type="button" onClick={saveSecurity}>
-                    <Icons.Key className="size-4" /> {t("settings.security.updatePassword", langUi)}
+                  <Button
+                    size="sm"
+                    type="button"
+                    disabled={
+                      securitySaving ||
+                      !newPasswordMeetsStrength ||
+                      newPasswordSameAsCurrent ||
+                      !security.current.trim()
+                    }
+                    onClick={() => void saveSecurity()}
+                  >
+                    <Icons.Key className="size-4" />{" "}
+                    {securitySaving ? t("common.saving", langUi) : t("settings.security.updatePassword", langUi)}
                   </Button>
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    {t("settings.security.mvpNote", langUi)}
-                  </div>
                 </div>
               </div>
             )}
@@ -393,6 +528,7 @@ export function SharedSettingsPage() {
                   <div className="grid grid-cols-3 gap-3">
                     {themeOptions.map((themeMode) => (
                       <button
+                        type="button"
                         key={themeMode.value}
                         className={`p-4 rounded-lg border text-sm font-medium transition-colors flex flex-col items-center gap-2 ${theme === themeMode.value
                           ? "border-primary bg-primary/5 text-primary"
@@ -412,6 +548,7 @@ export function SharedSettingsPage() {
                   <div className="grid gap-3 sm:grid-cols-3">
                     {colorOptions.map((colorMode) => (
                       <button
+                        type="button"
                         key={colorMode.value}
                         className={`p-4 rounded-lg border text-sm font-medium transition-colors flex items-center gap-3 ${themeColor === colorMode.value
                           ? "border-primary bg-primary/5 text-primary"
@@ -432,6 +569,7 @@ export function SharedSettingsPage() {
                   <div className="grid grid-cols-2 gap-3">
                     {densityOptions.map((densityMode) => (
                       <button
+                        type="button"
                         key={densityMode.value}
                         className={`p-4 rounded-lg border text-left transition-colors ${density === densityMode.value
                           ? "border-primary bg-primary/5"
@@ -455,6 +593,7 @@ export function SharedSettingsPage() {
                   <div className="grid grid-cols-3 gap-3">
                     {sidebarOptions.map((sidebarModeOption) => (
                       <button
+                        type="button"
                         key={sidebarModeOption.value}
                         className={`p-4 rounded-lg border text-sm font-medium transition-colors flex flex-col items-center gap-2 ${sidebarMode === sidebarModeOption.value
                           ? "border-primary bg-primary/5 text-primary"
@@ -473,8 +612,8 @@ export function SharedSettingsPage() {
           </TabsContent>
 
           <TabsContent value="language" className={tabsContentClass}>
-            {(
-              <div >
+            {!switching && (
+              <div>
                 <div className={sectionStackClass}>
                   <label className={sectionTitleClass}>{t("settings.language.title", langUi)}</label>
                   <div className="space-y-2">
@@ -502,7 +641,7 @@ export function SharedSettingsPage() {
                     className="w-full px-3 py-2.5 rounded-lg border border-input bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                     value={languageDraft.timezone}
                     onChange={(e) =>
-                      setLanguageDraft((l) => ({ ...l, timezone: e.target.value as LanguageState["timezone"] }))
+                      setLanguageDraft((l) => ({ ...l, timezone: e.target.value as AppTimezone }))
                     }
                   >
                     <option value="Asia/Ho_Chi_Minh">{t("settings.language.timezone.hcm", langUi)}</option>

@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { getSubmissionResult, type SubmissionResultResponse } from "@/services/assignments.service";
-import { formatDateTimeVietnam } from "@/utils/date";
+import { formatDateTime } from "@/utils/date";
 import { useExam } from "@/context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { t, useLanguage } from "@/i18n";
+import { t, useLanguage, useTimezone } from "@/i18n";
 
 export function SubmissionResultPage() {
   const { submissionId } = useParams<{ submissionId: string }>();
@@ -14,6 +14,7 @@ export function SubmissionResultPage() {
   const { token } = useAuth();
   const { finishExam } = useExam();
   const lang = useLanguage();
+  const tz = useTimezone();
   const [data, setData] = useState<SubmissionResultResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -47,7 +48,7 @@ export function SubmissionResultPage() {
       <div>
         <h2 className="text-lg font-semibold text-foreground">{data.exam_title}</h2>
         <p className="text-sm text-muted-foreground">
-          {t("submissionResult.submittedAt", lang)} {data.submitted_at ? formatDateTimeVietnam(data.submitted_at) : "—"}
+          {t("submissionResult.submittedAt", lang)} {data.submitted_at ? formatDateTime(data.submitted_at, lang, tz) : "—"}
         </p>
       </div>
 
@@ -82,7 +83,7 @@ export function SubmissionResultPage() {
             <div className="glass-card p-6" key={q.question_id}>
               <div className="flex justify-between items-start gap-2 mb-2">
                 <span className="font-medium text-foreground">
-                  {t("submissionResult.question", lang).replace("{{number}}", String(idx + 1))}: {q.question_text}
+                  {t("submissionResult.question", { number: idx + 1 }, lang)}: {q.question_text}
                 </span>
                 <Badge variant={q.correct ? "default" : "destructive"}>
                   {q.correct ? t("studentResults.correct", lang) : t("studentResults.wrong", lang)}

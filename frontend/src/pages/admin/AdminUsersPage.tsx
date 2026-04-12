@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import {
   listUsers,
@@ -15,6 +15,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableCap
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -22,10 +23,19 @@ import {
 import { FilterChips } from "@/components/features/admin/filter-chips";
 import { DataTableLayout } from "@/components/features/admin/data-table-layout";
 import { t, useLanguage } from "@/i18n";
+import { Icons } from "@/components/layouts/Icons";
+import { cn } from "@/lib/utils";
+
+type PageNotice = { kind: "success" | "error"; message: string };
 
 export function AdminUsersPage() {
   const { token } = useAuth();
   const lang = useLanguage();
+  const createNameId = `${useId()}-fullName`;
+  const createEmailId = `${useId()}-email`;
+  const createPasswordId = `${useId()}-password`;
+  const createRoleId = `${useId()}-role`;
+
   function formatMessage(key: string, values: Record<string, string | number>) {
     return Object.entries(values).reduce(
       (message, [name, value]) => message.replaceAll(`{{${name}}}`, String(value)),
@@ -33,41 +43,62 @@ export function AdminUsersPage() {
     );
   }
 
-  const [users, setUsers] = useState < UserResponse[] > ([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [filterRole, setFilterRole] = useState < "teacher" | "student" | "all" > ("all");
+  const [users, setUsers] = useState<UserResponse[]>([]);
+  const [listLoading, setListLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [filterRole, setFilterRole] = useState<"teacher" | "student" | "all">("all");
   const [query, setQuery] = useState("");
 
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState < "teacher" | "student" > ("teacher");
+  const [role, setRole] = useState<"teacher" | "student">("teacher");
   const [creating, setCreating] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
 
-  const [editingUser, setEditingUser] = useState < UserResponse | null > (null);
+  const [editingUser, setEditingUser] = useState<UserResponse | null>(null);
   const [editEmail, setEditEmail] = useState("");
   const [editFullName, setEditFullName] = useState("");
-  const [editRole, setEditRole] = useState < "teacher" | "student" > ("teacher");
+  const [editRole, setEditRole] = useState<"teacher" | "student">("teacher");
   const [editIsActive, setEditIsActive] = useState(true);
   const [savingEdit, setSavingEdit] = useState(false);
+  const editEmailId = `${useId()}-edit-email`;
+  const editNameId = `${useId()}-edit-name`;
+  const editRoleId = `${useId()}-edit-role`;
+  const editStatusId = `${useId()}-edit-status`;
 
-  const [passwordUser, setPasswordUser] = useState < UserResponse | null > (null);
+  const [passwordUser, setPasswordUser] = useState<UserResponse | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
-  const [notice, setNotice] = useState("");
+  const pwdNewId = `${useId()}-pwd-new`;
+  const pwdConfirmId = `${useId()}-pwd-confirm`;
+
+  const [notice, setNotice] = useState<PageNotice | null>(null);
+
+  const fetchUsers = useCallback(async () => {
+    if (!token) {
+      setListLoading(false);
+      setUsers([]);
+      setLoadError("");
+      return;
+    }
+    setListLoading(true);
+    setLoadError("");
+    try {
+      const roleParam = filterRole === "all" ? undefined : filterRole;
+      const rows = await listUsers(token, roleParam);
+      setUsers(rows.filter((u) => u.role !== "admin"));
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : t("adminUsers.loadFailed", lang));
+    } finally {
+      setListLoading(false);
+    }
+  }, [token, filterRole, lang]);
 
   useEffect(() => {
-    if (!token) return;
-    const roleParam = filterRole === "all" ? undefined : filterRole;
-    setLoading(true);
-    listUsers(token, roleParam)
-      .then(setUsers)
-      .catch((e) => setError(e instanceof Error ? e.message : t("adminUsers.loadFailed", lang)))
-      .finally(() => setLoading(false));
-  }, [token, filterRole]);
+    void fetchUsers();
+  }, [fetchUsers]);
 
   const filteredUsers = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -79,7 +110,7 @@ export function AdminUsersPage() {
     e.preventDefault();
     if (!token) return;
     setCreating(true);
-    setError("");
+    setNotice(null);
     try {
       const created = await createUser(
         { email, full_name: fullName, password, role, is_active: true },
@@ -91,9 +122,12 @@ export function AdminUsersPage() {
       setPassword("");
       setRole("teacher");
       setCreateOpen(false);
-      setNotice(t("adminUsers.createSuccess", lang));
+      setNotice({ kind: "success", message: t("adminUsers.createSuccess", lang) });
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("adminUsers.createFailed", lang));
+      setNotice({
+        kind: "error",
+        message: err instanceof Error ? err.message : t("adminUsers.createFailed", lang),
+      });
     } finally {
       setCreating(false);
     }
@@ -101,6 +135,7 @@ export function AdminUsersPage() {
 
   async function applyToggleActive(user: UserResponse) {
     if (!token) return;
+    setNotice(null);
     try {
       if (user.is_active) {
         await deactivateUser(user.id, token);
@@ -109,9 +144,9 @@ export function AdminUsersPage() {
         const updated = await updateUser(user.id, { is_active: true }, token);
         setUsers((prev) => prev.map((u) => (u.id === user.id ? updated : u)));
       }
-      setNotice(t("adminUsers.updateStatusSuccess", lang));
+      setNotice({ kind: "success", message: t("adminUsers.updateStatusSuccess", lang) });
     } catch {
-      setNotice(t("adminUsers.updateStatusFailed", lang));
+      setNotice({ kind: "error", message: t("adminUsers.updateStatusFailed", lang) });
     }
   }
 
@@ -121,13 +156,13 @@ export function AdminUsersPage() {
     setEditFullName(u.full_name);
     setEditRole(u.role === "teacher" ? "teacher" : "student");
     setEditIsActive(u.is_active);
-    setNotice("");
+    setNotice(null);
   }
 
   async function saveEdit() {
     if (!token || !editingUser) return;
     setSavingEdit(true);
-    setNotice("");
+    setNotice(null);
     try {
       const updated = await updateUser(
         editingUser.id,
@@ -141,9 +176,12 @@ export function AdminUsersPage() {
       );
       setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
       setEditingUser(null);
-      setNotice(t("adminUsers.updateSuccess", lang));
+      setNotice({ kind: "success", message: t("adminUsers.updateSuccess", lang) });
     } catch (err) {
-      setNotice(err instanceof Error ? err.message : t("adminUsers.updateFailed", lang));
+      setNotice({
+        kind: "error",
+        message: err instanceof Error ? err.message : t("adminUsers.updateFailed", lang),
+      });
     } finally {
       setSavingEdit(false);
     }
@@ -151,13 +189,13 @@ export function AdminUsersPage() {
 
   async function savePassword() {
     if (!token || !passwordUser) return;
-    setNotice("");
+    setNotice(null);
     if (!newPassword || newPassword.length < 6) {
-      setNotice(t("adminUsers.passwordMinLength", lang));
+      setNotice({ kind: "error", message: t("adminUsers.passwordMinLength", lang) });
       return;
     }
     if (newPassword !== confirmPassword) {
-      setNotice(t("adminUsers.passwordMismatch", lang));
+      setNotice({ kind: "error", message: t("adminUsers.passwordMismatch", lang) });
       return;
     }
     setSavingPassword(true);
@@ -166,28 +204,22 @@ export function AdminUsersPage() {
       setPasswordUser(null);
       setNewPassword("");
       setConfirmPassword("");
-      setNotice(t("adminUsers.passwordResetSuccess", lang));
+      setNotice({ kind: "success", message: t("adminUsers.passwordResetSuccess", lang) });
     } catch (err) {
-      setNotice(err instanceof Error ? err.message : t("adminUsers.passwordResetFailed", lang));
+      setNotice({
+        kind: "error",
+        message: err instanceof Error ? err.message : t("adminUsers.passwordResetFailed", lang),
+      });
     } finally {
       setSavingPassword(false);
     }
   }
 
-  async function applyDelete(user: UserResponse) {
-    if (!token) return;
-    setNotice("");
-    try {
-      await deactivateUser(user.id, token);
-      setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, is_active: false } : u)));
-      setNotice(t("adminUsers.deleteSuccess", lang));
-    } catch (err) {
-      setNotice(err instanceof Error ? err.message : t("adminUsers.deleteFailed", lang));
-    }
+  if (!token) {
+    return (
+      <p className="text-sm text-muted-foreground">{t("adminUsers.notSignedIn", lang)}</p>
+    );
   }
-
-  if (loading) return <p className="text-muted-foreground">{t("adminUsers.loading", lang)}</p>;
-  if (error) return <p className="text-red-600">{error}</p>;
 
   return (
     <div className="space-y-6">
@@ -197,20 +229,32 @@ export function AdminUsersPage() {
           <p className="mt-1 text-sm text-muted-foreground">{t("adminUsers.subtitle", lang)}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <Button onClick={() => setCreateOpen(true)}>{t("adminUsers.createUser", lang)}</Button>
+          <Button type="button" onClick={() => setCreateOpen(true)} className="gap-1.5 rounded-lg">
+            <Icons.UserPlus className="size-4" />
+            {t("adminUsers.createUser", lang)}
+          </Button>
         </div>
       </div>
       {notice && (
-        <p className={`text-sm ${notice.toLowerCase().includes("fail") ? "text-destructive" : "text-primary"}`}>
-          {notice}
-        </p>
+        <div
+          className={cn(
+            "text-sm rounded-xl px-3 py-2 border",
+            notice.kind === "error"
+              ? "text-destructive bg-destructive/10 border-destructive/20"
+              : "text-primary bg-primary/10 border-primary/20",
+          )}
+        >
+          {notice.message}
+        </div>
       )}
 
       <DataTableLayout
         title={t("adminUsers.managementTitle", lang)}
-        loading={false}
-        error=""
-        isEmpty={filteredUsers.length === 0}
+        loading={listLoading}
+        error={loadError}
+        onRetry={loadError ? () => void fetchUsers() : undefined}
+        retryLabel={loadError ? t("common.retry", lang) : undefined}
+        isEmpty={!listLoading && !loadError && filteredUsers.length === 0}
         emptyMessage={t("adminUsers.empty", lang)}
         controls={
           <>
@@ -234,7 +278,9 @@ export function AdminUsersPage() {
         }
       >
         <Table>
-          <TableCaption>{t("adminUsers.totalUsers", lang)}: {users.length}</TableCaption>
+          <TableCaption>
+            {t("adminUsers.totalUsers", lang)}: {users.length}
+          </TableCaption>
           <TableHeader>
             <TableRow>
               <TableHead>{t("common.name", lang)}</TableHead>
@@ -271,7 +317,17 @@ export function AdminUsersPage() {
                       <Button size="sm" variant="ghost" type="button" onClick={() => openEdit(u)}>
                         {t("common.edit", lang)}
                       </Button>
-                      <Button size="sm" variant="ghost" type="button" onClick={() => setPasswordUser(u)}>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        type="button"
+                        onClick={() => {
+                          setNotice(null);
+                          setNewPassword("");
+                          setConfirmPassword("");
+                          setPasswordUser(u);
+                        }}
+                      >
                         {t("adminUsers.resetPassword", lang)}
                       </Button>
                       <Button
@@ -287,20 +343,6 @@ export function AdminUsersPage() {
                       >
                         {u.is_active ? t("adminUsers.deactivate", lang) : t("adminUsers.activate", lang)}
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        type="button"
-                        onClick={() => {
-                          if (
-                            window.confirm(formatMessage("adminUsers.deleteConfirm", { name: u.full_name, email: u.email }))
-                          ) {
-                            void applyDelete(u);
-                          }
-                        }}
-                      >
-                        {t("common.delete", lang)}
-                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -314,24 +356,54 @@ export function AdminUsersPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("adminUsers.createDialogTitle", lang)}</DialogTitle>
+            <DialogDescription>{t("adminUsers.createDialogDescription", lang)}</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreate} className="space-y-4">
             <div>
-              <label className="mb-1 block text-xs font-medium text-foreground">{t("settings.profile.fullName", lang)} *</label>
-              <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder={t("adminUsers.fullNamePlaceholder", lang)} required />
+              <label htmlFor={createNameId} className="mb-1 block text-xs font-medium text-foreground">
+                {t("settings.profile.fullName", lang)} *
+              </label>
+              <Input
+                id={createNameId}
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder={t("adminUsers.fullNamePlaceholder", lang)}
+                required
+              />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-foreground">{t("common.email", lang)} *</label>
-              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t("login.emailPlaceholder", lang)} required />
+              <label htmlFor={createEmailId} className="mb-1 block text-xs font-medium text-foreground">
+                {t("common.email", lang)} *
+              </label>
+              <Input
+                id={createEmailId}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={t("login.emailPlaceholder", lang)}
+                required
+              />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-foreground">{t("adminUsers.newPassword", lang)} *</label>
-              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={6} required />
+              <label htmlFor={createPasswordId} className="mb-1 block text-xs font-medium text-foreground">
+                {t("adminUsers.newPassword", lang)} *
+              </label>
+              <Input
+                id={createPasswordId}
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                minLength={6}
+                required
+              />
               <p className="mt-1 text-[11px] text-muted-foreground">{t("adminUsers.passwordHint", lang)}</p>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-foreground">{t("common.roleLabel", lang)} *</label>
+              <label htmlFor={createRoleId} className="mb-1 block text-xs font-medium text-foreground">
+                {t("common.roleLabel", lang)} *
+              </label>
               <select
+                id={createRoleId}
                 value={role}
                 onChange={(e) => setRole(e.target.value as "teacher" | "student")}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
@@ -353,26 +425,29 @@ export function AdminUsersPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("adminUsers.editDialogTitle", lang)}</DialogTitle>
+            <DialogDescription>{t("adminUsers.editDialogDescription", lang)}</DialogDescription>
           </DialogHeader>
           {editingUser && (
             <div className="space-y-4">
-              {notice && notice.toLowerCase().includes("fail") && (
-                <div className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                  {notice}
-                </div>
-              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="sm:col-span-2">
-                  <label className="mb-1 block text-xs font-medium text-foreground">{t("common.email", lang)}</label>
-                  <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
+                  <label htmlFor={editEmailId} className="mb-1 block text-xs font-medium text-foreground">
+                    {t("common.email", lang)}
+                  </label>
+                  <Input id={editEmailId} value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="mb-1 block text-xs font-medium text-foreground">{t("settings.profile.fullName", lang)}</label>
-                  <Input value={editFullName} onChange={(e) => setEditFullName(e.target.value)} />
+                  <label htmlFor={editNameId} className="mb-1 block text-xs font-medium text-foreground">
+                    {t("settings.profile.fullName", lang)}
+                  </label>
+                  <Input id={editNameId} value={editFullName} onChange={(e) => setEditFullName(e.target.value)} />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-foreground">{t("common.roleLabel", lang)}</label>
+                  <label htmlFor={editRoleId} className="mb-1 block text-xs font-medium text-foreground">
+                    {t("common.roleLabel", lang)}
+                  </label>
                   <select
+                    id={editRoleId}
                     value={editRole}
                     onChange={(e) => setEditRole(e.target.value as "teacher" | "student")}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
@@ -382,8 +457,11 @@ export function AdminUsersPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-foreground">{t("common.status", lang)}</label>
+                  <label htmlFor={editStatusId} className="mb-1 block text-xs font-medium text-foreground">
+                    {t("common.status", lang)}
+                  </label>
                   <select
+                    id={editStatusId}
                     value={editIsActive ? "active" : "inactive"}
                     onChange={(e) => setEditIsActive(e.target.value === "active")}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
@@ -397,7 +475,7 @@ export function AdminUsersPage() {
                 <Button variant="secondary" type="button" onClick={() => setEditingUser(null)} disabled={savingEdit}>
                   {t("common.cancel", lang)}
                 </Button>
-                <Button type="button" disabled={savingEdit} onClick={saveEdit}>
+                <Button type="button" disabled={savingEdit} onClick={() => void saveEdit()}>
                   {savingEdit ? t("common.saving", lang) : t("common.save", lang)}
                 </Button>
               </DialogFooter>
@@ -406,31 +484,37 @@ export function AdminUsersPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!passwordUser} onOpenChange={(open) => !savingPassword && !open && setPasswordUser(null)}>
+      <Dialog
+        open={!!passwordUser}
+        onOpenChange={(open) => {
+          if (!open && !savingPassword) {
+            setPasswordUser(null);
+            setNewPassword("");
+            setConfirmPassword("");
+            setNotice(null);
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("adminUsers.passwordDialogTitle", lang)}</DialogTitle>
+            <DialogDescription>
+              {passwordUser
+                ? formatMessage("adminUsers.passwordDialogDescription", { email: passwordUser.email })
+                : null}
+            </DialogDescription>
           </DialogHeader>
           {passwordUser && (
             <div className="space-y-4">
-              <div className="text-sm text-muted-foreground">
-                {formatMessage("adminUsers.passwordDialogDescription", { email: passwordUser.email })}
-              </div>
-              {notice && (
-                <div
-                  className={`text-sm rounded-xl px-3 py-2 border ${notice.toLowerCase().includes("fail") || notice.toLowerCase().includes("must") || notice.toLowerCase().includes("match")
-                      ? "text-destructive bg-destructive/10 border-destructive/20"
-                      : "text-primary bg-primary/10 border-primary/20"
-                    }`}
-                >
-                  {notice}
-                </div>
-              )}
               <div className="grid grid-cols-1 gap-3">
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-foreground">{t("adminUsers.newPassword", lang)}</label>
+                  <label htmlFor={pwdNewId} className="mb-1 block text-xs font-medium text-foreground">
+                    {t("adminUsers.newPassword", lang)}
+                  </label>
                   <Input
+                    id={pwdNewId}
                     type="password"
+                    autoComplete="new-password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     minLength={6}
@@ -438,9 +522,13 @@ export function AdminUsersPage() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-foreground">{t("adminUsers.confirmNewPassword", lang)}</label>
+                  <label htmlFor={pwdConfirmId} className="mb-1 block text-xs font-medium text-foreground">
+                    {t("adminUsers.confirmNewPassword", lang)}
+                  </label>
                   <Input
+                    id={pwdConfirmId}
                     type="password"
+                    autoComplete="new-password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     minLength={6}
@@ -457,11 +545,12 @@ export function AdminUsersPage() {
                     setPasswordUser(null);
                     setNewPassword("");
                     setConfirmPassword("");
+                    setNotice(null);
                   }}
                 >
                   {t("common.cancel", lang)}
                 </Button>
-                <Button type="button" disabled={savingPassword} onClick={savePassword}>
+                <Button type="button" disabled={savingPassword} onClick={() => void savePassword()}>
                   {savingPassword ? t("common.saving", lang) : t("settings.security.updatePassword", lang)}
                 </Button>
               </DialogFooter>
@@ -472,4 +561,3 @@ export function AdminUsersPage() {
     </div>
   );
 }
-

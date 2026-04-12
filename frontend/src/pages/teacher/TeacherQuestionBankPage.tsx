@@ -21,19 +21,23 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Icons } from "@/components/layouts/Icons";
-import { t, useLanguage } from "@/i18n";
+import { t, useLanguage, type I18nKey, type LanguageCode } from "@/i18n";
 import { Card } from "@/components/ui/card";
 
 export function TeacherQuestionBankPage() {
   const { token } = useAuth();
   const lang = useLanguage();
-  function tr(key: string, values?: Record<string, string | number>) {
-    const base = t(key as never, lang);
-    if (!values) return base;
-    return Object.entries(values).reduce(
-      (message, [name, value]) => message.replaceAll(`{{${name}}}`, String(value)),
-      base,
-    );
+  /** Local helper: `t()` is strict per-key; this bridges optional `values` for this page. */
+  const tLoose = t as (
+    key: I18nKey,
+    arg2?: LanguageCode | Record<string, string | number>,
+    arg3?: LanguageCode,
+  ) => string;
+  function tr(key: I18nKey, values?: Record<string, string | number>) {
+    if (values === undefined) {
+      return tLoose(key, lang);
+    }
+    return tLoose(key, values, lang);
   }
 
   const [loading, setLoading] = useState(true);
@@ -71,7 +75,7 @@ export function TeacherQuestionBankPage() {
   const normalizedTags = useMemo(() => {
     return tagsText
       .split(",")
-      .map((t) => t.trim())
+      .map((part) => part.trim())
       .filter(Boolean)
       .slice(0, 10);
   }, [tagsText]);
@@ -98,7 +102,7 @@ export function TeacherQuestionBankPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  async function openCreate() {
+  function openCreate() {
     setEditingId(null);
     setDraft({
       question_type: "single_choice",
@@ -207,12 +211,16 @@ export function TeacherQuestionBankPage() {
     setSaving(true);
     setError("");
     try {
+      const optionsWithText = draft.options
+        .map((o) => ({ ...o, text: o.text.trim() }))
+        .filter((o) => o.text.length > 0)
+        .map((o, i) => ({ ...o, order_index: i }));
       const payload: BankQuestionCreate = {
         ...draft,
         text: draft.text.trim(),
         explanation: draft.explanation?.trim() || null,
         tags: normalizedTags,
-        options: draft.options.map((o, i) => ({ ...o, order_index: i, text: o.text.trim() })) as BankAnswerOptionCreate[],
+        options: optionsWithText as BankAnswerOptionCreate[],
       };
       if (editingId == null) await createBankQuestion(payload, token);
       else await updateBankQuestion(editingId, payload, token);
@@ -260,7 +268,7 @@ export function TeacherQuestionBankPage() {
     } catch (e) {
       setImportPreview(null);
       setSelectedFile(null);
-      setImportError(e instanceof Error ? e.message : "Failed to preview import");
+      setImportError(e instanceof Error ? e.message : tr("questionBank.importPreviewFailed"));
     } finally {
       setImportLoading(false);
     }
@@ -276,7 +284,7 @@ export function TeacherQuestionBankPage() {
       setSelectedFile(null);
       await refresh();
     } catch (e) {
-      setImportError(e instanceof Error ? e.message : "Failed to import questions");
+      setImportError(e instanceof Error ? e.message : tr("questionBank.importCommitFailed"));
     } finally {
       setImportLoading(false);
     }
@@ -286,16 +294,16 @@ export function TeacherQuestionBankPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{t("questionBank.title", lang)}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{loading ? t("common.loading", lang) : tr("questionBank.totalQuestions", { count: total })}</p>
+          <h1 className="text-2xl font-bold text-foreground">{tr("questionBank.title")}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{loading ? tr("common.loading") : tr("questionBank.totalQuestions", { count: total })}</p>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <Button variant="secondary" onClick={() => refresh()} disabled={loading || saving}>
-            {t("common.refresh", lang)}
+            {tr("common.refresh")}
           </Button>
           <Button onClick={openCreate} disabled={saving}>
-            <Icons.Plus className="size-4" /> {t("questionBank.newQuestion", lang)}
+            <Icons.Plus className="size-4" /> {tr("questionBank.newQuestion")}
           </Button>
         </div>
       </div>
@@ -304,8 +312,8 @@ export function TeacherQuestionBankPage() {
       <Card className="p-6 glass-card">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="text-sm font-semibold text-foreground">Import questions (Excel/CSV/Word)</div>
-            <div className="mt-1 text-xs text-muted-foreground">Upload file để preview trước khi commit vào Question Bank.</div>
+            <div className="text-sm font-semibold text-foreground">{tr("questionBank.importSectionTitle")}</div>
+            <div className="mt-1 text-xs text-muted-foreground">{tr("questionBank.importSectionHint")}</div>
           </div>
           <div className="flex items-center gap-2 flex-wrap justify-end">
             <Button
@@ -313,21 +321,21 @@ export function TeacherQuestionBankPage() {
               variant="outline"
               onClick={() => downloadTemplate("/templates/question-import-template.docx")}
             >
-              Download Word template
+              {tr("questionBank.importDownloadWordTemplate")}
             </Button>
             <Button
               type="button"
               variant="outline"
               onClick={() => downloadTemplate("/templates/question-import-template.xlsx")}
             >
-              Download Excel template
+              {tr("questionBank.importDownloadExcelTemplate")}
             </Button>
             <Button
               type="button"
               variant="outline"
               onClick={() => downloadTemplate("/templates/question-import-template.csv")}
             >
-              Download CSV template
+              {tr("questionBank.importDownloadCsvTemplate")}
             </Button>
           </div>
         </div>
@@ -345,22 +353,20 @@ export function TeacherQuestionBankPage() {
             }}
           />
           <Button type="button" onClick={() => document.getElementById(importInputId)?.click()} disabled={importLoading}>
-            {importLoading ? "Reading..." : "Choose file"}
+            {importLoading ? tr("common.loading") : tr("questionBank.importChooseFile")}
           </Button>
-          <div className="text-xs text-muted-foreground">
-            Gợi ý: use template để đúng format cột/dòng (tránh lỗi import).
-          </div>
+          <div className="text-xs text-muted-foreground">{tr("questionBank.importToolbarHint")}</div>
         </div>
 
-        {importError ? <div className="mt-3 text-sm text-rose-700">{importError}</div> : null}
+        {importError ? <div className="mt-3 text-sm text-destructive">{importError}</div> : null}
 
         {importPreview ? (
           <div className="mt-4 space-y-3 rounded-xl border border-border bg-card/30 p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold">Import preview</div>
+                <div className="text-sm font-semibold">{tr("questionBank.importPreviewTitle")}</div>
                 <div className="text-xs text-muted-foreground mt-1">
-                  File có {importPreview.total} câu hỏi được nhận diện.
+                  {tr("questionBank.importPreviewDescription", { count: importPreview.total })}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -374,27 +380,27 @@ export function TeacherQuestionBankPage() {
                   }}
                   disabled={importLoading}
                 >
-                  Cancel
+                  {tr("common.cancel")}
                 </Button>
                 <Button type="button" onClick={() => void commitImport()} disabled={importLoading}>
-                  {importLoading ? "Importing..." : `Import ${importPreview.total}`}
+                  {importLoading ? tr("common.loading") : tr("questionBank.importCommitButton", { count: importPreview.total })}
                 </Button>
               </div>
             </div>
 
             <div className="rounded-lg border border-border bg-card p-3">
-              <div className="text-xs font-semibold text-muted-foreground mb-2">Preview items</div>
+              <div className="text-xs font-semibold text-muted-foreground mb-2">{tr("questionBank.importPreviewTableTitle")}</div>
               {importPreview.preview.length === 0 ? (
-                <div className="text-sm text-muted-foreground">No preview items.</div>
+                <div className="text-sm text-muted-foreground">{tr("questionBank.importPreviewEmpty")}</div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Question</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Difficulty</TableHead>
-                      <TableHead>Options</TableHead>
-                      <TableHead>Tags</TableHead>
+                      <TableHead>{tr("questionBank.importPreviewQuestion")}</TableHead>
+                      <TableHead>{tr("questionBank.importPreviewType")}</TableHead>
+                      <TableHead>{tr("questionBank.importPreviewDifficulty")}</TableHead>
+                      <TableHead>{tr("questionBank.importPreviewOptions")}</TableHead>
+                      <TableHead className="text-right">{tr("questionBank.importPreviewTags")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -411,9 +417,9 @@ export function TeacherQuestionBankPage() {
                             {p.tags.length === 0 ? (
                               <span className="text-xs text-muted-foreground">—</span>
                             ) : (
-                              p.tags.slice(0, 5).map((t) => (
-                                <Badge key={t} variant="outline">
-                                  {t}
+                              p.tags.slice(0, 5).map((tag) => (
+                                <Badge key={tag} variant="outline">
+                                  {tag}
                                 </Badge>
                               ))
                             )}
@@ -435,7 +441,7 @@ export function TeacherQuestionBankPage() {
           <input
             type="text"
             className="bg-transparent outline-none w-full text-foreground placeholder:text-muted-foreground text-sm"
-            placeholder={t("questionBank.searchPlaceholder", lang)}
+            placeholder={tr("questionBank.searchPlaceholder")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
@@ -446,19 +452,19 @@ export function TeacherQuestionBankPage() {
         {error ? <div className="mt-4 text-sm text-muted-foreground">{error}</div> : null}
 
         {loading ? (
-          <div className="flex items-center justify-center py-20"><Icons.Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+          <div className="flex items-center justify-center py-20"><Icons.Loader2 className="size-6 animate-spin text-primary" /></div>
         ) : items.length === 0 ? (
-          <div className="text-center py-20 text-muted-foreground text-sm">{t("questionBank.empty", lang)}</div>
+          <div className="text-center py-20 text-muted-foreground text-sm">{tr("questionBank.empty")}</div>
         ) : (
           <div className="mt-4">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t("questionBank.question", lang)}</TableHead>
-                  <TableHead>{t("common.type", lang)}</TableHead>
-                  <TableHead>{t("questionBank.difficulty", lang)}</TableHead>
-                  <TableHead>{t("common.status", lang)}</TableHead>
-                  <TableHead>{t("questionBank.tags", lang)}</TableHead>
+                  <TableHead>{tr("questionBank.question")}</TableHead>
+                  <TableHead>{tr("common.type")}</TableHead>
+                  <TableHead>{tr("questionBank.difficulty")}</TableHead>
+                  <TableHead>{tr("common.status")}</TableHead>
+                  <TableHead className="text-right">{tr("questionBank.tags")}</TableHead>
                   <TableHead />
                 </TableRow>
               </TableHeader>
@@ -469,7 +475,7 @@ export function TeacherQuestionBankPage() {
                       <div className="font-medium text-muted-foreground line-clamp-2">{it.text}</div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {it.question_type === "single_choice" ? t("questionBank.single", lang) : t("questionBank.multiple", lang)}
+                      {it.question_type === "single_choice" ? tr("questionBank.single") : tr("questionBank.multiple")}
                     </TableCell>
                     <TableCell>
                       <Badge
@@ -481,13 +487,13 @@ export function TeacherQuestionBankPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={it.is_active ? "default" : "outline"}>{it.is_active ? t("common.status.active", lang) : t("common.status.inactive", lang)}</Badge>
+                      <Badge variant={it.is_active ? "default" : "outline"}>{it.is_active ? tr("common.status.active") : tr("common.status.inactive")}</Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
-                        {(it.tags ?? []).slice(0, 3).map((t) => (
-                          <Badge key={t} variant="outline">
-                            {t}
+                        {(it.tags ?? []).slice(0, 3).map((tag) => (
+                          <Badge key={tag} variant="outline">
+                            {tag}
                           </Badge>
                         ))}
                         {(it.tags ?? []).length > 3 ? (
@@ -498,7 +504,7 @@ export function TeacherQuestionBankPage() {
                     <TableCell className="text-right">
                       <div className="inline-flex items-center gap-2">
                         <Button size="sm" variant="secondary" onClick={() => openEdit(it.id)} disabled={saving}>
-                          {t("common.edit", lang)}
+                          {tr("common.edit")}
                         </Button>
                         <Button
                           size="sm"
@@ -506,7 +512,7 @@ export function TeacherQuestionBankPage() {
                           onClick={() => {
                             if (
                               window.confirm(
-                                t("questionBank.deleteConfirm", lang),
+                                tr("questionBank.deleteConfirm"),
                               )
                             ) {
                               void doDelete(it.id);
@@ -514,7 +520,7 @@ export function TeacherQuestionBankPage() {
                           }}
                           disabled={saving}
                         >
-                          {t("common.delete", lang)}
+                          {tr("common.delete")}
                         </Button>
                       </div>
                     </TableCell>
@@ -531,16 +537,16 @@ export function TeacherQuestionBankPage() {
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="text-sm font-semibold text-foreground">
-                {editingId == null ? t("questionBank.editor.newTitle", lang) : tr("questionBank.editor.editTitle", { id: editingId })}
+                {editingId == null ? tr("questionBank.editor.newTitle") : tr("questionBank.editor.editTitle", { id: editingId })}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">{t("questionBank.editor.description", lang)}</div>
+              <div className="text-xs text-muted-foreground mt-1">{tr("questionBank.editor.description")}</div>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="secondary" onClick={() => setEditorOpen(false)} disabled={saving}>
-                {t("common.cancel", lang)}
+                {tr("common.cancel")}
               </Button>
               <Button onClick={save} disabled={saving}>
-                {saving ? t("common.saving", lang) : t("common.save", lang)}
+                {saving ? tr("common.saving") : tr("common.save")}
               </Button>
             </div>
           </div>
@@ -549,7 +555,7 @@ export function TeacherQuestionBankPage() {
             <div className="lg:col-span-2 space-y-3">
               <div>
                 <label htmlFor={questionTextFieldId} className="block text-xs font-medium text-muted-foreground mb-1">
-                  {t("questionBank.editor.questionText", lang)}
+                  {tr("questionBank.editor.questionText")}
                 </label>
                 <Textarea
                   id={questionTextFieldId}
@@ -560,7 +566,7 @@ export function TeacherQuestionBankPage() {
               </div>
               <div>
                 <label htmlFor={explanationFieldId} className="block text-xs font-medium text-muted-foreground mb-1">
-                  {t("questionBank.editor.explanation", lang)}
+                  {tr("questionBank.editor.explanation")}
                 </label>
                 <Textarea
                   id={explanationFieldId}
@@ -572,9 +578,9 @@ export function TeacherQuestionBankPage() {
 
               <div className="rounded-2xl border border-border p-4 bg-card">
                 <div className="flex items-center justify-between">
-                  <div className="text-xs font-semibold text-muted-foreground">{t("questionBank.editor.answerOptions", lang)}</div>
+                  <div className="text-xs font-semibold text-muted-foreground">{tr("questionBank.editor.answerOptions")}</div>
                   <Button size="sm" variant="ghost" onClick={addOption} type="button">
-                    + {t("questionBank.editor.addOption", lang)}
+                    + {tr("questionBank.editor.addOption")}
                   </Button>
                 </div>
                 <div className="mt-3 space-y-2">
@@ -606,7 +612,7 @@ export function TeacherQuestionBankPage() {
                         onClick={() => removeOption(idx)}
                         disabled={draft.options.length <= 2}
                       >
-                        {t("questionBank.editor.removeOption", lang)}
+                        {tr("questionBank.editor.removeOption")}
                       </Button>
                     </div>
                   ))}
@@ -616,50 +622,50 @@ export function TeacherQuestionBankPage() {
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">{t("questionBank.editor.type", lang)}</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">{tr("questionBank.editor.type")}</label>
                 <select
                   value={draft.question_type}
                   onChange={(e) => setQuestionType(e.target.value as QuestionType)}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 >
-                  <option value="single_choice">{t("questionBank.editor.singleChoice", lang)}</option>
-                  <option value="multiple_choice">{t("questionBank.editor.multipleChoice", lang)}</option>
+                  <option value="single_choice">{tr("questionBank.editor.singleChoice")}</option>
+                  <option value="multiple_choice">{tr("questionBank.editor.multipleChoice")}</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">{t("questionBank.difficulty", lang)}</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">{tr("questionBank.difficulty")}</label>
                 <select
                   value={draft.difficulty}
                   onChange={(e) => setDraft((d) => ({ ...d, difficulty: e.target.value as QuestionDifficulty }))}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 >
-                  <option value="easy">{t("questionBank.difficulty.easy", lang)}</option>
-                  <option value="medium">{t("questionBank.difficulty.medium", lang)}</option>
-                  <option value="hard">{t("questionBank.difficulty.hard", lang)}</option>
+                  <option value="easy">{tr("questionBank.difficulty.easy")}</option>
+                  <option value="medium">{tr("questionBank.difficulty.medium")}</option>
+                  <option value="hard">{tr("questionBank.difficulty.hard")}</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">{t("questionBank.editor.status", lang)}</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">{tr("questionBank.editor.status")}</label>
                 <select
                   value={draft.is_active ? "active" : "inactive"}
                   onChange={(e) => setDraft((d) => ({ ...d, is_active: e.target.value === "active" }))}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 >
-                  <option value="active">{t("common.status.active", lang)}</option>
-                  <option value="inactive">{t("common.status.inactive", lang)}</option>
+                  <option value="active">{tr("common.status.active")}</option>
+                  <option value="inactive">{tr("common.status.inactive")}</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">{t("questionBank.editor.tags", lang)}</label>
-                <Input value={tagsText} onChange={(e) => setTagsText(e.target.value)} placeholder={t("questionBank.editor.tagsPlaceholder", lang)} />
+                <label className="block text-xs font-medium text-muted-foreground mb-1">{tr("questionBank.editor.tags")}</label>
+                <Input value={tagsText} onChange={(e) => setTagsText(e.target.value)} placeholder={tr("questionBank.editor.tagsPlaceholder")} />
                 {normalizedTags.length > 0 ? (
                   <div className="mt-2 flex flex-wrap gap-1">
-                    {normalizedTags.map((t) => (
-                      <Badge key={t} variant="outline">
-                        {t}
+                    {normalizedTags.map((tag) => (
+                      <Badge key={tag} variant="outline">
+                        {tag}
                       </Badge>
                     ))}
                   </div>

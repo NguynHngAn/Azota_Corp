@@ -5,10 +5,10 @@ import { listMyAssignments, type AssignmentDetail } from "@/services/assignments
 import { Icons } from "@/components/layouts/Icons";
 import { JoinClassPanel } from "@/components/features/student/join-class-panel";
 import { Button } from "@/components/ui/button";
-import { formatDateTimeVietnam } from "@/utils/date";
+import { formatDateTime } from "@/utils/date";
 import { useNavigate } from "react-router";
 import { cn } from "@/lib/utils";
-import { t, useLanguage } from "@/i18n";
+import { t, useLanguage, useTimezone } from "@/i18n";
 
 function firstName(fullNameOrEmail?: string | null): string {
   const raw = (fullNameOrEmail || "").trim();
@@ -39,6 +39,7 @@ function scorePercentColorClass(score: number): string {
 export function StudentDashboardPage() {
   const { token, user } = useAuth();
   const lang = useLanguage();
+  const tz = useTimezone();
   const navigate = useNavigate();
   function tr(key: string, values?: Record<string, string | number>) {
     const base = t(key as never, lang);
@@ -178,7 +179,7 @@ export function StudentDashboardPage() {
                     <div className="text-right">
                       <div className="text-xs text-muted-foreground flex items-center justify-end gap-1">
                         <Icons.Clock className="w-3 h-3 shrink-0" />
-                        {formatDateTimeVietnam(a.start_time)}
+                        {formatDateTime(a.start_time, lang, tz)}
                       </div>
                     </div>
                   </div>
@@ -200,7 +201,7 @@ export function StudentDashboardPage() {
                 <div key={a.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/30 transition-colors">
                   <div>
                     <div className="text-sm font-medium text-foreground">{a.exam_title}</div>
-                    <div className="text-xs text-muted-foreground">{formatDateTimeVietnam(a.end_time)}</div>
+                    <div className="text-xs text-muted-foreground">{formatDateTime(a.end_time, lang, tz)}</div>
                   </div>
                   <div className="text-right">
                     <span

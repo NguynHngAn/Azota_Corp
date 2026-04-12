@@ -19,7 +19,7 @@ export function ProfilePage() {
           <div>
             <p className="text-xs font-medium text-primary uppercase tracking-wide">{t("profile.account", lang)}</p>
             <h1 className="text-xl md:text-2xl font-semibold text-foreground">
-              {t("profile.hello", lang).replace("{{name}}", displayName || t("common.user", lang))}
+              {t("profile.hello", { name: displayName || t("common.user", lang) }, lang)}
             </h1>
             <p className="text-sm text-muted-foreground">
               {t("profile.welcome", lang)}

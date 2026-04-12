@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +12,8 @@ interface DataTableLayoutProps {
   isEmpty: boolean;
   emptyMessage: string;
   loadingRows?: number;
+  onRetry?: () => void;
+  retryLabel?: string;
   children: ReactNode;
 }
 
@@ -22,6 +25,8 @@ export function DataTableLayout({
   isEmpty,
   emptyMessage,
   loadingRows = 3,
+  onRetry,
+  retryLabel,
   children,
 }: DataTableLayoutProps) {
   return (
@@ -43,7 +48,14 @@ export function DataTableLayout({
             ))}
           </div>
         ) : error ? (
-          <p className="py-10 text-center text-sm text-destructive">{error}</p>
+          <div className="flex flex-col items-center gap-3 py-10 text-center">
+            <p className="text-sm text-destructive">{error}</p>
+            {onRetry && retryLabel ? (
+              <Button type="button" variant="outline" size="sm" className="rounded-lg" onClick={onRetry}>
+                {retryLabel}
+              </Button>
+            ) : null}
+          </div>
         ) : isEmpty ? (
           <p className="py-10 text-center text-sm text-muted-foreground">{emptyMessage}</p>
         ) : (

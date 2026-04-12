@@ -10,14 +10,15 @@ import { Icons } from "@/components/layouts/Icons";
 import { FilterChips } from "@/components/features/admin/filter-chips";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatDateTimeVietnam } from "@/utils/date";
-import { t, useLanguage } from "@/i18n";
+import { formatDateTime } from "@/utils/date";
+import { t, useLanguage, useTimezone } from "@/i18n";
 
 type Filter = "all" | "suspicious";
 
 export function TeacherAntiCheatingPage() {
   const { token } = useAuth();
   const lang = useLanguage();
+  const tz = useTimezone();
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -216,7 +217,7 @@ export function TeacherAntiCheatingPage() {
                         {r.last_event_at ? (
                           <div className="space-y-0.5">
                             <div className="text-xs text-muted-foreground">{r.last_event_type ?? "—"}</div>
-                            <div>{formatDateTimeVietnam(r.last_event_at)}</div>
+                            <div>{formatDateTime(r.last_event_at, lang, tz)}</div>
                           </div>
                         ) : (
                           "—"

@@ -8,9 +8,9 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatDateTimeVietnam } from "@/utils/date";
+import { formatDateTime } from "@/utils/date";
 import { Icons } from "@/components/layouts/Icons";
-import { t, useLanguage } from "@/i18n";
+import { t, useLanguage, useTimezone } from "@/i18n";
 
 // In-memory caches (persist across SPA navigation)
 const membersCache = new Map<number, ClassMemberResponse[]>();
@@ -45,6 +45,7 @@ type StudentRow = {
 export function TeacherStudentsPage() {
   const { token } = useAuth();
   const lang = useLanguage();
+  const tz = useTimezone();
   function tr(key: string, values?: Record<string, string | number>) {
     const base = t(key as never, lang);
     if (!values) return base;
@@ -229,7 +230,7 @@ export function TeacherStudentsPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {s.firstJoinedAt ? formatDateTimeVietnam(s.firstJoinedAt) : "—"}
+                      {s.firstJoinedAt ? formatDateTime(s.firstJoinedAt, lang, tz) : "—"}
                     </TableCell>
                   </TableRow>
                 ))}

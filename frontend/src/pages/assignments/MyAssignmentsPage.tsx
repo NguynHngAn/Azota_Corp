@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { listMyAssignments, type AssignmentDetail } from "@/services/assignments.service";
-import { formatDateTimeVietnam } from "@/utils/date";
+import { formatDateTime } from "@/utils/date";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { t, useLanguage } from "@/i18n";
+import { t, useLanguage, useTimezone } from "@/i18n";
 import { Icons } from "@/components/layouts/Icons";
 
 function getStatus(a: AssignmentDetail): { label: string; variant: "default" | "secondary" | "outline" } {
@@ -20,6 +20,7 @@ function getStatus(a: AssignmentDetail): { label: string; variant: "default" | "
 export function MyAssignmentsPage() {
   const { token } = useAuth();
   const lang = useLanguage();
+  const tz = useTimezone();
   const [assignments, setAssignments] = useState<AssignmentDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -69,7 +70,7 @@ export function MyAssignmentsPage() {
                   </span>
                   <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
                     <Icons.Calendar className="size-3" />
-                    {formatDateTimeVietnam(a.start_time)} – {formatDateTimeVietnam(a.end_time)}
+                    {formatDateTime(a.start_time, lang, tz)} – {formatDateTime(a.end_time, lang, tz)}
                   </div>
                   <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
                     <Icons.Clock className="size-3" />

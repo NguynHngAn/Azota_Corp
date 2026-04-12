@@ -23,7 +23,7 @@ export function ExamListPage() {
   useEffect(() => {
     if (!token) return;
     listExams(token, { include_deleted: filter === "deleted" })
-      .then(setExams)
+      .then((rows) => setExams(Array.isArray(rows) ? rows : []))
       .catch((e) => setError(e instanceof Error ? e.message : t("examList.failed", lang)))
       .finally(() => setLoading(false));
   }, [token, filter]);
@@ -104,7 +104,7 @@ export function ExamListPage() {
             { value: "all", label: t("common.all", lang) },
             { value: "published", label: t("common.status.published", lang) },
             { value: "draft", label: t("common.status.draft", lang) },
-            { value: "deleted", label: "Deleted" },
+            { value: "deleted", label: t("common.status.deleted", lang) },
           ]}
         />
       </div>
@@ -127,7 +127,7 @@ export function ExamListPage() {
                     <TableCell>{e.title}</TableCell>
                     <TableCell>
                       {filter === "deleted" ? (
-                        <Badge variant="destructive">Deleted</Badge>
+                        <Badge variant="destructive">{t("common.status.deleted", lang)}</Badge>
                       ):(
                         <Badge variant={e.is_draft ? "outline" : "default"}>
                           {e.is_draft 
@@ -156,7 +156,7 @@ export function ExamListPage() {
                           disabled={deletingId === e.id}
                           onClick={() => void handleRestoreExam(e.id)}
                         >
-                          {deletingId === e.id ? "Restoring..." : "Restore"}
+                          {deletingId === e.id ? t("common.restoring", lang) : t("common.restore", lang)}
                         </Button>
                       ) : (
                         // Delete
@@ -193,7 +193,7 @@ export function ExamListPage() {
               { value: "all", label: t("common.all", lang) },
               { value: "published", label: t("common.status.published", lang) },
               { value: "draft", label: t("common.status.draft", lang) },
-              { value: "deleted", label: "Deleted" },
+            { value: "deleted", label: t("common.status.deleted", lang) },
             ]}
           />
       </div>
@@ -221,7 +221,7 @@ export function ExamListPage() {
                       </Badge>
                     </div>
                   </Link>
-                  {filter === "deleted" ? (
+                    {filter === "deleted" ? (
                     <Button
                       type="button"
                       size="sm"
@@ -229,7 +229,7 @@ export function ExamListPage() {
                       disabled={deletingId === e.id}
                       onClick={() => void handleRestoreExam(e.id)}
                     >
-                      {deletingId === e.id ? "Restoring..." : "Restore"}
+                      {deletingId === e.id ? t("common.restoring", lang) : t("common.restore", lang)}
                     </Button>
                   ) : (
                     <Button
@@ -239,7 +239,7 @@ export function ExamListPage() {
                       disabled={deletingId === e.id}
                       onClick={() => void handleDeleteExam(e.id)}
                     >
-                      {deletingId === e.id ? "Deleting..." : "Delete"}
+                      {deletingId === e.id ? t("common.deleting", lang) : t("common.delete", lang)}
                     </Button>
                   )}
                 </div>

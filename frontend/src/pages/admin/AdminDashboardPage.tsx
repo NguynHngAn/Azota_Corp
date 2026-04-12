@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
-import { listUsers, type UserResponse } from "@/services/users.service";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
+import { Link } from "react-router";
+import { listUsers, createUser, type UserResponse } from "@/services/users.service";
+import { listExams } from "@/services/exams.service";
 import { useAuth } from "@/context/AuthContext";
 import { StatCard } from "@/components/layouts/StatCard";
 import { Input } from "@/components/ui/input";
@@ -7,13 +9,23 @@ import { FilterChips } from "@/components/features/admin/filter-chips";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { createUser } from "@/services/users.service";
 import { Icons } from "@/components/layouts/Icons";
 import { DataTableLayout } from "@/components/features/admin/data-table-layout";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { t, useLanguage } from "@/i18n";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { t, useLanguage, useTimezone } from "@/i18n";
+import { cn } from "@/lib/utils";
+import { formatLocaleDate } from "@/utils/date";
 
-type Filter = "all" | "admin" | "teacher" | "student";
+type Filter = "all" | "teacher" | "student";
+
+type PageNotice = { kind: "success" | "error"; message: string };
 
 function roleBadgeVariant(role: string): "default" | "secondary" | "outline" | "destructive" {
   if (role === "teacher") return "default";
@@ -25,31 +37,59 @@ function roleBadgeVariant(role: string): "default" | "secondary" | "outline" | "
 export function AdminDashboardPage() {
   const { token } = useAuth();
   const lang = useLanguage();
+  const tz = useTimezone();
+  const createNameId = `${useId()}-fullName`;
+  const createEmailId = `${useId()}-email`;
+  const createPasswordId = `${useId()}-password`;
+  const createRoleId = `${useId()}-role`;
+
   const [users, setUsers] = useState<UserResponse[]>([]);
+  const [examCount, setExamCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
 
-  // Create user modal
   const [createOpen, setCreateOpen] = useState(false);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"teacher" | "student">("teacher");
   const [creating, setCreating] = useState(false);
-  const [notice, setNotice] = useState("");
+  const [notice, setNotice] = useState<PageNotice | null>(null);
 
-  useEffect(() => {
-    if (!token) return;
+  const fetchDashboard = useCallback(async () => {
+    if (!token) {
+      setLoading(false);
+      setUsers([]);
+      setExamCount(0);
+      setError("");
+      return;
+    }
     setLoading(true);
     setError("");
-    listUsers(token)
-      .then(setUsers)
-      .catch((e) => setError(e instanceof Error ? e.message : t("adminDashboard.failed", lang)))
-      .finally(() => setLoading(false));
-  }, [token]);
+    try {
+      const userRows = await listUsers(token);
+      setUsers(userRows.filter((u) => u.role !== "admin"));
+      try {
+        const exams = await listExams(token);
+        setExamCount(exams.length);
+      } catch {
+        setExamCount(0);
+      }
+    } catch (e) {
+      setUsers([]);
+      setExamCount(0);
+      setError(e instanceof Error ? e.message : t("adminDashboard.failed", lang));
+    } finally {
+      setLoading(false);
+    }
+  }, [token, lang]);
+
+  useEffect(() => {
+    void fetchDashboard();
+  }, [fetchDashboard]);
 
   const stats = useMemo(() => {
     const total = users.length;
@@ -69,9 +109,9 @@ export function AdminDashboardPage() {
 
   async function handleCreate() {
     if (!token) return;
-    setNotice("");
+    setNotice(null);
     if (!fullName.trim() || !email.trim() || password.length < 6) {
-      setNotice(t("adminDashboard.validation", lang));
+      setNotice({ kind: "error", message: t("adminDashboard.validation", lang) });
       return;
     }
     setCreating(true);
@@ -86,12 +126,19 @@ export function AdminDashboardPage() {
       setEmail("");
       setPassword("");
       setRole("teacher");
-      setNotice(t("adminUsers.createSuccess", lang));
+      setNotice({ kind: "success", message: t("adminUsers.createSuccess", lang) });
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : t("adminDashboard.createFailed", lang));
+      setNotice({
+        kind: "error",
+        message: e instanceof Error ? e.message : t("adminDashboard.createFailed", lang),
+      });
     } finally {
       setCreating(false);
     }
+  }
+
+  if (!token) {
+    return <p className="text-sm text-muted-foreground">{t("adminUsers.notSignedIn", lang)}</p>;
   }
 
   return (
@@ -102,7 +149,14 @@ export function AdminDashboardPage() {
           <p className="mt-1 text-sm text-muted-foreground">{t("adminDashboard.subtitle", lang)}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <Button className="gap-1.5 rounded-lg" onClick={() => setCreateOpen(true)}>
+          <Button
+            type="button"
+            className="gap-1.5 rounded-lg"
+            onClick={() => {
+              setNotice(null);
+              setCreateOpen(true);
+            }}
+          >
             <Icons.UserPlus className="size-4" />
             {t("adminUsers.createUser", lang)}
           </Button>
@@ -110,9 +164,16 @@ export function AdminDashboardPage() {
       </div>
 
       {notice && (
-        <p className={`text-sm ${notice.toLowerCase().includes("fail") ? "text-destructive" : "text-primary"}`}>
-          {notice}
-        </p>
+        <div
+          className={cn(
+            "text-sm rounded-xl px-3 py-2 border",
+            notice.kind === "error"
+              ? "text-destructive bg-destructive/10 border-destructive/20"
+              : "text-primary bg-primary/10 border-primary/20",
+          )}
+        >
+          {notice.message}
+        </div>
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -139,7 +200,7 @@ export function AdminDashboardPage() {
         />
         <StatCard
           icon={<Icons.FileText className="size-5" />}
-          value={String(stats.total)}
+          value={String(examCount)}
           title={t("adminDashboard.totalExams", lang)}
           change="--"
           trend="up"
@@ -150,7 +211,9 @@ export function AdminDashboardPage() {
         title={t("adminUsers.managementTitle", lang)}
         loading={loading}
         error={error}
-        isEmpty={filtered.length === 0}
+        onRetry={error ? () => void fetchDashboard() : undefined}
+        retryLabel={error ? t("common.retry", lang) : undefined}
+        isEmpty={!loading && !error && filtered.length === 0}
         emptyMessage={t("adminUsers.empty", lang)}
         controls={
           <>
@@ -163,10 +226,9 @@ export function AdminDashboardPage() {
             </div>
             <FilterChips
               value={filter}
-              onChange={setFilter}
+              onChange={(v) => setFilter(v as Filter)}
               options={[
                 { value: "all", label: t("common.all", lang) },
-                { value: "admin", label: t("role.admin", lang) },
                 { value: "teacher", label: t("role.teacher", lang) },
                 { value: "student", label: t("role.student", lang) },
               ]}
@@ -183,7 +245,7 @@ export function AdminDashboardPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.slice(0, 8).map((u) => (
+            {filtered.map((u) => (
               <TableRow key={u.id}>
                 <TableCell>
                   <div className="flex items-center gap-3">
@@ -200,7 +262,7 @@ export function AdminDashboardPage() {
                   <Badge variant={roleBadgeVariant(u.role)}>{t(`role.${u.role}` as never, lang)}</Badge>
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {new Date(u.created_at).toLocaleDateString()}
+                  {formatLocaleDate(u.created_at, lang, tz)}
                 </TableCell>
               </TableRow>
             ))}
@@ -208,27 +270,72 @@ export function AdminDashboardPage() {
         </Table>
       </DataTableLayout>
 
-      <Dialog open={createOpen} onOpenChange={(open) => !creating && setCreateOpen(open)}>
+      <div className="text-center">
+        <Link
+          to="/admin/users"
+          className="text-sm font-medium text-primary hover:underline underline-offset-4"
+        >
+          {t("adminDashboard.viewAllUsers", lang)}
+        </Link>
+      </div>
+
+      <Dialog
+        open={createOpen}
+        onOpenChange={(open) => {
+          if (!creating) {
+            setCreateOpen(open);
+            if (!open) setNotice(null);
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("adminUsers.createDialogTitle", lang)}</DialogTitle>
+            <DialogDescription>{t("adminUsers.createDialogDescription", lang)}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-xs font-medium text-foreground">{t("settings.profile.fullName", lang)} *</label>
-              <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder={t("adminUsers.fullNamePlaceholder", lang)} />
+              <label htmlFor={createNameId} className="mb-1 block text-xs font-medium text-foreground">
+                {t("settings.profile.fullName", lang)} *
+              </label>
+              <Input
+                id={createNameId}
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder={t("adminUsers.fullNamePlaceholder", lang)}
+              />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-foreground">{t("common.email", lang)} *</label>
-              <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t("login.emailPlaceholder", lang)} />
+              <label htmlFor={createEmailId} className="mb-1 block text-xs font-medium text-foreground">
+                {t("common.email", lang)} *
+              </label>
+              <Input
+                id={createEmailId}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={t("login.emailPlaceholder", lang)}
+              />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-foreground">{t("login.password", lang)} *</label>
-              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t("adminUsers.passwordHint", lang)} />
+              <label htmlFor={createPasswordId} className="mb-1 block text-xs font-medium text-foreground">
+                {t("login.password", lang)} *
+              </label>
+              <Input
+                id={createPasswordId}
+                type="password"
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={t("adminUsers.passwordHint", lang)}
+              />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-foreground">{t("common.roleLabel", lang)} *</label>
+              <label htmlFor={createRoleId} className="mb-1 block text-xs font-medium text-foreground">
+                {t("common.roleLabel", lang)} *
+              </label>
               <select
+                id={createRoleId}
                 value={role}
                 onChange={(e) => setRole(e.target.value as "teacher" | "student")}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
@@ -237,10 +344,9 @@ export function AdminDashboardPage() {
                 <option value="student">{t("role.student", lang)}</option>
               </select>
             </div>
-            {notice && <p className="text-sm text-destructive">{notice}</p>}
           </div>
           <DialogFooter className="mt-4">
-            <Button className="w-full" disabled={creating} onClick={handleCreate}>
+            <Button type="button" className="w-full" disabled={creating} onClick={() => void handleCreate()}>
               {creating ? t("adminUsers.creating", lang) : t("adminUsers.createAccount", lang)}
             </Button>
           </DialogFooter>
@@ -249,4 +355,3 @@ export function AdminDashboardPage() {
     </div>
   );
 }
-

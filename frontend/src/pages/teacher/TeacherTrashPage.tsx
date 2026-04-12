@@ -6,14 +6,15 @@ import { Badge } from "@/components/ui/badge";
 import { Icons } from "@/components/layouts/Icons";
 import { listExams, restoreExam, type ExamResponse } from "@/services/exams.service";
 import { listAssignments, restoreAssignment, type AssignmentDetail } from "@/services/assignments.service";
-import { formatDateTimeVietnam } from "@/utils/date";
-import { t, useLanguage } from "@/i18n";
+import { formatDateTime } from "@/utils/date";
+import { t, useLanguage, useTimezone } from "@/i18n";
 
 type TrashTab = "exams" | "assignments";
 
 export function TeacherTrashPage() {
   const { token } = useAuth();
   const lang = useLanguage();
+  const tz = useTimezone();
   const [tab, setTab] = useState<TrashTab>("exams");
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
@@ -35,8 +36,10 @@ export function TeacherTrashPage() {
       listAssignments(token, { include_deleted: true }).catch(() => [] as AssignmentDetail[]),
     ])
       .then(([e, a]) => {
-        setExams(e.filter((x) => Boolean(x.deleted_at)));
-        setAssignments(a.filter((x) => Boolean(x.deleted_at)));
+        const examRows = Array.isArray(e) ? e : [];
+        const assignmentRows = Array.isArray(a) ? a : [];
+        setExams(examRows.filter((x) => Boolean(x.deleted_at)));
+        setAssignments(assignmentRows.filter((x) => Boolean(x.deleted_at)));
         setSelectedExamIds({});
         setSelectedAssignmentIds({});
       })
@@ -84,7 +87,7 @@ export function TeacherTrashPage() {
         setSelectedAssignmentIds({});
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Restore failed");
+      setError(e instanceof Error ? e.message : t("common.restoreFailed", lang));
     } finally {
       setWorking(false);
     }
@@ -96,8 +99,8 @@ export function TeacherTrashPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Trash</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Khôi phục Exams/Assignments đã xóa.</p>
+          <h1 className="text-2xl font-semibold text-foreground">{t("teacherTrash.title", lang)}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t("teacherTrash.subtitle", lang)}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -105,14 +108,14 @@ export function TeacherTrashPage() {
             variant={tab === "exams" ? "secondary" : "outline"}
             onClick={() => setTab("exams")}
           >
-            <Icons.FileText className="size-4" /> Exams
+            <Icons.FileText className="size-4" /> {t("teacherTrash.exams", lang)}
           </Button>
           <Button
             type="button"
             variant={tab === "assignments" ? "secondary" : "outline"}
             onClick={() => setTab("assignments")}
           >
-            <Icons.ClipboardList className="size-4" /> Assignments
+            <Icons.ClipboardList className="size-4" /> {t("teacherTrash.assignments", lang)}
           </Button>
         </div>
       </div>
@@ -125,7 +128,7 @@ export function TeacherTrashPage() {
               <input
                 type="text"
                 className="bg-transparent outline-none w-full text-foreground placeholder:text-muted-foreground text-sm"
-                placeholder="Search…"
+                placeholder={t("common.search", lang)}
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
               />
@@ -140,7 +143,10 @@ export function TeacherTrashPage() {
               disabled={bulkCount === 0 || working}
               onClick={() => void restoreSelected()}
             >
-              <Icons.Check className="size-4" /> {working ? "Restoring..." : `Restore selected (${bulkCount})`}
+              <Icons.Check className="size-4" />
+              {working
+                ? t("common.restoring", lang)
+                : t("common.restoreSelected", { count: bulkCount }, lang)}
             </Button>
           </div>
         </div>
@@ -152,7 +158,7 @@ export function TeacherTrashPage() {
       ) : tab === "exams" ? (
         <div className="space-y-2">
           {filteredExams.length === 0 ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">Không có Exams trong Trash.</div>
+            <div className="py-10 text-center text-sm text-muted-foreground">{t("teacherTrash.empty", lang)}</div>
           ) : (
             filteredExams.map((e) => (
               <div key={e.id} className="glass-card p-4 flex items-center justify-between gap-3">
@@ -165,7 +171,7 @@ export function TeacherTrashPage() {
                   <div className="min-w-0">
                     <div className="truncate text-sm font-medium text-foreground">{e.title}</div>
                     <div className="mt-1 text-xs text-muted-foreground">
-                      Deleted at: {e.deleted_at ? formatDateTimeVietnam(e.deleted_at) : "—"}
+                      {t("teacherTrash.deletedAt", lang)}: {e.deleted_at ? formatDateTime(e.deleted_at, lang, tz) : "—"}
                     </div>
                   </div>
                 </label>
@@ -186,13 +192,13 @@ export function TeacherTrashPage() {
                         return next;
                       });
                     } catch (err) {
-                      setError(err instanceof Error ? err.message : "Restore failed");
+                      setError(err instanceof Error ? err.message : t("common.restoreFailed", lang));
                     } finally {
                       setWorking(false);
                     }
                   }}
                 >
-                  Restore
+                  {t("common.restore", lang)}
                 </Button>
               </div>
             ))
@@ -201,7 +207,7 @@ export function TeacherTrashPage() {
       ) : (
         <div className="space-y-2">
           {filteredAssignments.length === 0 ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">Không có Assignments trong Trash.</div>
+            <div className="py-10 text-center text-sm text-muted-foreground">{t("teacherTrash.noAssignments", lang)}</div>
           ) : (
             filteredAssignments.map((a) => (
               <div key={a.id} className="glass-card p-4 flex items-center justify-between gap-3">
@@ -216,11 +222,11 @@ export function TeacherTrashPage() {
                   <div className="min-w-0">
                     <div className="truncate text-sm font-medium text-foreground">{a.exam_title}</div>
                     <div className="mt-1 text-xs text-muted-foreground truncate">
-                      {a.class_name} · {formatDateTimeVietnam(a.start_time)} – {formatDateTimeVietnam(a.end_time)} ·{" "}
+                      {a.class_name} · {formatDateTime(a.start_time, lang, tz)} – {formatDateTime(a.end_time, lang, tz)} ·{" "}
                       {a.duration_minutes} min
                     </div>
                     <div className="mt-1 text-xs text-muted-foreground">
-                      Deleted at: {a.deleted_at ? formatDateTimeVietnam(a.deleted_at) : "—"}
+                      Deleted at: {a.deleted_at ? formatDateTime(a.deleted_at, lang, tz) : "—"}
                     </div>
                   </div>
                 </label>
@@ -241,13 +247,13 @@ export function TeacherTrashPage() {
                         return next;
                       });
                     } catch (err) {
-                      setError(err instanceof Error ? err.message : "Restore failed");
+                      setError(err instanceof Error ? err.message : t("common.restoreFailed", lang));
                     } finally {
                       setWorking(false);
                     }
-                  }}
+                    }}
                 >
-                  Restore
+                  {t("common.restore", lang)}
                 </Button>
               </div>
             ))

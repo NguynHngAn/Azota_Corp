@@ -23,7 +23,6 @@ import {
   getAntiCheatAnalyticsDashboard,
   getAntiCheatSubmissionTimeline,
   type AntiCheatAnalyticsDashboardResponse,
-  type LeaderboardEntry,
   type SubmissionTimelineResponse,
 } from "@/services/antiCheatAnalytics.service";
 import { useAuth } from "@/context/AuthContext";
@@ -45,8 +44,8 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { formatDateTimeVietnam } from "@/utils/date";
-import { t, useLanguage } from "@/i18n";
+import { formatDateTime } from "@/utils/date";
+import { t, useLanguage, useTimezone } from "@/i18n";
 
 const CHART_COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--destructive))", "hsl(var(--muted-foreground))"];
 
@@ -93,6 +92,7 @@ async function getAssignmentReportCached(id: number, token: string): Promise<Ass
 export function TeacherAnalyticsPage() {
   const { token } = useAuth();
   const lang = useLanguage();
+  const tz = useTimezone();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") === "anti-cheat" ? "anti-cheat" : "overview";
 
@@ -139,9 +139,9 @@ export function TeacherAnalyticsPage() {
       listAssignments(token).catch(() => [] as AssignmentDetail[]),
     ])
       .then(([c, e, a]) => {
-        setClasses(c);
-        setExams(e);
-        setAssignments(a);
+        setClasses(Array.isArray(c) ? c : []);
+        setExams(Array.isArray(e) ? e : []);
+        setAssignments(Array.isArray(a) ? a : []);
       })
       .catch((e: unknown) => {
         setError(e instanceof Error ? e.message : t("teacherAnalytics.failed", lang));
@@ -273,24 +273,24 @@ export function TeacherAnalyticsPage() {
     };
   }, [avgScore, exams.length, statsLoading, studentsCount, submissionsCount]);
 
-  const distributionChart = useMemo(
-    () =>
-      (acData?.distribution ?? []).map((d) => ({
-        name: d.label,
-        students: d.count,
-      })),
-    [acData],
-  );
+  const distributionChart = useMemo(() => {
+    const raw = acData?.distribution;
+    const rows = Array.isArray(raw) ? raw : [];
+    return rows.map((d) => ({
+      name: d.label,
+      students: d.count,
+    }));
+  }, [acData]);
 
-  const eventChart = useMemo(
-    () =>
-      (acData?.event_breakdown ?? []).map((e) => ({
-        name: e.event_type,
-        count: e.count,
-        weight: e.weighted_contribution,
-      })),
-    [acData],
-  );
+  const eventChart = useMemo(() => {
+    const raw = acData?.event_breakdown;
+    const rows = Array.isArray(raw) ? raw : [];
+    return rows.map((e) => ({
+      name: e.event_type,
+      count: e.count,
+      weight: e.weighted_contribution,
+    }));
+  }, [acData]);
 
   const refreshAntiCheat = () => {
     const aid = assignmentFilter === "all" ? undefined : parseInt(assignmentFilter, 10);
@@ -429,7 +429,7 @@ export function TeacherAnalyticsPage() {
                   <li key={row.question_id} className="border-b border-border/60 pb-3 last:border-0 last:pb-0">
                     <p className="text-sm text-foreground line-clamp-2">{row.question_text}</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {t("teacherAnalytics.incorrectRateLabel", lang).replace("{{rate}}", row.incorrect_rate.toFixed(1))}
+                      {t("teacherAnalytics.incorrectRateLabel", { rate: row.incorrect_rate.toFixed(1) }, lang)}
                     </p>
                   </li>
                 ))}
@@ -552,7 +552,7 @@ export function TeacherAnalyticsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {(acData.leaderboard as LeaderboardEntry[]).map((row) => (
+                    {(Array.isArray(acData.leaderboard) ? acData.leaderboard : []).map((row) => (
                       <TableRow key={row.submission_id}>
                         <TableCell className="font-mono">{row.rank}</TableCell>
                         <TableCell>
@@ -594,13 +594,13 @@ export function TeacherAnalyticsPage() {
           </DialogHeader>
           {timelineLoading ? (
             <p className="text-muted-foreground">{t("common.loading", lang)}</p>
-          ) : timelineData && timelineData.events.length ? (
+          ) : timelineData && Array.isArray(timelineData.events) && timelineData.events.length ? (
             <ul className="space-y-3 text-sm">
               {timelineData.events.map((ev) => (
                 <li key={ev.id} className="border-b border-border/60 pb-3">
                   <div className="flex justify-between gap-2">
                     <span className="font-medium">{ev.event_type}</span>
-                    <span className="text-muted-foreground text-xs">{formatDateTimeVietnam(ev.created_at)}</span>
+                    <span className="text-muted-foreground text-xs">{formatDateTime(ev.created_at, lang, tz)}</span>
                   </div>
                   <pre className="mt-1 text-xs text-muted-foreground whitespace-pre-wrap break-all">
                     {JSON.stringify(ev.meta, null, 0)}
@@ -616,80 +616,3 @@ export function TeacherAnalyticsPage() {
     </div>
   );
 }
-//       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-//         <StatCard
-//           icon={<Icons.Users className="text-primary" />}
-//           value={String(stats.myStudents)}
-//           title={t("teacherDashboard.myStudents", lang)}
-//           change="--"
-//           trend="up"
-//         />
-//         <StatCard
-//           icon={<Icons.BookOpen className="text-primary" />}
-//           value={String(stats.myExams)}
-//           title={t("nav.exams", lang)}
-//           change="--"
-//           trend="up"
-//         />
-//         <StatCard
-//           icon={<Icons.CheckCircle className="text-info" />}
-//           value={String(stats.submissions)}
-//           title={t("teacherDashboard.submissions", lang)}
-//           change="--"
-//           trend="up"
-//         />
-//         <StatCard
-//           icon={<Icons.Chart className="text-success" />}
-//           value={String(stats.avgScore)}
-//           title={t("teacherDashboard.avgScore", lang)}
-//           change="--"
-//           trend="up"
-//         />
-//       </div>
-
-//       <div className="glass-card p-6">
-//         {error ? (
-//           <div className="text-sm text-destructive">{error}</div>
-//         ) : loading ? (
-//           <div className="space-y-3">
-//             <div className="h-4 w-2/3 rounded-lg bg-muted animate-pulse" />
-//             <div className="h-4 w-1/2 rounded-lg bg-muted animate-pulse" />
-//           </div>
-//         ) : (
-//           <div className="space-y-2">
-//             {statsLoading && (
-//               <div className="text-xs text-muted-foreground">
-//                 {t("teacherDashboard.calculatingStats", lang)} {statsProgress.classesDone}/{statsProgress.classesTotal} {t("teacherDashboard.classes", lang).toLowerCase()},{" "}
-//                 {statsProgress.reportsDone}/{statsProgress.reportsTotal} assignments
-//               </div>
-//             )}
-//             <div className="text-sm text-muted-foreground">
-//               {t("teacherAnalytics.info", lang)}
-//             </div>
-//           </div>
-//         )}
-//       </div>
-
-//       <div className="glass-card p-6">
-//         <div className="text-sm font-semibold text-foreground">Most missed questions</div>
-//         <div className="mt-3 space-y-2">
-//           {topMissedQuestions.length === 0 ? (
-//             <div className="text-sm text-muted-foreground">No report data available yet.</div>
-//           ) : (
-//             topMissedQuestions.map((item, index) => (
-//               <div key={item.question_id} className="rounded-xl border border-border px-3 py-3">
-//                 <div className="text-sm font-medium text-foreground">
-//                   {index + 1}. {item.question_text}
-//                 </div>
-//                 <div className="mt-1 text-xs text-muted-foreground">
-//                   Incorrect {item.incorrect_count}/{item.total_answers} ({item.incorrect_rate.toFixed(2)}%)
-//                 </div>
-//               </div>
-//             ))
-//           )}
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-

@@ -271,7 +271,7 @@ export function EditExamPage() {
                   {t("common.cancel", lang)}
                 </Button>
                 <Button onClick={importSelected} disabled={bankLoading || selectedIds.length === 0}>
-                  {bankLoading ? t("editExam.adding", lang) : t("editExam.addCount", lang).replace("{{count}}", String(selectedIds.length))}
+                  {bankLoading ? t("editExam.adding", lang) : t("editExam.addCount", { count: selectedIds.length }, lang)}
                 </Button>
               </div>
             </div>

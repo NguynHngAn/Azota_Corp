@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { deleteAssignment, listAssignments, restoreAssignment, type AssignmentDetail } from "@/services/assignments.service";
-import { formatDateTimeVietnam } from "@/utils/date";
+import { formatDateTime } from "@/utils/date";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/layouts/Icons";
-import { t, useLanguage } from "@/i18n";
+import { t, useLanguage, useTimezone } from "@/i18n";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 function basePath(pathname: string): string {
   if (pathname.startsWith("/admin")) return "/admin";
@@ -15,6 +16,7 @@ function basePath(pathname: string): string {
 export function AssignmentListPage() {
   const { token } = useAuth();
   const lang = useLanguage();
+  const tz = useTimezone();
   const location = useLocation();
   const navigate = useNavigate();
   const base = basePath(location.pathname);
@@ -23,26 +25,33 @@ export function AssignmentListPage() {
   const [error, setError] = useState("");
   const [q, setQ] = useState("");
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [tab, setTab] = useState<"active" | "deleted">("active");
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") === "deleted" ? "deleted" : "active";
+  const setActiveTab = (value: string) => {
+    if (value === "deleted") setSearchParams({ tab: "deleted" });
+    else setSearchParams({});
+  };
 
   useEffect(() => {
     if (!token) return;
-    listAssignments(token, { include_deleted: tab === "deleted" })
-      .then(setAssignments)
+
+    listAssignments(token, { include_deleted: activeTab === "deleted" })
+      .then((rows) => setAssignments(Array.isArray(rows) ? rows : []))
       .catch((e) => setError(e instanceof Error ? e.message : t("assignmentList.failed", lang)))
       .finally(() => setLoading(false));
-  }, [token, tab]);
+  }, [token, activeTab, lang]);
 
   async function handleDelete(id: number) {
     if (!token) return;
-    const ok = window.confirm("Xóa assignment này? (Có thể khôi phục sau nếu cần)");
+    const ok = window.confirm(t("assignmentList.deleteConfirm", lang));
     if (!ok) return;
     setDeletingId(id);
     try {
       await deleteAssignment(id, token);
       setAssignments((prev) => prev.filter((a) => a.id !== id));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Delete failed");
+      setError(e instanceof Error ? e.message : t("common.deleteFailed", lang));
     } finally {
       setDeletingId(null);
     }
@@ -55,7 +64,7 @@ export function AssignmentListPage() {
       await restoreAssignment(id, token);
       setAssignments((prev) => prev.filter((a) => a.id !== id));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Restore failed");
+      setError(e instanceof Error ? e.message : t("common.restoreFailed", lang));
     } finally {
       setDeletingId(null);
     }
@@ -63,8 +72,8 @@ export function AssignmentListPage() {
 
   const filtered = assignments.filter((a) => {
     const query = q.trim().toLowerCase();
-    if (tab === "active" && a.deleted_at) return false;
-    if (tab === "deleted" && !a.deleted_at) return false;
+    if (activeTab === "active" && a.deleted_at) return false;
+    if (activeTab === "deleted" && !a.deleted_at) return false;
     if (!query) return true;
     return `${a.exam_title} ${a.class_name}`.toLowerCase().includes(query);
   });
@@ -82,15 +91,13 @@ export function AssignmentListPage() {
         <Button onClick={() => navigate(`${base}/assignments/new`)}><Icons.Plus className="size-4" /> {t("assignmentList.new", lang)}</Button>
       </div>
 
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="active">Active</TabsTrigger>
+          <TabsTrigger value="deleted">Deleted</TabsTrigger>
+        </TabsList>
+      </Tabs>
       <div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button type="button" variant={tab === "active" ? "secondary" : "outline"} onClick={() => setTab("active")}>
-            Active
-          </Button>
-          <Button type="button" variant={tab === "deleted" ? "secondary" : "outline"} onClick={() => setTab("deleted")}>
-            Deleted
-          </Button>
-        </div>
         <div className="search-input max-w-md">
           <Icons.Search className="size-4" />
           <input
@@ -101,7 +108,6 @@ export function AssignmentListPage() {
             onChange={(e) => setQ(e.target.value)}
           />
         </div>
-
         <div className="mt-4">
           {filtered.length === 0 ? (
             <div className="py-12 text-center text-sm text-muted-foreground">
@@ -123,7 +129,7 @@ export function AssignmentListPage() {
                       </div>
                     </div>
                     <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
-                      <Icons.Calendar className="size-3" /> {formatDateTimeVietnam(a.start_time)} – {formatDateTimeVietnam(a.end_time)}
+                      <Icons.Calendar className="size-3" /> {formatDateTime(a.start_time, lang, tz)} – {formatDateTime(a.end_time, lang, tz)}
                     </div>
                     <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
                       <Icons.Clock className="size-3" /> {a.duration_minutes} {t("common.minutes", lang)}
@@ -131,36 +137,40 @@ export function AssignmentListPage() {
                   </div>
                   {base === "/teacher" ? (
                     <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        type="button"
-                        className="text-sm hover:text-primary hover:bg-secondary"
-                        onClick={() => navigate(`/teacher/assignments/${a.id}/report`)}
-                      >
-                        {t("assignmentList.viewReport", lang)} <Icons.ArrowRight className="size-3 inline-block ml-1" />
-                      </Button>
-                      {tab === "deleted" ? (
+                      {activeTab === "deleted" ? (
                         <Button
                           size="sm"
                           variant="secondary"
                           type="button"
                           disabled={deletingId === a.id}
+                          className="text-sm hover:text-primary hover:bg-secondary"
                           onClick={() => void handleRestore(a.id)}
                         >
-                          <Icons.ArchiveRestore  className="size-3 inline-block mr-1" />
-                         {deletingId === a.id ? "Restoring..." : "Restore"}
+                          <Icons.ArchiveRestore className="size-3 inline-block mr-1" />
+                          {deletingId === a.id ? t("common.restoring", lang) : t("common.restore", lang)}
                         </Button>
                       ) : (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          type="button"
-                          disabled={deletingId === a.id}
-                          onClick={() => void handleDelete(a.id)}
-                        >
-                          <Icons.Trash2 className="size-3 inline-block mr-1" />{deletingId === a.id ? "Deleting..." : "Delete"}
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            type="button"
+                            disabled={deletingId === a.id}
+                            className="text-sm hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => void handleDelete(a.id)}
+                          >
+                            <Icons.Trash2 className="size-3 inline-block mr-1" />{deletingId === a.id ? t("common.deleting", lang) : t("common.delete", lang)}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            type="button"
+                            className="text-sm hover:text-primary hover:bg-secondary"
+                            onClick={() => navigate(`/teacher/assignments/${a.id}/report`)}
+                          >
+                            {t("assignmentList.viewReport", lang)} <Icons.ArrowRight className="size-3 inline-block ml-1" />
+                          </Button>
+                        </>
                       )}
                     </div>
                   ) : null}

@@ -2,15 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { getSubmissionResult, listMySubmissions, type MySubmissionSummary } from "@/services/assignments.service";
-import { formatDateTimeVietnam } from "@/utils/date";
+import { formatDateTime } from "@/utils/date";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { t, useLanguage } from "@/i18n";
+import { t, useLanguage, useTimezone } from "@/i18n";
 import { Icons } from "@/components/layouts/Icons";
 
 export function StudentResultsPage() {
   const { token } = useAuth();
   const lang = useLanguage();
+  const tz = useTimezone();
   const navigate = useNavigate();
   const [items, setItems] = useState<MySubmissionSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,7 +107,7 @@ export function StudentResultsPage() {
                     <Badge variant="secondary">{t("studentResults.score", lang)}: {it.score ?? 0}</Badge>
                   </div>
                   <div className="text-xs text-muted-foreground mt-1 truncate">
-                    {it.class_name} · {formatDateTimeVietnam(it.submitted_at)}
+                    {it.class_name} · {formatDateTime(it.submitted_at, lang, tz)}
                   </div>
 
                   <div className="mt-2 flex flex-wrap items-center gap-2">

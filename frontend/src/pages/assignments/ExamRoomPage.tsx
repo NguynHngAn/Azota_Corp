@@ -127,7 +127,7 @@ export function ExamRoomPage() {
 
     setLoading(true);
     setError("");
-  try {
+    try {
       // 1. Fullscreen first
       await requestFullScreen();
       lastOkRef.current = true;
@@ -136,8 +136,10 @@ export function ExamRoomPage() {
       const data = await startAssignment(id, token);
       setRoom(data);
 
-      // 3. Use server deadline (NO client calc)
-      const endTime = new Date(data.deadline_at).getTime();
+      // 3. Deadline: prefer server field, else started_at + duration
+      const endTime = data.deadline_at
+        ? new Date(data.deadline_at).getTime()
+        : Date.parse(data.started_at) + data.duration_minutes * 60_000;
       setRemainingMs(Math.max(0, endTime - Date.now()));
 
       // 4. Restore saved answers (HEAD giữ lại)
@@ -154,14 +156,14 @@ export function ExamRoomPage() {
 
       // 6. Anti-cheat log
       void logAntiCheatEvent(
-      {
-        assignment_id: data.assignment_id,
-        submission_id: data.submission_id,
-        event_type: "EXAM_START",
-      },
-      token
-    ).catch(() => {});
-  } catch (e) {
+        {
+          assignment_id: data.assignment_id,
+          submission_id: data.submission_id,
+          event_type: "EXAM_START",
+        },
+        token
+      ).catch(() => { });
+    } catch (e) {
       const msg = e instanceof Error ? e.message : t("examRoom.failedStart", lang);
       setError(msg);
       try {
@@ -170,7 +172,7 @@ export function ExamRoomPage() {
       } catch {
         setAlreadySubmittedSubmissionId(null);
       }
-      await exitFullScreen().catch(() => {});
+      await exitFullScreen().catch(() => { });
     } finally {
       setLoading(false);
     }
@@ -330,7 +332,7 @@ export function ExamRoomPage() {
               await exitFullScreen();
               navigate(`/student/assignments/result/${room.submission_id}`, { replace: true });
             }
-          }).catch(() => {});
+          }).catch(() => { });
         }
         if (!isVisible) {
           void logAntiCheatEvent(
@@ -342,7 +344,7 @@ export function ExamRoomPage() {
               await exitFullScreen();
               navigate(`/student/assignments/result/${room.submission_id}`, { replace: true });
             }
-          }).catch(() => {});
+          }).catch(() => { });
         }
       }
       setViolationMessage(t("examRoom.violationMessage", lang));
@@ -561,13 +563,14 @@ function QuestionBlock({
   onMultiple: (questionId: number, optionId: number, checked: boolean) => void;
   disabled: boolean;
 }) {
+  const lang = useLanguage();
   const isSingle = question.question_type === "single_choice";
   const sortedOptions = [...question.options].sort((a, b) => a.order_index - b.order_index);
 
   return (
     <fieldset className="p-4 bg-card rounded shadow" disabled={disabled}>
       <legend className="text-sm font-medium text-muted-foreground mb-2">
-        {t("examRoom.question", useLanguage()).replace("{{number}}", String(index))}: {question.text}
+        {t("examRoom.question", { number: index }, lang)}: {question.text}
       </legend>
       <div className="space-y-2">
         {sortedOptions.map((opt) => (
