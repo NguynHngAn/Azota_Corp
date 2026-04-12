@@ -49,6 +49,10 @@ export function resetUserPassword(userId: number, newPassword: string, token: st
   return put(`/api/v1/users/${userId}/password`, { new_password: newPassword }, token);
 }
 
+export function changeMyPassword(currentPassword: string, newPassword: string, token: string): Promise<void> {
+  return put("/api/v1/users/me/password", { current_password: currentPassword, new_password: newPassword }, token);
+}
+
 export async function uploadMyAvatar(file: File, token: string): Promise<UserResponse> {
   const form = new FormData();
   form.append("file", file);

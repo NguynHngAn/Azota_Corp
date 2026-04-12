@@ -60,7 +60,7 @@ export interface SubmissionStartResponse {
   submission_id: number;
   assignment_id: number;
   started_at: string;
-  deadline_at: string;
+  deadline_at?: string;
   duration_minutes: number;
   exam_title: string;
   max_violations: number;
@@ -68,7 +68,6 @@ export interface SubmissionStartResponse {
   questions: ExamRoomQuestion[];
   saved_answers?: SubmitAnswerPayload[];
   server_now?: string;
-  deadline_at?: string;
 }
 
 export function createAssignment(body: AssignmentCreatePayload, token: string): Promise<AssignmentResponse> {
