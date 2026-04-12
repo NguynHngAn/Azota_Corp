@@ -6,9 +6,15 @@ from pathlib import Path
 
 from app.database import get_db
 from app.models.user import Role, User
-from app.schemas.user import AdminResetPasswordRequest, UserCreate, UserResponse, UserUpdate
+from app.schemas.user import (
+    AdminResetPasswordRequest,
+    ChangeOwnPasswordRequest,
+    UserCreate,
+    UserResponse,
+    UserUpdate,
+)
 from app.api.deps import get_current_user, require_role
-from app.core.security import hash_password
+from app.core.security import hash_password, verify_password
 from app.services.avatar_service import save_avatar_file
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -33,13 +39,29 @@ def upload_my_avatar(
     return current_user
 
 
+@router.put("/me/password", status_code=status.HTTP_204_NO_CONTENT)
+def change_my_password(
+    body: ChangeOwnPasswordRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Session = Depends(get_db),
+):
+    if not verify_password(body.current_password, current_user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect",
+        )
+    current_user.password_hash = hash_password(body.new_password)
+    db.commit()
+    return None
+
+
 @router.get("", response_model=list[UserResponse])
 def list_users(
     current_user: Annotated[User, Depends(require_role(Role.admin))],
     db: Session = Depends(get_db),
     role: Role | None = Query(None),
 ):
-    q = db.query(User)
+    q = db.query(User).filter(User.role != Role.admin)
     if role is not None:
         q = q.filter(User.role == role)
     return q.order_by(User.id).all()
@@ -78,6 +100,11 @@ def update_user(
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    if user.role == Role.admin:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Admin accounts cannot be modified from this screen",
+        )
     if body.role is not None and body.role not in (Role.teacher, Role.student):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only teacher or student roles are allowed")
     if body.email is not None:
@@ -106,6 +133,11 @@ def admin_reset_password(
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    if user.role == Role.admin:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Admin passwords cannot be reset from this screen",
+        )
     user.password_hash = hash_password(body.new_password)
     db.commit()
     return None
@@ -122,6 +154,11 @@ def deactivate_user(
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    if user.role == Role.admin:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Admin accounts cannot be deactivated from this screen",
+        )
     # Soft delete: deactivate account
     user.is_active = False
     db.commit()
