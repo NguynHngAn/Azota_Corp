@@ -1,0 +1,15 @@
+export const authMessages = {
+  "login.welcomeBack": "Welcome back",
+  "login.subtitle": "Sign in to your Azota account",
+  "login.failed": "Login failed",
+  "login.emailPlaceholder": "you@school.edu",
+  "login.password": "Password",
+  "login.showPassword": "Show password",
+  "login.hidePassword": "Hide password",
+  "login.rememberMe": "Remember me",
+  "login.backToHome": "Back to home",
+  "login.signingIn": "Signing in...",
+  "login.signIn": "Sign In",
+  "login.needAccount": "Need an account?",
+  "login.contactAdmin": "Contact admin",
+} as const;

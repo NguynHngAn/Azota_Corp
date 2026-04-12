@@ -1,0 +1,15 @@
+export const authMessages = {
+  "login.welcomeBack": "Chào mừng quay lại",
+  "login.subtitle": "Đăng nhập vào tài khoản Azota của bạn",
+  "login.failed": "Đăng nhập thất bại",
+  "login.emailPlaceholder": "ban@truonghoc.edu",
+  "login.password": "Mật khẩu",
+  "login.showPassword": "Hiện mật khẩu",
+  "login.hidePassword": "Ẩn mật khẩu",
+  "login.rememberMe": "Ghi nhớ đăng nhập",
+  "login.backToHome": "Quay lại trang chủ",
+  "login.signingIn": "Đang đăng nhập...",
+  "login.signIn": "Đăng nhập",
+  "login.needAccount": "Cần tài khoản?",
+  "login.contactAdmin": "Liên hệ quản trị viên",
+} as const;
