@@ -56,9 +56,13 @@ import {
   Star,
   ChevronDown,
   Award,
-  ArchiveRestore
+  ArchiveRestore,
+  MessageCircle,
+  X
 } from "lucide-react";
 export const Icons = {
+  X: X,
+  MessageCircle: MessageCircle,
   ArchiveRestore: ArchiveRestore,
   Award: Award,
   ChevronDown: ChevronDown,

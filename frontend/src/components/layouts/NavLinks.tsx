@@ -34,6 +34,12 @@ export function getBaseNavItems(role: DashboardRole, lang: LanguageCode): NavIte
     return [
       { key: "dashboard", to: "/admin/dashboard", label: t("nav.dashboard", lang), icon: Icons.Dashboard },
       { key: "users", to: "/admin/users", label: t("nav.users", lang), icon: Icons.Users },
+      {
+        key: "accountRequests",
+        to: "/admin/account-requests",
+        label: t("nav.accountRequests", lang),
+        icon: Icons.UserPlus,
+      },
       { key: "classes", to: "/admin/classes", label: t("nav.classes", lang), icon: Icons.BookOpen },
       { key: "analytics", to: "/admin/analytics", label: t("nav.analytics", lang), icon: Icons.Chart },
       { key: "settings", to: "/admin/settings", label: t("nav.settings", lang), icon: Icons.Settings },

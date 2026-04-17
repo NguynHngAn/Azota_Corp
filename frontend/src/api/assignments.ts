@@ -10,6 +10,7 @@ export interface AssignmentResponse {
   shuffle_questions: boolean;
   shuffle_options: boolean;
   max_violations: number;
+  max_attempts: number;
   created_at: string;
   deleted_at?: string | null;
 }
@@ -30,6 +31,7 @@ export interface AssignmentCreatePayload {
   shuffle_questions?: boolean;
   shuffle_options?: boolean;
   max_violations?: number;
+  max_attempts?: number;
 }
 
 export interface ExamRoomOption {
@@ -64,6 +66,9 @@ export interface SubmissionStartResponse {
   duration_minutes: number;
   exam_title: string;
   max_violations: number;
+  max_attempts: number;
+  attempts_left: number;
+  attempt_no: number;
   violation_count: number;
   questions: ExamRoomQuestion[];
   saved_answers?: SubmitAnswerPayload[];

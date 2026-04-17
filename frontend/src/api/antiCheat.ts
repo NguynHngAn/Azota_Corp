@@ -19,7 +19,7 @@ export type AntiCheatEventType =
 
 export interface AntiCheatEventCreate {
   assignment_id: number;
-  submission_id?: number | null;
+  submission_id: number;
   event_type: AntiCheatEventType | string;
   meta?: Record<string, unknown>;
 }
@@ -71,6 +71,19 @@ export interface AntiCheatMonitorResponse {
 
 export async function logAntiCheatEvent(body: AntiCheatEventCreate, token: string): Promise<AntiCheatEventLogResponse> {
   return post<AntiCheatEventLogResponse>("/api/v1/anti-cheat/events", body, token);
+}
+
+export interface AntiCheatHeartbeatResponse {
+  ok: boolean;
+  server_now: string;
+  deadline_at: string | null;
+}
+
+export async function sendAntiCheatHeartbeat(
+  body: { assignment_id: number; submission_id: number },
+  token: string,
+): Promise<AntiCheatHeartbeatResponse> {
+  return post<AntiCheatHeartbeatResponse>("/api/v1/anti-cheat/heartbeat", body, token);
 }
 
 export async function getTeacherAntiCheatMonitor(

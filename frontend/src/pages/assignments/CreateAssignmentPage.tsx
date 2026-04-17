@@ -35,6 +35,7 @@ export function CreateAssignmentPage() {
   const [shuffleQuestions, setShuffleQuestions] = useState(false);
   const [shuffleOptions, setShuffleOptions] = useState(false);
   const [maxViolations, setMaxViolations] = useState<number>(3);
+  const [maxAttempts, setMaxAttempts] = useState<number>(1);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -88,6 +89,7 @@ export function CreateAssignmentPage() {
         shuffle_questions: shuffleQuestions,
         shuffle_options: shuffleOptions,
         max_violations: maxViolations,
+        max_attempts: maxAttempts,
       };
       await createAssignment(body, token);
       navigate(`${base}/assignments`);
@@ -167,7 +169,7 @@ export function CreateAssignmentPage() {
             />
           </div>
           <div className="space-y-3 rounded-xl border border-border p-4">
-            <div className="text-sm font-medium text-foreground">Exam protections</div>
+            <div className="text-sm font-medium text-foreground">{t("createAssignment.protections", lang)}</div>
             <label className="flex items-center gap-2 text-sm text-foreground">
               <input
                 className="accent-primary"
@@ -175,7 +177,7 @@ export function CreateAssignmentPage() {
                 checked={shuffleQuestions}
                 onChange={(e) => setShuffleQuestions(e.target.checked)}
               />
-              Shuffle question order per student
+              {t("createAssignment.shuffleQuestions", lang)}
             </label>
             <label className="flex items-center gap-2 text-sm text-foreground">
               <input
@@ -184,16 +186,30 @@ export function CreateAssignmentPage() {
                 checked={shuffleOptions}
                 onChange={(e) => setShuffleOptions(e.target.checked)}
               />
-              Shuffle answer options per student
+              {t("createAssignment.shuffleOptions", lang)}
             </label>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Auto-submit after violations</label>
+              <label className="block text-sm font-medium text-foreground mb-1">
+                {t("createAssignment.autoSubmitViolations", lang)}
+              </label>
               <Input
                 type="number"
                 min={1}
                 max={20}
                 value={maxViolations}
                 onChange={(e) => setMaxViolations(Number(e.target.value) || 1)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">
+                {t("createAssignment.maxAttempts", lang)}
+              </label>
+              <Input
+                type="number"
+                min={1}
+                max={10}
+                value={maxAttempts}
+                onChange={(e) => setMaxAttempts(Number(e.target.value) || 1)}
               />
             </div>
           </div>

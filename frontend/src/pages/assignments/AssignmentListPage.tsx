@@ -93,8 +93,8 @@ export function AssignmentListPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList>
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="deleted">Deleted</TabsTrigger>
+          <TabsTrigger value="active">{t("assignmentList.tab.active", lang)}</TabsTrigger>
+          <TabsTrigger value="deleted">{t("assignmentList.tab.deleted", lang)}</TabsTrigger>
         </TabsList>
       </Tabs>
       <div>

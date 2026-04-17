@@ -53,7 +53,7 @@ export function AssignmentReportPage() {
       setInsight(res);
     } catch (e) {
       setInsight(null);
-      setInsightError(e instanceof Error ? e.message : "Không tạo được nhận xét AI.");
+      setInsightError(e instanceof Error ? e.message : t("assignmentReport.aiFailed", lang));
     } finally {
       setInsightLoading(false);
     }
@@ -99,9 +99,9 @@ export function AssignmentReportPage() {
       <div className="glass-card p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-foreground">Nhận xét AI (tùy chọn)</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t("assignmentReport.aiTitle", lang)}</h3>
             <p className="mt-1 text-xs text-muted-foreground">
-              Chỉ gọi AI khi bạn bấm nút. Gợi ý dựa trên số liệu trên trang; không thay thế đánh giá của giáo viên.
+              {t("assignmentReport.aiHint", lang)}
             </p>
           </div>
           <Button
@@ -112,12 +112,12 @@ export function AssignmentReportPage() {
             onClick={requestAiInsight}
           >
             <Icons.Sparkles className="h-4 w-4" />
-            {insightLoading ? "Đang tạo..." : "Tạo nhận xét AI"}
+            {insightLoading ? t("assignmentReport.aiGenerating", lang) : t("assignmentReport.aiGenerate", lang)}
           </Button>
         </div>
 
         {!canRequestInsight ? (
-          <p className="mt-3 text-sm text-muted-foreground">Cần ít nhất một bài đã nộp để tạo nhận xét.</p>
+          <p className="mt-3 text-sm text-muted-foreground">{t("assignmentReport.aiNeedSubmission", lang)}</p>
         ) : null}
         {insightError ? <p className="mt-3 text-sm text-destructive">{insightError}</p> : null}
 
@@ -127,7 +127,7 @@ export function AssignmentReportPage() {
 
             {insight.strengths.length > 0 ? (
               <div>
-                <div className="text-xs font-semibold text-muted-foreground">Điểm tích cực</div>
+                <div className="text-xs font-semibold text-muted-foreground">{t("assignmentReport.strengths", lang)}</div>
                 <ul className="mt-2 list-inside list-disc space-y-1">
                   {insight.strengths.map((line: string, i: number) => (
                     <li key={i}>{line}</li>
@@ -138,7 +138,7 @@ export function AssignmentReportPage() {
 
             {insight.concerns.length > 0 ? (
               <div>
-                <div className="text-xs font-semibold text-muted-foreground">Cần lưu ý</div>
+                <div className="text-xs font-semibold text-muted-foreground">{t("assignmentReport.concerns", lang)}</div>
                 <ul className="mt-2 list-inside list-disc space-y-1">
                   {insight.concerns.map((line: string, i: number) => (
                     <li key={i}>{line}</li>
@@ -149,7 +149,7 @@ export function AssignmentReportPage() {
 
             {insight.suggestions.length > 0 ? (
               <div>
-                <div className="text-xs font-semibold text-muted-foreground">Gợi ý ôn / dạy</div>
+                <div className="text-xs font-semibold text-muted-foreground">{t("assignmentReport.suggestions", lang)}</div>
                 <ul className="mt-2 list-inside list-disc space-y-1">
                   {insight.suggestions.map((line: string, i: number) => (
                     <li key={i}>{line}</li>
@@ -164,9 +164,9 @@ export function AssignmentReportPage() {
       </div>
 
       <div className="glass-card p-6">
-        <h3 className="text-sm font-semibold text-foreground mb-4">Most missed questions</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-4">{t("assignmentReport.mostMissedQuestions", lang)}</h3>
         {report.top_missed_questions.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No submission data yet.</p>
+          <p className="text-sm text-muted-foreground">{t("assignmentReport.noSubmissionData", lang)}</p>
         ) : (
           <div className="space-y-3">
             {report.top_missed_questions.map((item, index) => (
@@ -178,7 +178,7 @@ export function AssignmentReportPage() {
                   <div className="text-sm font-semibold text-destructive">{item.incorrect_rate.toFixed(2)}%</div>
                 </div>
                 <div className="mt-2 text-xs text-muted-foreground">
-                  Incorrect: {item.incorrect_count} | Correct: {item.correct_count} | Total answers: {item.total_answers}
+                  {t("assignmentReport.incorrect", lang)}: {item.incorrect_count} | {t("assignmentReport.correct", lang)}: {item.correct_count} | {t("assignmentReport.totalAnswers", lang)}: {item.total_answers}
                 </div>
               </div>
             ))}

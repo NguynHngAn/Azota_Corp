@@ -1,11 +1,11 @@
-import { useMemo, useState } from "react";
-import { MessageCircle, Minus, Sparkles, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { t, useLanguage } from "@/i18n";
 import {
   createBankQuestion,
   type BankQuestionCreate,
@@ -16,6 +16,7 @@ import {
   type TeacherAIQuestionRequest,
   type TeacherAITask,
 } from "@/services/teacherAi.service";
+import { Icons } from "../layouts/Icons";
 
 type SelectionMap = Record<number, boolean>;
 type ChatMessage = {
@@ -25,44 +26,73 @@ type ChatMessage = {
   tone?: "default" | "muted" | "warning";
 };
 
-const defaultPrompts: Record<TeacherAITask, string> = {
-  generate_questions: "Tao 10 cau hoi ve so nguyen to cho hoc sinh lop 6",
-  suggest_similar_questions: "Goi y 5 cau tuong tu de luyen tap them",
+const defaultPromptKeys: Record<
+  TeacherAITask,
+  "teacherAi.defaultPrompt.generate" | "teacherAi.defaultPrompt.similar"
+> = {
+  generate_questions: "teacherAi.defaultPrompt.generate",
+  suggest_similar_questions: "teacherAi.defaultPrompt.similar",
 };
 
+function createMessageId(prefix: string): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return `${prefix}-${crypto.randomUUID()}`;
+  }
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function shouldSimulatePartialSaveFailure(): boolean {
+  if (!import.meta.env.DEV || typeof window === "undefined") return false;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("teacherAiPartialSaveFailure") === "1") return true;
+    return window.localStorage.getItem("teacherAi.simulatePartialSaveFailure") === "1";
+  } catch {
+    return false;
+  }
+}
+
 export function TeacherAiAssistantCard() {
+  const lang = useLanguage();
   const { token } = useAuth();
   const { success, error: showError } = useToast();
+  const userEditedPromptRef = useRef(false);
+  const userEditedLanguageRef = useRef(false);
   const [open, setOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [task, setTask] = useState<TeacherAITask>("generate_questions");
-  const [prompt, setPrompt] = useState(defaultPrompts.generate_questions);
+  const [prompt, setPrompt] = useState<string>(t(defaultPromptKeys.generate_questions, lang));
   const [sourceQuestionText, setSourceQuestionText] = useState("");
   const [questionType, setQuestionType] = useState<"single_choice" | "multiple_choice" | "mixed">("single_choice");
   const [difficulty, setDifficulty] = useState<QuestionDifficulty>("medium");
-  const [language, setLanguage] = useState("Vietnamese");
+  const [language, setLanguage] = useState(lang === "en" ? "English" : "Vietnamese");
   const [count, setCount] = useState(5);
   const [tagsText, setTagsText] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [aiModel, setAiModel] = useState("");
+  const [aiProvider, setAiProvider] = useState<"gemini" | "local-fallback" | "">("");
   const [items, setItems] = useState<BankQuestionCreate[]>([]);
   const [selected, setSelected] = useState<SelectionMap>({});
   const [message, setMessage] = useState("");
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    {
-      id: "welcome-1",
-      role: "assistant",
-      text: "Xin chao. Toi la AI Assistant cho giao vien. Toi co the tao cau hoi moi hoac goi y cau hoi tuong tu.",
-    },
-    {
-      id: "welcome-2",
-      role: "assistant",
-      text: 'Hay nhap yeu cau nhu: "Tao 5 cau single choice ve so nguyen to" hoac chuyen sang che do goi y cau tuong tu.',
-      tone: "muted",
-    },
-  ]);
+  const buildWelcomeMessages = useCallback(
+    (nextLang: "en" | "vi"): ChatMessage[] => [
+      {
+        id: "welcome-1",
+        role: "assistant",
+        text: t("teacherAi.welcomePrimary", nextLang),
+      },
+      {
+        id: "welcome-2",
+        role: "assistant",
+        text: t("teacherAi.welcomeSecondary", nextLang),
+        tone: "muted",
+      },
+    ],
+    [],
+  );
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(buildWelcomeMessages(lang));
 
   const normalizedTags = useMemo(() => {
     return tagsText
@@ -71,6 +101,31 @@ export function TeacherAiAssistantCard() {
       .filter(Boolean)
       .slice(0, 10);
   }, [tagsText]);
+
+  useEffect(() => {
+    if (!userEditedLanguageRef.current) {
+      setLanguage(lang === "en" ? "English" : "Vietnamese");
+    }
+    if (!userEditedPromptRef.current) {
+      setPrompt(t(defaultPromptKeys[task], lang));
+    }
+    setChatMessages((current) => {
+      const onlyWelcome =
+        current.length <= 2 &&
+        current.every((message) => message.id === "welcome-1" || message.id === "welcome-2");
+      if (!onlyWelcome) return current;
+      const next = buildWelcomeMessages(lang);
+      const same =
+        current.length === next.length &&
+        current.every(
+          (message, index) =>
+            message.id === next[index].id &&
+            message.text === next[index].text &&
+            message.tone === next[index].tone,
+        );
+      return same ? current : next;
+    });
+  }, [lang, task, chatMessages, buildWelcomeMessages]);
 
   function resetSelection(nextItems: BankQuestionCreate[]) {
     const nextSelected: SelectionMap = {};
@@ -83,11 +138,11 @@ export function TeacherAiAssistantCard() {
   function buildRequest(): TeacherAIQuestionRequest | null {
     const trimmedPrompt = prompt.trim();
     if (!trimmedPrompt) {
-      setMessage("Prompt is required.");
+      setMessage(t("teacherAi.error.promptRequired", lang));
       return null;
     }
     if (task === "suggest_similar_questions" && !sourceQuestionText.trim()) {
-      setMessage("Source question text is required for similar suggestions.");
+      setMessage(t("teacherAi.error.sourceRequired", lang));
       return null;
     }
     return {
@@ -103,7 +158,7 @@ export function TeacherAiAssistantCard() {
   }
 
   async function handleGenerate() {
-    if (!token) return;
+    if (!token || saving) return;
     const body = buildRequest();
     if (!body) return;
     setLoading(true);
@@ -111,7 +166,7 @@ export function TeacherAiAssistantCard() {
     setChatMessages((current) => [
       ...current,
       {
-        id: `user-${Date.now()}`,
+        id: createMessageId("user"),
         role: "user",
         text: body.prompt,
       },
@@ -119,43 +174,46 @@ export function TeacherAiAssistantCard() {
     try {
       const response = await generateTeacherAIQuestions(body, token);
       setAiModel(response.model);
+      setAiProvider(response.provider === "local-fallback" ? "local-fallback" : "gemini");
       setItems(response.items);
       resetSelection(response.items);
       setChatMessages((current) => [
         ...current,
         {
-          id: `assistant-${Date.now()}`,
+          id: createMessageId("assistant"),
           role: "assistant",
           text:
             response.provider === "local-fallback"
-              ? `Gemini tam thoi khong kha dung, nen toi da tao ${response.items.length} cau hoi bang fallback local de ban tiep tuc thu nghiem.`
-              : `Toi da tao ${response.items.length} cau hoi theo yeu cau cua ban. Ban co the xem preview va luu vao Question Bank.`,
+              ? t("teacherAi.generatedFallback", { count: response.items.length }, lang)
+              : t("teacherAi.generatedSuccess", { count: response.items.length }, lang),
           tone: response.provider === "local-fallback" ? "warning" : "default",
         },
         ...(response.note
           ? [
-              {
-                id: `assistant-note-${Date.now()}`,
-                role: "assistant" as const,
-                text: response.note,
-                tone: "muted" as const,
-              },
-            ]
+            {
+              id: createMessageId("assistant-note"),
+              role: "assistant" as const,
+              text: response.note,
+              tone: "muted" as const,
+            },
+          ]
           : []),
       ]);
       if (response.items.length === 0) {
-        setMessage("AI did not return any questions. Try a more specific prompt.");
+        setMessage(t("teacherAi.error.empty", lang));
       }
     } catch (err) {
-      const text = err instanceof Error ? err.message : "Failed to generate AI suggestions";
+      const text = err instanceof Error ? err.message : t("teacherAi.error.generateFailed", lang);
       setMessage(text);
-      showError({ title: "AI request failed", description: text });
+      showError({ title: t("teacherAi.toast.requestFailed", lang), description: text });
+      setAiModel("");
+      setAiProvider("");
       setItems([]);
       setSelected({});
       setChatMessages((current) => [
         ...current,
         {
-          id: `assistant-error-${Date.now()}`,
+          id: createMessageId("assistant-error"),
           role: "assistant",
           text,
           tone: "warning",
@@ -172,36 +230,77 @@ export function TeacherAiAssistantCard() {
 
   async function saveSelected() {
     if (!token) return;
-    const selectedItems = items.filter((_, index) => selected[index]);
-    if (selectedItems.length === 0) {
-      setMessage("Please select at least one question to save.");
+    const selectedEntries = items
+      .map((item, index) => ({ item, index }))
+      .filter(({ index }) => selected[index]);
+    if (selectedEntries.length === 0) {
+      setMessage(t("teacherAi.error.selectAtLeastOne", lang));
       return;
     }
     setSaving(true);
     setMessage("");
     try {
-      for (const item of selectedItems) {
-        await createBankQuestion(item, token);
-      }
-      success({
-        title: "Saved to Question Bank",
-        description: `${selectedItems.length} AI-generated question(s) were saved.`,
+      const outcomes = await Promise.allSettled(
+        selectedEntries.map(({ item }, idx) => {
+          if (shouldSimulatePartialSaveFailure() && idx === selectedEntries.length - 1) {
+            return Promise.reject(new Error(t("teacherAi.error.saveFailed", lang)));
+          }
+          return createBankQuestion(item, token);
+        }),
+      );
+      const successfulIndexes = new Set<number>();
+      const failedIndexes = new Set<number>();
+      outcomes.forEach((result, idx) => {
+        const originalIndex = selectedEntries[idx].index;
+        if (result.status === "fulfilled") successfulIndexes.add(originalIndex);
+        else failedIndexes.add(originalIndex);
       });
-      const remaining = items.filter((_, index) => !selected[index]);
-      setItems(remaining);
-      resetSelection(remaining);
-      setChatMessages((current) => [
-        ...current,
-        {
-          id: `assistant-save-${Date.now()}`,
-          role: "assistant",
-          text: `Da luu ${selectedItems.length} cau hoi vao Question Bank.`,
-        },
-      ]);
+      const successCount = successfulIndexes.size;
+      const failedCount = failedIndexes.size;
+
+      if (successCount > 0 && failedCount === 0) {
+        success({
+          title: t("teacherAi.toast.savedTitle", lang),
+          description: t("teacherAi.toast.savedDescription", { count: successCount }, lang),
+        });
+      } else if (successCount > 0) {
+        success({
+          title: t("teacherAi.toast.partialSavedTitle", lang),
+          description: t(
+            "teacherAi.toast.partialSavedDescription",
+            { successCount, failedCount },
+            lang,
+          ),
+        });
+      } else {
+        setMessage(t("teacherAi.error.saveFailed", lang));
+      }
+
+      const remainingEntries = items
+        .map((item, index) => ({ item, index }))
+        .filter(({ index }) => !successfulIndexes.has(index));
+      const nextItems = remainingEntries.map(({ item }) => item);
+      const nextSelected: SelectionMap = {};
+      remainingEntries.forEach(({ index }, nextIndex) => {
+        nextSelected[nextIndex] = failedIndexes.has(index);
+      });
+      setItems(nextItems);
+      setSelected(nextSelected);
+
+      if (successCount > 0) {
+        setChatMessages((current) => [
+          ...current,
+          {
+            id: createMessageId("assistant-save"),
+            role: "assistant",
+            text: t("teacherAi.savedChatMessage", { count: successCount }, lang),
+          },
+        ]);
+      }
     } catch (err) {
-      const text = err instanceof Error ? err.message : "Failed to save AI-generated questions";
+      const text = err instanceof Error ? err.message : t("teacherAi.error.saveFailed", lang);
       setMessage(text);
-      showError({ title: "Save failed", description: text });
+      showError({ title: t("teacherAi.toast.saveFailedTitle", lang), description: text });
     } finally {
       setSaving(false);
     }
@@ -209,7 +308,8 @@ export function TeacherAiAssistantCard() {
 
   function switchTask(nextTask: TeacherAITask) {
     setTask(nextTask);
-    setPrompt(defaultPrompts[nextTask]);
+    userEditedPromptRef.current = false;
+    setPrompt(t(defaultPromptKeys[nextTask], lang));
     setMessage("");
   }
 
@@ -224,11 +324,11 @@ export function TeacherAiAssistantCard() {
           setMinimized(false);
         }}
         className="fixed bottom-6 right-6 z-50 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-2xl transition-transform hover:scale-105"
-        aria-label="Open AI assistant"
+        aria-label={t("teacherAi.open", lang)}
       >
         <div className="flex flex-col items-center justify-center leading-none">
-          <MessageCircle className="h-6 w-6" />
-          <span className="mt-1 text-[10px] font-semibold">AI</span>
+          <Icons.MessageCircle className="h-6 w-6" />
+          <span className="mt-1 text-[10px] font-semibold">{t("teacherAi.shortLabel", lang)}</span>
         </div>
       </button>
     );
@@ -239,30 +339,30 @@ export function TeacherAiAssistantCard() {
       <div className="flex h-[80vh] flex-col overflow-hidden rounded-[28px] border border-border bg-card shadow-2xl">
         <div className="flex items-center justify-between bg-primary px-4 py-4 text-primary-foreground">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
-              <Sparkles className="h-5 w-5" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-background">
+              <Icons.Sparkles className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-lg font-semibold leading-none">AI Assistant</div>
-              <div className="mt-1 text-xs text-primary-foreground/80">Teacher support for question generation</div>
+              <div className="text-lg font-semibold leading-none">{t("teacherAi.title", lang)}</div>
+              <div className="mt-1 text-xs text-primary-foreground/80">{t("teacherAi.subtitle", lang)}</div>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setMinimized((current) => !current)}
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 transition-colors hover:bg-white/20"
-              aria-label={minimized ? "Expand AI assistant" : "Minimize AI assistant"}
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-background transition-colors hover:bg-background/80"
+              aria-label={minimized ? t("teacherAi.expand", lang) : t("teacherAi.minimize", lang)}
             >
-              <Minus className="h-4 w-4" />
+              <Icons.Minus className="h-4 w-4" />
             </button>
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 transition-colors hover:bg-white/20"
-              aria-label="Close AI assistant"
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-background transition-colors hover:bg-background/80"
+              aria-label={t("teacherAi.close", lang)}
             >
-              <X className="h-4 w-4" />
+              <Icons.X className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -277,13 +377,12 @@ export function TeacherAiAssistantCard() {
                       className={
                         entry.role === "user"
                           ? "ml-10 rounded-2xl bg-primary px-5 py-4 text-base leading-6 text-primary-foreground"
-                          : `mr-10 rounded-2xl px-5 py-4 text-base leading-6 ${
-                              entry.tone === "warning"
-                                ? "bg-amber-100 text-amber-900"
-                                : entry.tone === "muted"
-                                  ? "bg-muted text-muted-foreground"
-                                  : "bg-muted text-foreground"
-                            }`
+                          : `mr-10 rounded-2xl px-5 py-4 text-base leading-6 ${entry.tone === "warning"
+                            ? "bg-amber-100 text-amber-900"
+                            : entry.tone === "muted"
+                              ? "bg-muted text-muted-foreground"
+                              : "bg-muted text-foreground"
+                          }`
                       }
                     >
                       {entry.text}
@@ -299,7 +398,7 @@ export function TeacherAiAssistantCard() {
                       variant={task === "generate_questions" ? "default" : "outline"}
                       onClick={() => switchTask("generate_questions")}
                     >
-                      Generate questions
+                      {t("teacherAi.action.generate", lang)}
                     </Button>
                     <Button
                       type="button"
@@ -307,45 +406,51 @@ export function TeacherAiAssistantCard() {
                       variant={task === "suggest_similar_questions" ? "default" : "outline"}
                       onClick={() => switchTask("suggest_similar_questions")}
                     >
-                      Suggest similar
+                      {t("teacherAi.action.suggest", lang)}
                     </Button>
                     <Button type="button" size="sm" variant="ghost" onClick={() => setShowAdvanced((current) => !current)}>
-                      {showAdvanced ? "Hide options" : "More options"}
+                      {showAdvanced ? t("teacherAi.action.hideOptions", lang) : t("teacherAi.action.moreOptions", lang)}
                     </Button>
                   </div>
 
                   {showAdvanced ? (
                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
                       <div>
-                        <div className="mb-1 text-xs font-medium text-muted-foreground">Question type</div>
+                        <div className="mb-1 text-xs font-medium text-muted-foreground">{t("teacherAi.questionType", lang)}</div>
                         <select
                           value={questionType}
                           onChange={(e) => setQuestionType(e.target.value as typeof questionType)}
                           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                         >
-                          <option value="single_choice">Single choice</option>
-                          <option value="multiple_choice">Multiple choice</option>
-                          <option value="mixed">Mixed</option>
+                          <option value="single_choice">{t("teacherAi.questionType.single", lang)}</option>
+                          <option value="multiple_choice">{t("teacherAi.questionType.multiple", lang)}</option>
+                          <option value="mixed">{t("teacherAi.questionType.mixed", lang)}</option>
                         </select>
                       </div>
                       <div>
-                        <div className="mb-1 text-xs font-medium text-muted-foreground">Difficulty</div>
+                        <div className="mb-1 text-xs font-medium text-muted-foreground">{t("teacherAi.difficulty", lang)}</div>
                         <select
                           value={difficulty}
                           onChange={(e) => setDifficulty(e.target.value as QuestionDifficulty)}
                           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                         >
-                          <option value="easy">Easy</option>
-                          <option value="medium">Medium</option>
-                          <option value="hard">Hard</option>
+                          <option value="easy">{t("questionBank.difficulty.easy", lang)}</option>
+                          <option value="medium">{t("questionBank.difficulty.medium", lang)}</option>
+                          <option value="hard">{t("questionBank.difficulty.hard", lang)}</option>
                         </select>
                       </div>
                       <div>
-                        <div className="mb-1 text-xs font-medium text-muted-foreground">Language</div>
-                        <Input value={language} onChange={(e) => setLanguage(e.target.value)} />
+                        <div className="mb-1 text-xs font-medium text-muted-foreground">{t("teacherAi.language", lang)}</div>
+                        <Input
+                          value={language}
+                          onChange={(e) => {
+                            userEditedLanguageRef.current = true;
+                            setLanguage(e.target.value);
+                          }}
+                        />
                       </div>
                       <div>
-                        <div className="mb-1 text-xs font-medium text-muted-foreground">Count</div>
+                        <div className="mb-1 text-xs font-medium text-muted-foreground">{t("teacherAi.count", lang)}</div>
                         <Input
                           type="number"
                           min={1}
@@ -355,11 +460,11 @@ export function TeacherAiAssistantCard() {
                         />
                       </div>
                       <div className="sm:col-span-2">
-                        <div className="mb-1 text-xs font-medium text-muted-foreground">Tags</div>
+                        <div className="mb-1 text-xs font-medium text-muted-foreground">{t("teacherAi.tags", lang)}</div>
                         <Input
                           value={tagsText}
                           onChange={(e) => setTagsText(e.target.value)}
-                          placeholder="math, grade 6, prime numbers"
+                          placeholder={t("teacherAi.tagsPlaceholder", lang)}
                         />
                       </div>
                     </div>
@@ -367,12 +472,12 @@ export function TeacherAiAssistantCard() {
 
                   {task === "suggest_similar_questions" ? (
                     <div className="mt-3">
-                      <div className="mb-1 text-xs font-medium text-muted-foreground">Source question text</div>
+                      <div className="mb-1 text-xs font-medium text-muted-foreground">{t("teacherAi.sourceQuestion", lang)}</div>
                       <Textarea
                         value={sourceQuestionText}
                         onChange={(e) => setSourceQuestionText(e.target.value)}
                         rows={3}
-                        placeholder="Paste the existing question here so AI can create similar items."
+                        placeholder={t("teacherAi.sourceQuestionPlaceholder", lang)}
                       />
                     </div>
                   ) : null}
@@ -385,22 +490,28 @@ export function TeacherAiAssistantCard() {
                 <div className="rounded-2xl border border-border bg-card px-5 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <div className="text-base font-semibold text-foreground">AI Preview</div>
+                      <div className="text-base font-semibold text-foreground">{t("teacherAi.previewTitle", lang)}</div>
                       <div className="mt-1 text-xs text-muted-foreground">
-                        {items.length > 0 ? `${items.length} question(s) ready` : "No generated questions yet"}
+                        {items.length > 0
+                          ? t("teacherAi.readyCount", { count: items.length }, lang)
+                          : t("teacherAi.noGeneratedYet", lang)}
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       {aiModel ? <Badge variant="outline">{aiModel}</Badge> : null}
-                      <Badge variant="outline">{aiModel === "local-fallback" ? "fallback local" : "gemini"}</Badge>
-                      <Badge variant="secondary">{selectedCount} selected</Badge>
+                      {aiProvider ? (
+                        <Badge variant="outline">
+                          {aiProvider === "local-fallback" ? t("teacherAi.providerFallback", lang) : t("teacherAi.providerGemini", lang)}
+                        </Badge>
+                      ) : null}
+                      <Badge variant="secondary">{t("teacherAi.selectedCount", { count: selectedCount }, lang)}</Badge>
                     </div>
                   </div>
 
                   <div className="mt-3 max-h-[25vh] space-y-3 overflow-y-auto pr-1">
                     {items.length === 0 ? (
                       <div className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-base text-muted-foreground">
-                        Generated questions will appear here for review before saving.
+                        {t("teacherAi.generatedWillAppear", lang)}
                       </div>
                     ) : (
                       items.map((item, index) => {
@@ -421,9 +532,11 @@ export function TeacherAiAssistantCard() {
                                 <div className="text-base font-medium text-foreground leading-6">{item.text}</div>
                                 <div className="mt-2 flex flex-wrap gap-2">
                                   <Badge variant="secondary">
-                                    {item.question_type === "single_choice" ? "Single choice" : "Multiple choice"}
+                                    {item.question_type === "single_choice"
+                                      ? t("teacherAi.questionType.single", lang)
+                                      : t("teacherAi.questionType.multiple", lang)}
                                   </Badge>
-                                  <Badge variant="outline">{item.difficulty}</Badge>
+                                  <Badge variant="outline">{t(`questionBank.difficulty.${item.difficulty}`, lang)}</Badge>
                                 </div>
                                 <div className="mt-2 space-y-1 text-sm text-muted-foreground">
                                   {item.options.map((option) => (
@@ -432,7 +545,9 @@ export function TeacherAiAssistantCard() {
                                     </div>
                                   ))}
                                 </div>
-                                <div className="mt-2 text-sm text-muted-foreground">Correct: {correctIndexes}</div>
+                                <div className="mt-2 text-sm text-muted-foreground">
+                                  {t("teacherAi.correct", lang)}: {correctIndexes}
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -447,26 +562,29 @@ export function TeacherAiAssistantCard() {
             <div className="border-t border-border bg-card px-5 py-5">
               <Textarea
                 value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
+                onChange={(e) => {
+                  userEditedPromptRef.current = true;
+                  setPrompt(e.target.value);
+                }}
                 rows={3}
-                placeholder="Nhap yeu cau cho AI Assistant..."
+                placeholder={t("teacherAi.promptPlaceholder", lang)}
                 className="resize-none rounded-2xl border-border text-base"
               />
               <div className="mt-3 flex items-center justify-between gap-2">
-                <div className="text-xs text-muted-foreground">Preview first, then save selected questions to Question Bank.</div>
+                <div className="text-xs text-muted-foreground">{t("teacherAi.previewHint", lang)}</div>
                 <div className="flex items-center gap-2">
                   <Button type="button" variant="secondary" onClick={() => void saveSelected()} disabled={saving || items.length === 0}>
-                    {saving ? "Saving..." : "Save selected"}
+                    {saving ? t("common.saving", lang) : t("teacherAi.action.saveSelected", lang)}
                   </Button>
-                  <Button type="button" onClick={() => void handleGenerate()} disabled={loading}>
-                    {loading ? "Generating..." : "Send"}
+                  <Button type="button" onClick={() => void handleGenerate()} disabled={loading || saving}>
+                    {loading ? t("teacherAi.generating", lang) : t("teacherAi.action.send", lang)}
                   </Button>
                 </div>
               </div>
             </div>
           </>
         ) : (
-          <div className="bg-card px-4 py-4 text-sm text-muted-foreground">AI Assistant is minimized. Use the top controls to reopen the chat.</div>
+          <div className="bg-card px-4 py-4 text-sm text-muted-foreground">{t("teacherAi.minimizedHint", lang)}</div>
         )}
       </div>
     </div>
