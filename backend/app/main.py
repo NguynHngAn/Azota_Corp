@@ -16,9 +16,13 @@ from app.api.v1 import (
     anti_cheat_analytics,
     question_bank,
     teacher_ai,
+    account_requests,
+    admin_account_requests,
 )
 
 app = FastAPI(title=settings.app_name)
+app.include_router(account_requests.router, prefix="/api/v1")
+app.include_router(admin_account_requests.router, prefix="/api/v1")
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(users.router, prefix="/api/v1")
 app.include_router(classes.router, prefix="/api/v1")

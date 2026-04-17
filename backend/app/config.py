@@ -30,7 +30,14 @@ class Settings(BaseSettings):
     secret_key: str = "change-me-in-production"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
-    refresh_token_expire_days: int = 7
+    # Refresh JWT lifetime when “remember this device” is on vs off (SPA stores refresh beside access).
+    refresh_token_expire_days_remember: int = 30
+    refresh_token_expire_days_session: int = 1
+
+    # Password reset (public links point to SPA)
+    frontend_base_url: str = "http://localhost:5173"
+    password_reset_token_ttl_minutes: int = 30
+    email_smtp_host: str | None = None
 
     # AI explanations / Teacher AI (Gemini)
     ai_explanation_enabled: bool = False
