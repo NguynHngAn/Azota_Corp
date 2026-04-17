@@ -4,3 +4,5 @@ export const ROLES = ["admin", "teacher", "student"] as const;
 export type Role = (typeof ROLES)[number];
 
 export const AUTH_TOKEN_KEY = import.meta.env.VITE_AUTH_TOKEN_KEY ?? "azota_access_token";
+export const AUTH_REFRESH_TOKEN_KEY =
+  import.meta.env.VITE_AUTH_REFRESH_TOKEN_KEY ?? "azota_refresh_token";

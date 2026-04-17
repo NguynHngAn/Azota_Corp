@@ -1,5 +1,18 @@
 import { API_BASE_URL } from "@/utils/constants";
 
+export class ApiError extends Error {
+  readonly status: number;
+  readonly detail: unknown;
+
+  constructor(message: string, status: number, detail?: unknown) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.detail = detail;
+    Object.setPrototypeOf(this, ApiError.prototype);
+  }
+}
+
 async function request<T>(
   path: string,
   options: RequestInit & { token?: string } = {},
@@ -18,7 +31,7 @@ async function request<T>(
   if (!res.ok) {
     const detail = data.detail;
     const msg = Array.isArray(detail) ? detail.map((d: { msg?: string }) => d.msg).join(", ") : (detail ?? res.statusText);
-    throw new Error(typeof msg === "string" ? msg : res.statusText);
+    throw new ApiError(typeof msg === "string" ? msg : res.statusText, res.status, detail);
   }
   return data as T;
 }

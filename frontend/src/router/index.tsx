@@ -2,7 +2,10 @@ import { Navigate, Route, Routes } from "react-router";
 import { lazy, Suspense } from "react";
 import { AuthProvider, useAuth, ExamProvider } from "@/context";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
-import { Login } from "@/pages/Login";
+import { Login } from "@/pages/auth/Login";
+import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage";
+import { ResetPasswordPage } from "@/pages/auth/ResetPasswordPage";
+import RequestAccountPage from "@/pages/auth/RequestAccountPage";
 const LazyLandingPage = lazy(() => import("@/pages/LandingPage"));
 import {
   ClassListPage,
@@ -23,7 +26,6 @@ import {
   SubmissionResultPage,
 } from "@/pages/assignments";
 import { AssignmentReportPage } from "@/pages/reports";
-import { ProfilePage } from "@/pages/ProfilePage";
 import { AdminUsersPage } from "@/pages/admin/AdminUsersPage";
 import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage";
 import { AdminClassesPage } from "@/pages/admin/AdminClassesPage";
@@ -31,6 +33,7 @@ import { AdminExamsPage } from "@/pages/admin/AdminExamsPage";
 import { AdminAssignmentsPage } from "@/pages/admin/AdminAssignmentsPage";
 import { AdminAnalyticsPage } from "@/pages/admin/AdminAnalyticsPage";
 import { AdminSettingsPage } from "@/pages/admin/AdminSettingsPage";
+import { AccountRequestsPage } from "@/pages/admin/AccountRequestsPage";
 import { TeacherDashboardPage } from "@/pages/teacher/TeacherDashboardPage";
 import { TeacherQuestionBankPage } from "@/pages/teacher/TeacherQuestionBankPage";
 import { TeacherStudentsPage } from "@/pages/teacher/TeacherStudentsPage";
@@ -110,11 +113,15 @@ export function AppRouter() {
         <Routes>
           <Route path="/" element={<RootRedirect />} />
           <Route path="/login" element={<LoginRedirect />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/request-account" element={<RequestAccountPage />} />
           <Route path="/signup" element={<Navigate to="/login" replace />} />
           <Route path="/admin" element={<DashboardLayout role="admin" />}>
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboardPage />} />
             <Route path="users" element={<AdminUsersPage />} />
+            <Route path="account-requests" element={<AccountRequestsPage />} />
             <Route path="exams" element={<AdminExamsPage />} />
             <Route path="classes" element={<AdminClassesPage />} />
             <Route path="classes/new" element={<CreateClassPage />} />
@@ -148,7 +155,7 @@ export function AppRouter() {
             <Route path="anti-cheating" element={<TeacherAntiCheatingPage />} />
             <Route path="anti-cheat-analytics" element={<Navigate to="/teacher/analytics?tab=anti-cheat" replace />} />
             <Route path="analytics" element={<TeacherAnalyticsPage />} />
-            
+
             <Route path="trash" element={<TeacherTrashPage />} />
             <Route path="settings" element={<TeacherSettingsPage />} />
           </Route>
@@ -163,7 +170,6 @@ export function AppRouter() {
             <Route path="assignments/result/:submissionId" element={<SubmissionResultPage />} />
             <Route path="results" element={<StudentResultsPage />} />
             <Route path="settings" element={<StudentSettingsPage />} />
-            <Route path="profile" element={<ProfilePage />} />
             <Route path="join" element={<JoinClassPage />} />
           </Route>
         </Routes>
