@@ -16,8 +16,13 @@ EVENT_WEIGHTS: dict[str, float] = {
     "CUT_ATTEMPT": 1.5,
     "PASTE_ATTEMPT": 2.0,
     "CONTEXT_MENU": 0.75,
+    "COPY_BLOCKED": 1.5,
+    "CUT_BLOCKED": 1.5,
+    "PASTE_BLOCKED": 2.0,
+    "CONTEXT_MENU_BLOCKED": 0.75,
     "TEXT_SELECTION": 0.5,
     "DEVTOOLS_DETECTED": 3.0,
+    "HEARTBEAT_MISSED": 2.0,
 }
 
 VIOLATION_EVENT_TYPES: frozenset[str] = frozenset(EVENT_WEIGHTS.keys())

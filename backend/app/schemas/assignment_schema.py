@@ -29,6 +29,7 @@ class AssignmentCreate(BaseModel):
     shuffle_questions: bool = False
     shuffle_options: bool = False
     max_violations: int = Field(default=3, ge=1, le=20)
+    max_attempts: int = Field(default=1, ge=1, le=10)
 
 
 class AssignmentResponse(BaseModel):
@@ -41,6 +42,7 @@ class AssignmentResponse(BaseModel):
     shuffle_questions: bool
     shuffle_options: bool
     max_violations: int
+    max_attempts: int
     created_at: datetime
     deleted_at: datetime | None = None
 
@@ -68,6 +70,9 @@ class SubmissionStartResponse(BaseModel):
     duration_minutes: int
     exam_title: str
     max_violations: int
+    max_attempts: int
+    attempts_left: int
+    attempt_no: int
     # violation_count: int = 0
     # questions: list[dict]
     # saved_answers: list[SubmissionAnswerPayload] = Field(default_factory=list)

@@ -1,4 +1,5 @@
 import json
+import time
 from urllib import error, parse, request
 
 from fastapi import HTTPException, status
@@ -12,6 +13,61 @@ from app.schemas.teacher_ai_schema import AssignmentInsightResponse, TeacherAIQu
 _GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 
 
+def _is_gemini_unavailable(detail_text: str) -> bool:
+    normalized = (detail_text or "").upper()
+    return '"STATUS": "UNAVAILABLE"' in normalized or '"CODE": 503' in normalized
+
+
+def _is_gemini_quota_limited(detail_text: str) -> bool:
+    normalized = (detail_text or "").upper()
+    return '"CODE": 429' in normalized or "QUOTA" in normalized or "RATE LIMIT" in normalized
+
+
+def _request_gemini_json(req: request.Request, *, timeout: int = 90) -> dict:
+    """
+    Retry short transient Gemini outages before failing with a user-friendly message.
+    """
+    retries = 2
+    backoffs = [0.6, 1.2]
+    last_http_error: error.HTTPError | None = None
+
+    for attempt in range(retries + 1):
+        try:
+            with request.urlopen(req, timeout=timeout) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="ignore")
+            last_http_error = exc
+            retryable = exc.code == 503 or _is_gemini_unavailable(detail)
+            if retryable and attempt < retries:
+                time.sleep(backoffs[attempt])
+                continue
+            if retryable:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Gemini is temporarily overloaded. Please retry in a few moments.",
+                )
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"Gemini request failed: {detail or exc.reason}",
+            )
+        except error.URLError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"Gemini connection failed: {exc.reason}",
+            )
+
+    if last_http_error is not None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Gemini is temporarily overloaded. Please retry in a few moments.",
+        )
+    raise HTTPException(
+        status_code=status.HTTP_502_BAD_GATEWAY,
+        detail="Gemini request failed unexpectedly",
+    )
+
+
 def _normalize_tags(tags: list[str]) -> list[str]:
     normalized: list[str] = []
     for tag in tags:
@@ -20,6 +76,62 @@ def _normalize_tags(tags: list[str]) -> list[str]:
             continue
         normalized.append(value[:64])
     return normalized[:10]
+
+
+def _extract_topic(payload: TeacherAIQuestionRequest) -> str:
+    raw = (
+        payload.source_question_text
+        if payload.task == "suggest_similar_questions" and (payload.source_question_text or "").strip()
+        else payload.prompt
+    )
+    cleaned = " ".join((raw or "").strip().split())
+    return cleaned[:120] or "the requested topic"
+
+
+def _build_local_fallback_items(payload: TeacherAIQuestionRequest) -> list[BankQuestionCreate]:
+    topic = _extract_topic(payload)
+    normalized_tags = _normalize_tags(payload.tags)
+    requested_type = payload.question_type or QuestionType.single_choice
+    items: list[BankQuestionCreate] = []
+
+    for idx in range(payload.count):
+        question_type = requested_type
+        if payload.question_type is None and idx % 3 == 2:
+            question_type = QuestionType.multiple_choice
+
+        if payload.task == "suggest_similar_questions":
+            text = f"Similar practice question {idx + 1} about: {topic}"
+        else:
+            text = f"Practice question {idx + 1} about: {topic}"
+
+        if question_type == QuestionType.single_choice:
+            options = [
+                BankAnswerOptionCreate(order_index=0, text=f"Core idea related to {topic}", is_correct=True),
+                BankAnswerOptionCreate(order_index=1, text=f"Common misconception about {topic}", is_correct=False),
+                BankAnswerOptionCreate(order_index=2, text=f"Unrelated detail for {topic}", is_correct=False),
+                BankAnswerOptionCreate(order_index=3, text=f"Too broad statement about {topic}", is_correct=False),
+            ]
+        else:
+            options = [
+                BankAnswerOptionCreate(order_index=0, text=f"Correct aspect A of {topic}", is_correct=True),
+                BankAnswerOptionCreate(order_index=1, text=f"Correct aspect B of {topic}", is_correct=True),
+                BankAnswerOptionCreate(order_index=2, text=f"Incorrect aspect of {topic}", is_correct=False),
+                BankAnswerOptionCreate(order_index=3, text=f"Another incorrect aspect of {topic}", is_correct=False),
+            ]
+
+        items.append(
+            BankQuestionCreate(
+                question_type=question_type,
+                text=text,
+                explanation=f"Local fallback question generated for teacher workflow continuity about {topic}.",
+                difficulty=payload.difficulty,
+                is_active=True,
+                options=options,
+                tags=normalized_tags,
+            )
+        )
+
+    return items
 
 
 def _build_system_prompt() -> str:
@@ -247,19 +359,23 @@ def generate_teacher_ai_questions(payload: TeacherAIQuestionRequest) -> tuple[li
         method="POST",
     )
     try:
-        with request.urlopen(req, timeout=90) as response:
-            response_payload = json.loads(response.read().decode("utf-8"))
-    except error.HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="ignore")
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Gemini request failed: {detail or exc.reason}",
-        )
-    except error.URLError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Gemini connection failed: {exc.reason}",
-        )
+        response_payload = _request_gemini_json(req, timeout=90)
+    except HTTPException as exc:
+        detail_text = str(exc.detail)
+        if exc.status_code in (
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            status.HTTP_502_BAD_GATEWAY,
+        ) and (
+            "temporarily overloaded" in detail_text.lower()
+            or _is_gemini_quota_limited(detail_text)
+            or "quota" in detail_text.lower()
+        ):
+            return (
+                _build_local_fallback_items(payload),
+                "local-fallback",
+                "Gemini was unavailable or quota-limited, so locally generated practice questions were returned.",
+            )
+        raise
 
     content_text = _extract_text(response_payload)
     parsed = _extract_json(content_text)
@@ -369,20 +485,7 @@ def generate_assignment_insight(stats: dict) -> AssignmentInsightResponse:
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    try:
-        with request.urlopen(req, timeout=90) as response:
-            response_payload = json.loads(response.read().decode("utf-8"))
-    except error.HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="ignore")
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Gemini request failed: {detail or exc.reason}",
-        )
-    except error.URLError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Gemini connection failed: {exc.reason}",
-        )
+    response_payload = _request_gemini_json(req, timeout=90)
 
     content_text = _extract_text(response_payload)
     parsed = _extract_json(content_text)

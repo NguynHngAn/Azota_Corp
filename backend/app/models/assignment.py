@@ -19,6 +19,7 @@ class Assignment(Base):
     shuffle_questions: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     shuffle_options: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     max_violations: Mapped[int] = mapped_column(Integer, default=3, nullable=False)
+    max_attempts: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -30,13 +31,16 @@ class Assignment(Base):
 
 class Submission(Base):
     __tablename__ = "submissions"
-    __table_args__ = (UniqueConstraint("assignment_id", "user_id", name="uq_submission_assignment_user"),)
+    __table_args__ = (UniqueConstraint("assignment_id", "user_id", "attempt_no", name="uq_submission_assignment_user_attempt"),)
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     assignment_id: Mapped[int] = mapped_column(ForeignKey("assignments.id", ondelete="CASCADE"), nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    attempt_no: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    deadline_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
     submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_heartbeat_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     score: Mapped[float | None] = mapped_column(Float, nullable=True)
     auto_submitted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     submit_reason: Mapped[str | None] = mapped_column(String(64), nullable=True)

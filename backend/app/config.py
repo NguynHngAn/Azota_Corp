@@ -46,9 +46,14 @@ class Settings(BaseSettings):
 
     # Anti-cheat: server-side enforcement (auto-submit when weighted score exceeds threshold)
     anti_cheat_max_violations: float = 10.0
-    anti_cheat_enforce: bool = False
+    anti_cheat_enforce: bool = True
     anti_cheat_event_rate_window_seconds: int = 60
     anti_cheat_event_rate_max: int = 120
+    anti_cheat_heartbeat_stale_seconds: int = 30
+
+    # Built-in timeout finalizer fallback (runs in API process).
+    exam_timeout_finalizer_enabled: bool = True
+    exam_timeout_finalizer_interval_seconds: int = 20
 
     def get_database_url(self) -> str:
         if self.database_url:

@@ -12,13 +12,13 @@ AntiCheatEventType = Literal[
     "PASTE_BLOCKED",
     "CUT_BLOCKED",
     "CONTEXT_MENU_BLOCKED",
+    "HEARTBEAT_MISSED",
 ]
 
 class AntiCheatEventCreate(BaseModel):
     assignment_id: int = Field(..., gt=0)
-    submission_id: int | None = Field(default=None, gt=0)
-    # event_type: AntiCheatEventType = Field(..., min_length=1, max_length=64)
-    event_type: AntiCheatEventType 
+    submission_id: int = Field(..., gt=0)
+    event_type: AntiCheatEventType
     meta: dict = Field(default_factory=dict)
 
 
@@ -67,3 +67,14 @@ class AntiCheatMonitorSummary(BaseModel):
 class AntiCheatMonitorResponse(BaseModel):
     summary: AntiCheatMonitorSummary
     rows: list[AntiCheatMonitorRow]
+
+
+class AntiCheatHeartbeatRequest(BaseModel):
+    assignment_id: int = Field(..., gt=0)
+    submission_id: int = Field(..., gt=0)
+
+
+class AntiCheatHeartbeatResponse(BaseModel):
+    ok: bool = True
+    server_now: datetime
+    deadline_at: datetime | None

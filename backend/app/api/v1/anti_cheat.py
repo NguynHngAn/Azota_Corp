@@ -15,6 +15,8 @@ from app.models.exam import Exam
 from app.models.anti_cheat import AntiCheatEvent
 from app.schemas.anti_cheat_schema import (
     AntiCheatEventCreate,
+    AntiCheatHeartbeatRequest,
+    AntiCheatHeartbeatResponse,
     AntiCheatEventResponse,
     AntiCheatMonitorResponse,
     AntiCheatMonitorRow,
@@ -22,6 +24,9 @@ from app.schemas.anti_cheat_schema import (
 )
 from app.services.assignment_service import (
     can_manage_assignment,
+    ensure_submission_deadline,
+    finalize_submission,
+    is_submission_expired,
     is_in_class,
     try_auto_submit_submission_on_violation_threshold,
 )
@@ -45,17 +50,21 @@ def create_event(
     if not is_in_class(db, assignment.class_id, current_user.id):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not in this class")
 
-    submission_id = body.submission_id or None
-    submission = None
-    if submission_id is not None:
-        submission = (
-            db.query(Submission)
-            .filter(Submission.id == submission_id)
-            .with_for_update()
-            .first()
-            )
-        if not submission or submission.assignment_id != assignment.id or submission.user_id != current_user.id:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid submission_id")
+    submission_id = body.submission_id
+    submission = (
+        db.query(Submission)
+        .filter(Submission.id == submission_id)
+        .with_for_update()
+        .first()
+    )
+    if (
+        not submission
+        or submission.assignment_id != assignment.id
+        or submission.user_id != current_user.id
+    ):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid submission_id")
+    if submission.submitted_at is not None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Submission already submitted")
 
     recent_n = count_recent_events_for_rate_limit(
         db,
@@ -79,17 +88,13 @@ def create_event(
     )
     db.add(ev)
     db.flush()
-    if submission_id is not None:
-        violation_weighted_score, violation_count = submission_violation_metrics(db, submission_id)
-        if submission:
-            submission.violation_count = violation_count
-    else:
-        violation_weighted_score, violation_count = 0.0, 0
+    violation_weighted_score, violation_count = submission_violation_metrics(db, submission_id)
+    submission.violation_count = violation_count
     auto_submitted = False
+    max_violations = assignment.max_violations or settings.anti_cheat_max_violations
     if (
-        submission_id is not None
-        and settings.anti_cheat_enforce
-        and violation_weighted_score >= settings.anti_cheat_max_violations
+        settings.anti_cheat_enforce
+        and violation_weighted_score >= float(max_violations)
     ):
         auto_submitted = try_auto_submit_submission_on_violation_threshold(
             db, user_id=current_user.id, submission_id=submission_id
@@ -108,6 +113,47 @@ def create_event(
         violation_count=violation_count,
         auto_submitted=auto_submitted,
     )
+
+
+@router.post("/heartbeat", response_model=AntiCheatHeartbeatResponse)
+def anti_cheat_heartbeat(
+    body: AntiCheatHeartbeatRequest,
+    current_user: Annotated[User, Depends(require_role(Role.student))],
+    db: Session = Depends(get_db),
+):
+    assignment = db.query(Assignment).filter(Assignment.id == body.assignment_id).first()
+    if not assignment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found")
+    submission = (
+        db.query(Submission)
+        .filter(Submission.id == body.submission_id)
+        .with_for_update()
+        .first()
+    )
+    if (
+        not submission
+        or submission.assignment_id != assignment.id
+        or submission.user_id != current_user.id
+    ):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid submission_id")
+    if submission.started_at is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Submission not started")
+    if submission.submitted_at is not None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Submission already submitted")
+    ensure_submission_deadline(submission)
+    if is_submission_expired(submission):
+        finalize_submission(
+            db,
+            submission=submission,
+            submit_reason="time_limit_reached",
+            auto_submitted=True,
+        )
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Time limit exceeded")
+    now = datetime.now(timezone.utc)
+    submission.last_heartbeat_at = now
+    db.commit()
+    return AntiCheatHeartbeatResponse(server_now=now, deadline_at=submission.deadline_at)
 
 
 @router.get("/monitor", response_model=AntiCheatMonitorResponse)

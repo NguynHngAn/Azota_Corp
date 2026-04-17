@@ -71,23 +71,22 @@ def exam_questions_for_student(submission: Submission) -> list[dict]:
 
 
 def get_submission_deadline(submission: Submission) -> datetime:
-    if not submission.started_at:
-        raise ValueError("Submission has not been started")
+    if submission.deadline_at is None:
+        raise ValueError("Submission deadline is not set")
+    return submission.deadline_at
 
-    started_at = submission.started_at
 
-    # Ensure timezone-aware (UTC)
-    if started_at.tzinfo is None:
-        started_at = started_at.replace(tzinfo=timezone.utc)
-    # Business rule:
-    # - assignment.start_time/end_time define the "entry window" (when students may start).
-    # - duration_minutes is the "working time" that starts counting when the student starts.
-    # If the student starts before end_time, they can finish even after end_time.
-    duration = submission.assignment.duration_minutes
-    if duration is None:
-        raise ValueError("Assignment duration is not set")
-        
-    return started_at + timedelta(minutes=duration)
+def ensure_submission_deadline(submission: Submission) -> None:
+    if submission.deadline_at is None and submission.started_at is not None:
+        submission.deadline_at = submission.started_at + timedelta(
+            minutes=submission.assignment.duration_minutes
+        )
+
+
+def is_heartbeat_stale(submission: Submission, now: datetime, threshold_seconds: int) -> bool:
+    if submission.last_heartbeat_at is None:
+        return True
+    return (now - submission.last_heartbeat_at).total_seconds() > threshold_seconds
 
 
 def is_submission_expired(submission: Submission, now: datetime | None = None) -> bool:
@@ -138,6 +137,24 @@ def apply_submission_answers_and_grade(
     submission.score = score
 
 
+def finalize_submission(
+    db: Session,
+    *,
+    submission: Submission,
+    submit_reason: str,
+    auto_submitted: bool,
+    body: SubmitPayload | None = None,
+) -> bool:
+    if submission.submitted_at is not None:
+        return False
+    assignment = submission.assignment
+    payload = body or submit_payload_for_finalize_from_db(db, submission, assignment.exam)
+    apply_submission_answers_and_grade(db, submission, assignment, payload)
+    submission.auto_submitted = auto_submitted
+    submission.submit_reason = submit_reason
+    return True
+
+
 def try_auto_submit_submission_on_violation_threshold(
     db: Session,
     *,
@@ -159,14 +176,13 @@ def try_auto_submit_submission_on_violation_threshold(
     )
     if not submission or submission.submitted_at is not None or submission.started_at is None:
         return False
-    assignment = submission.assignment
+    ensure_submission_deadline(submission)
     now = datetime.now(timezone.utc)
-    if now > assignment.end_time:
+    if is_submission_expired(submission, now):
         return False
-    submit_deadline = submission.started_at + timedelta(minutes=assignment.duration_minutes)
-    if now > submit_deadline:
-        return False
-    exam = assignment.exam
-    body = submit_payload_for_finalize_from_db(db, submission, exam)
-    apply_submission_answers_and_grade(db, submission, assignment, body)
-    return True
+    return finalize_submission(
+        db,
+        submission=submission,
+        submit_reason="anti_cheat_threshold",
+        auto_submitted=True,
+    )

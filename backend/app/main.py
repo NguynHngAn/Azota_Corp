@@ -1,11 +1,13 @@
 from fastapi import FastAPI, Depends
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+import logging
+import threading
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from app.config import settings
-from app.database import get_db
+from app.database import get_db, SessionLocal
 from app.api.v1 import (
     auth,
     users,
@@ -19,6 +21,11 @@ from app.api.v1 import (
     account_requests,
     admin_account_requests,
 )
+from app.services.assignment_timeout_worker import finalize_expired_submissions
+
+logger = logging.getLogger(__name__)
+_timeout_worker_stop = threading.Event()
+_timeout_worker_thread: threading.Thread | None = None
 
 app = FastAPI(title=settings.app_name)
 app.include_router(account_requests.router, prefix="/api/v1")
@@ -37,6 +44,43 @@ app.include_router(teacher_ai.router, prefix="/api/v1")
 _static_dir = Path(__file__).resolve().parent / "static"
 _static_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
+
+
+def _run_timeout_finalizer_loop() -> None:
+    interval = max(5, int(settings.exam_timeout_finalizer_interval_seconds))
+    while not _timeout_worker_stop.is_set():
+        db = SessionLocal()
+        try:
+            finalize_expired_submissions(db)
+        except Exception:
+            db.rollback()
+            logger.exception("Built-in timeout finalizer loop failed")
+        finally:
+            db.close()
+        _timeout_worker_stop.wait(interval)
+
+
+@app.on_event("startup")
+def _start_timeout_finalizer_loop() -> None:
+    global _timeout_worker_thread
+    if not settings.exam_timeout_finalizer_enabled:
+        return
+    if _timeout_worker_thread and _timeout_worker_thread.is_alive():
+        return
+    _timeout_worker_stop.clear()
+    _timeout_worker_thread = threading.Thread(
+        target=_run_timeout_finalizer_loop,
+        name="timeout-finalizer-loop",
+        daemon=True,
+    )
+    _timeout_worker_thread.start()
+
+
+@app.on_event("shutdown")
+def _stop_timeout_finalizer_loop() -> None:
+    _timeout_worker_stop.set()
+    if _timeout_worker_thread and _timeout_worker_thread.is_alive():
+        _timeout_worker_thread.join(timeout=2)
 
 
 @app.get("/routes")

@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
 from app.database import get_db
+from app.config import settings
+from app.models.anti_cheat import AntiCheatEvent
 from app.models.user import Role, User
 from app.models.assignment import Assignment, Submission, SubmissionAnswer
 from app.models.class_model import Class, ClassMember
@@ -36,20 +38,59 @@ from app.services.teacher_ai_service import generate_assignment_insight
 from app.api.deps import get_current_user, require_role
 from app.services.assignment_service import (
     can_manage_assignment,
+    ensure_submission_deadline,
     exam_questions_for_student,
+    finalize_submission,
     get_submission_deadline,
+    is_heartbeat_stale,
     is_in_class,
     is_submission_expired,
     upsert_submission_answers_only,
 )
 from app.services.class_service import can_manage_class
-from app.services.anti_cheat_service import submit_submission_now
 from app.services.grading_service import grade_submission
 from app.services.ai_explanation_service import generate_explanations_for_submission
 from app.services.reporting_service import build_top_missed_questions
 
 from sqlalchemy.exc import OperationalError
 router = APIRouter(prefix="/assignments", tags=["assignments"])
+
+
+def _heartbeat_stale_threshold_seconds() -> int:
+    return int(getattr(settings, "anti_cheat_heartbeat_stale_seconds", 30))
+
+
+def _record_heartbeat_missed_event(db: Session, submission: Submission) -> None:
+    try:
+        with db.begin_nested():
+            db.add(
+                AntiCheatEvent(
+                    assignment_id=submission.assignment_id,
+                    submission_id=submission.id,
+                    user_id=submission.user_id,
+                    event_type="HEARTBEAT_MISSED",
+                    meta={"source": "request_path"},
+                )
+            )
+    except IntegrityError:
+        pass
+
+
+def _enforce_heartbeat_integrity(
+    db: Session,
+    submission: Submission,
+    now: datetime,
+) -> bool:
+    if not is_heartbeat_stale(submission, now, _heartbeat_stale_threshold_seconds()):
+        return False
+    _record_heartbeat_missed_event(db, submission)
+    did_finalize = finalize_submission(
+        db,
+        submission=submission,
+        submit_reason="heartbeat_stale",
+        auto_submitted=True,
+    )
+    return did_finalize
 
 
 @router.get("/submissions/my", response_model=list[MySubmissionSummary])
@@ -97,6 +138,7 @@ def get_my_submission_for_assignment(
             Submission.user_id == current_user.id,
             Submission.submitted_at.is_not(None),
         )
+        .order_by(Submission.attempt_no.desc())
         .first()
     )
     if not submission:
@@ -125,6 +167,7 @@ def submit_submission(
         .first()
         )
     except OperationalError:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Submission is being processed, please retry")
     if not submission:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
@@ -132,10 +175,16 @@ def submit_submission(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not your submission")
     if submission.submitted_at:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Already submitted")
+    ensure_submission_deadline(submission)
+    now = datetime.now(timezone.utc)
+    if _enforce_heartbeat_integrity(db, submission, now):
+        db.commit()
+        db.refresh(submission)
+        return submission
     if is_submission_expired(submission):
-        submit_submission_now(
+        finalize_submission(
             db,
-            submission,
+            submission=submission,
             submit_reason="time_limit_reached",
             auto_submitted=True,
         )
@@ -147,27 +196,13 @@ def submit_submission(
     for item in body.answers:
         if item.question_id not in exam_question_ids:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid question_id {item.question_id}")
-    for item in body.answers:
-        existing = db.query(SubmissionAnswer).filter(
-            SubmissionAnswer.submission_id == submission_id,
-            SubmissionAnswer.question_id == item.question_id,
-        ).first()
-        if existing:
-            existing.chosen_option_ids = item.chosen_option_ids
-        else:
-            db.add(
-                SubmissionAnswer(
-                    submission_id=submission_id,
-                    question_id=item.question_id,
-                    chosen_option_ids=item.chosen_option_ids,
-                )
-            )
     submit_reason = body.submit_reason or ("time_limit_reached" if is_submission_expired(submission) else "manual_submit")
-    submit_submission_now(
+    finalize_submission(
         db,
-        submission,
+        submission=submission,
         submit_reason=submit_reason,
         auto_submitted=submit_reason != "manual_submit",
+        body=body,
     )
     db.flush()
     db.refresh(submission)
@@ -198,13 +233,17 @@ def autosave_submission_answers(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Already submitted")
     if submission.started_at is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Submission not started")
-    assignment = submission.assignment
+    ensure_submission_deadline(submission)
     now = datetime.now(timezone.utc)
-    if now > assignment.end_time:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Assignment window ended")
-    submit_deadline = submission.started_at + timedelta(minutes=assignment.duration_minutes)
-    if now > submit_deadline:
+    if _enforce_heartbeat_integrity(db, submission, now):
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Heartbeat stale, submission auto-submitted",
+        )
+    if is_submission_expired(submission, now):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Time limit exceeded")
+    assignment = submission.assignment
     exam_question_ids = {q.id for q in assignment.exam.questions}
     for item in body.answers:
         if item.question_id not in exam_question_ids:
@@ -494,6 +533,7 @@ def create_assignment(
         shuffle_questions=body.shuffle_questions or exam.shuffle_questions,
         shuffle_options=body.shuffle_options or exam.shuffle_options,
         max_violations=body.max_violations,
+        max_attempts=body.max_attempts,
     )
     db.add(assignment)
     db.commit()
@@ -523,6 +563,7 @@ def list_assignments(
             shuffle_questions=a.shuffle_questions,
             shuffle_options=a.shuffle_options,
             max_violations=a.max_violations,
+            max_attempts=a.max_attempts,
             created_at=a.created_at,
             deleted_at=a.deleted_at,
             exam_title=a.exam.title,
@@ -569,6 +610,7 @@ def list_my_assignments(
             shuffle_questions=a.shuffle_questions,
             shuffle_options=a.shuffle_options,
             max_violations=a.max_violations,
+            max_attempts=a.max_attempts,
             created_at=a.created_at,
             exam_title=a.exam.title,
             class_name=a.class_.name,
@@ -595,10 +637,16 @@ def start_assignment(
     now = datetime.now(timezone.utc)
 
     # 3. Find or create submission (IMPORTANT)
-    submission = db.query(Submission).filter(
+    latest_submission = (
+        db.query(Submission)
+        .filter(
         Submission.assignment_id == assignment_id,
         Submission.user_id == current_user.id,
-    ).first()
+        )
+        .order_by(Submission.attempt_no.desc())
+        .first()
+    )
+    submission = latest_submission
     if not submission:
         # Entry window rule: student must start within [start_time, end_time].
         if now < assignment.start_time:
@@ -606,28 +654,52 @@ def start_assignment(
         if now > assignment.end_time:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Assignment entry window is closed")
         try:
-            submission = Submission(assignment_id=assignment_id, user_id=current_user.id)
+            submission = Submission(assignment_id=assignment_id, user_id=current_user.id, attempt_no=1)
             db.add(submission)
             db.commit()
             db.refresh(submission)
         except IntegrityError:
             db.rollback()
-            submission = db.query(Submission).filter(
-                Submission.assignment_id == assignment_id,
-                Submission.user_id == current_user.id,
-            ).first()
+            submission = (
+                db.query(Submission)
+                .filter(
+                    Submission.assignment_id == assignment_id,
+                    Submission.user_id == current_user.id,
+                )
+                .order_by(Submission.attempt_no.desc())
+                .first()
+            )
             if not submission:
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create submission")
-            
-    # 4. Already submitted        
-    if submission.submitted_at:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Already submitted")
+    elif submission.submitted_at:
+        if submission.attempt_no >= assignment.max_attempts:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No attempts left")
+        if now < assignment.start_time:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Assignment has not started yet")
+        if now > assignment.end_time:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Assignment entry window is closed")
+        try:
+            submission = Submission(
+                assignment_id=assignment_id,
+                user_id=current_user.id,
+                attempt_no=submission.attempt_no + 1,
+            )
+            db.add(submission)
+            db.commit()
+            db.refresh(submission)
+        except IntegrityError:
+            db.rollback()
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Attempt is being created, please retry")
     
+    ensure_submission_deadline(submission)
+    if submission.last_heartbeat_at is None:
+        submission.last_heartbeat_at = now
+
     # 5. Expired → auto submit
     if is_submission_expired(submission):
-        submit_submission_now(
+        finalize_submission(
             db,
-            submission,
+            submission=submission,
             submit_reason="time_limit_reached",
             auto_submitted=True,
         )
@@ -660,6 +732,9 @@ def start_assignment(
         duration_minutes=assignment.duration_minutes,
         exam_title=assignment.exam.title,
         max_violations=assignment.max_violations,
+        max_attempts=assignment.max_attempts,
+        attempts_left=max(assignment.max_attempts - submission.attempt_no, 0),
+        attempt_no=submission.attempt_no,
         violation_count=submission.violation_count,
         questions=questions,
         saved_answers=saved_answers,
